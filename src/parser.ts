@@ -38,13 +38,52 @@ import {
   VOID_ELEMENTS,
 } from './allowlists';
 import { type Diagnostic, OrbitParseError, type Pos, type Span } from './diagnostics';
-import { isDigit, isIdentPart, isIdentStart, lexExpression, Scanner } from './lexer';
+import { isDigit, isIdentPart, isIdentStart, lexExpression, numberLiteralProblem, Scanner } from './lexer';
 import { LIMITS } from './limits';
 import { type Token } from './tokens';
 
 // ---------------------------------------------------------------------------
 // Expression parser (Pratt / recursive descent over lexed tokens)
 // ---------------------------------------------------------------------------
+
+/**
+ * PRECEDENCE TABLE — loosest (binds last) at the top, tightest at the bottom.
+ * Each row is one descent level in the functions below; every binary level is
+ * left-associative except the ternary, which is right-associative.
+ *
+ *   1.  ?:            ternary                       parseTernary
+ *   2.  ??            coalesce                      parseCoalesce
+ *   3.  |>            PIPE                          parsePipe
+ *   4.  ||            logical or                    parseOr
+ *   5.  &&            logical and                   parseAnd
+ *   6.  == !=         equality                      parseEquality
+ *   7.  < <= > >=     comparison                    parseComparison
+ *   8.  ..            range                         parseRange
+ *   9.  + -           additive                      parseAdditive
+ *  10.  * / %         multiplicative                parseMultiplicative
+ *  11.  ! -           unary prefix                  parseUnary
+ *  12.  . ?. [] ()    postfix                       parsePostfix
+ *
+ * `|>` IS DELIBERATELY THE LOOSEST COMPUTATION OPERATOR. Only `??` and `?:` —
+ * which choose *between* already-computed values — bind looser. So:
+ *
+ *   a + b |> round        ==  (a + b) |> round        (not a + (b |> round))
+ *   a < b |> yesno        ==  (a < b) |> yesno
+ *   items |> first ?? "-" ==  (items |> first) ?? "-"
+ *
+ * This matches the universal reading of the pipe in Elixir/F#/Julia. Orbit
+ * v0.1 had `|>` binding TIGHTER than `*` and `+`, which silently reassociated
+ * `a + b |> f` into `a + (b |> f)`; that was reversed in v0.2, before the v1.0
+ * editions pragma would have made it an edition-breaking change.
+ *
+ * The right side of `|>` is a filter NAME (with optional arguments), never a
+ * full expression, so a tighter operator cannot legally follow a pipeline —
+ * `a |> round * 2` is O1019 with a parenthesize fix-it rather than a silent
+ * re-association.
+ */
+const OPS_AFTER_PIPE: ReadonlySet<string> = new Set([
+  '*', '/', '%', '+', '-', '<', '<=', '>', '>=', '==', '!=', '&&', '||', '..',
+]);
 
 class ExprParser {
   private i = 0;
@@ -129,10 +168,10 @@ class ExprParser {
   }
 
   private parseCoalesce(): Expr {
-    let left = this.parseOr();
+    let left = this.parsePipe();
     while (this.isPunct('??')) {
       this.next();
-      const right = this.parseOr();
+      const right = this.parsePipe();
       left = { kind: 'coalesce', left, right, span: this.spanOf(left, right) };
     }
     return left;
@@ -184,45 +223,64 @@ class ExprParser {
   }
 
   private parseMultiplicative(): Expr {
-    return this.parseBinaryLevel(['*', '/', '%'], () => this.parsePipe());
+    return this.parseBinaryLevel(['*', '/', '%'], () => this.parseUnary());
   }
 
+  /**
+   * Level 3 — see the precedence table above. The left operand is a full
+   * `||`-level expression, so `a + b |> f` and `a && b |> f` pipe the WHOLE
+   * left-hand side. The right operand is a filter reference only.
+   */
   private parsePipe(): Expr {
-    {
-      let left = this.parseUnary();
-      while (this.isPunct('|>')) {
-        this.next();
-        const t = this.peek();
-        if (t === undefined || t.kind !== 'ident') {
-          this.fail('O1013', 'the right side of |> must be a filter name', 'write x |> upper or x |> truncate(40)', t?.span);
-        }
-        this.next();
-        const args: Expr[] = [left];
-        let end = t.span.end;
-        if (this.isPunct('(')) {
-          this.next();
-          if (!this.isPunct(')')) {
-            for (;;) {
-              args.push(this.parseTernary());
-              if (this.isPunct(',')) {
-                this.next();
-                continue;
-              }
-              break;
-            }
-          }
-          end = this.expectPunct(')').span.end;
-        }
-        left = {
-          kind: 'call',
-          callee: t.text,
-          args,
-          viaPipe: true,
-          span: { start: left.span.start, end },
-        };
+    let left = this.parseOr();
+    let lastFilter: string | undefined;
+    while (this.isPunct('|>')) {
+      this.next();
+      const t = this.peek();
+      if (t === undefined || t.kind !== 'ident') {
+        this.fail('O1013', 'the right side of |> must be a filter name', 'write x |> upper or x |> truncate(40)', t?.span);
       }
-      return left;
+      this.next();
+      lastFilter = t.text;
+      const args: Expr[] = [left];
+      let end = t.span.end;
+      if (this.isPunct('(')) {
+        this.next();
+        if (!this.isPunct(')')) {
+          for (;;) {
+            args.push(this.parseTernary());
+            if (this.isPunct(',')) {
+              this.next();
+              continue;
+            }
+            break;
+          }
+        }
+        end = this.expectPunct(')').span.end;
+      }
+      left = {
+        kind: 'call',
+        callee: t.text,
+        args,
+        viaPipe: true,
+        span: { start: left.span.start, end },
+      };
     }
+    if (lastFilter !== undefined) {
+      // `|>` is the loosest computation operator, so nothing tighter may follow
+      // a pipeline. Reject with a fix-it instead of leaving a bare "unexpected
+      // token" (or, worse, silently re-associating the way v0.1 did).
+      const t = this.peek();
+      if (t !== undefined && t.kind === 'punct' && OPS_AFTER_PIPE.has(t.text)) {
+        this.fail(
+          'O1019',
+          `\`${t.text}\` cannot follow a |> pipeline — |> binds looser than every arithmetic and comparison operator`,
+          `parenthesize the pipeline: (… |> ${lastFilter}) ${t.text} …`,
+          t.span,
+        );
+      }
+    }
+    return left;
   }
 
   private parseUnary(): Expr {
@@ -632,6 +690,16 @@ class TemplateParser {
     return type;
   }
 
+  /**
+   * Frontmatter numbers go through the same digit-cap / exact-round-trip gate
+   * as expression-island numbers (O1024 / O1025) — `Number(digits)` alone
+   * would silently produce Infinity or a rounded neighbour.
+   */
+  private requireExactNumber(intDigits: string, fracDigits: string | undefined, at: Pos): void {
+    const problem = numberLiteralProblem(intDigits, fracDigits);
+    if (problem !== undefined) this.fail(problem.code, problem.message, problem.suggestion, at);
+  }
+
   /** Literal-only frontmatter values: numbers, strings, bools, none, colors. */
   private parseLiteral(): Expr {
     const at = this.s.posNow();
@@ -677,9 +745,11 @@ class TemplateParser {
         this.s.next();
         let frac = '';
         while (isDigit(this.s.peek())) frac += this.s.next();
+        this.requireExactNumber(digits, frac, at);
         const v = Number(`${digits}.${frac}`);
         return { kind: 'float', value: neg ? -v : v, span: { start: at, end: this.s.posNow() } };
       }
+      this.requireExactNumber(digits, undefined, at);
       const v = Number(digits);
       return { kind: 'int', value: neg ? -v : v, span: { start: at, end: this.s.posNow() } };
     }

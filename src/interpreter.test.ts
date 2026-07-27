@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { render, type RenderOptions } from './interpreter';
 import { compileOk, HOST_FILTERS, money, pageSource, cardSource } from './test-host.helper';
 import { type SourceFile } from './parser';
+import { type RenderWarning } from './diagnostics';
+import { unsafe_loadTrustedAst, serializeProgram } from './validate-ast';
+import { t } from './types';
+import { DEFAULT_LOCALE, STDLIB } from './stdlib';
 
 function product(overrides: Record<string, unknown> = {}) {
   return {
@@ -23,7 +27,10 @@ function renderPage(files: readonly SourceFile[], options: RenderOptions = {}) {
   return render(program, 'collection', { hostFilters: HOST_FILTERS, ...options });
 }
 
-function renderOkPage(files: readonly SourceFile[], options: RenderOptions = {}): { html: string; warnings: string[] } {
+function renderOkPage(
+  files: readonly SourceFile[],
+  options: RenderOptions = {},
+): { html: string; warnings: RenderWarning[] } {
   const result = renderPage(files, options);
   if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
   return result;
@@ -78,13 +85,184 @@ describe('rendering basics', () => {
 });
 
 describe('URL sink discipline (W-11)', () => {
-  it('blocks unsafe URLs at the sink, emits # and records a warning', () => {
-    const { html, warnings } = renderOkPage(
-      [pageSource('<a href={first(collection.products)?.url ?? "#"}>x</a>')],
-      { bindings: { collection: { title: 'x', products: [product({ url: 'javascript:alert(1)' })] } } },
-    );
+  const HOSTILE = [pageSource('<a href={first(collection.products)?.url ?? "#"}>x</a>')];
+  const HOSTILE_BINDINGS = {
+    collection: { title: 'x', products: [product({ url: 'javascript:alert(1)' })] },
+  };
+
+  it('blocks unsafe URLs at the sink, emits # and records a STRUCTURED warning', () => {
+    const { html, warnings } = renderOkPage(HOSTILE, { bindings: HOSTILE_BINDINGS });
     expect(html).toBe('<a href="#">x</a>');
-    expect(warnings.some((w) => w.includes('blocked unsafe URL'))).toBe(true);
+    const blocked = warnings.filter((w) => w.code === 'O4900');
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0]?.message).toContain('blocked unsafe URL in href');
+    expect(blocked[0]?.template).toBe('collection');
+    expect(blocked[0]?.line).toBeGreaterThan(0);
+    expect(blocked[0]?.col).toBeGreaterThan(0);
+  });
+
+  it("urlPolicy: 'placeholder' is the default (backwards compatible)", () => {
+    const explicit = renderOkPage(HOSTILE, { bindings: HOSTILE_BINDINGS, urlPolicy: 'placeholder' });
+    const implicit = renderOkPage(HOSTILE, { bindings: HOSTILE_BINDINGS });
+    expect(explicit.html).toBe(implicit.html);
+  });
+
+  it("urlPolicy: 'error' fails the render with O4037 instead of hiding a data bug", () => {
+    const result = renderPage(HOSTILE, { bindings: HOSTILE_BINDINGS, urlPolicy: 'error' });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('O4037');
+    expect(result.error.message).toContain('href');
+    expect(result.error.template).toBe('collection');
+    expect(result.error.line).toBeGreaterThan(0);
+  });
+
+  it("urlPolicy: 'error' leaves safe URLs alone", () => {
+    const { html } = renderOkPage(HOSTILE, {
+      bindings: { collection: { title: 'x', products: [product({ url: '/ok' })] } },
+      urlPolicy: 'error',
+    });
+    expect(html).toBe('<a href="/ok">x</a>');
+  });
+});
+
+describe('srcset is a candidate list, not a URL (W-11c)', () => {
+  const files = [pageSource('<img src="/a.jpg" srcset={collection.title} alt="x">')];
+  const withSrcset = (srcset: string, options: RenderOptions = {}) =>
+    renderPage(files, { bindings: { collection: { title: srcset, products: [] } }, ...options });
+
+  const okSrcset = (srcset: string): string => {
+    const r = withSrcset(srcset);
+    if (!r.ok) throw new Error(`${r.error.code}: ${r.error.message}`);
+    return r.html;
+  };
+
+  it('passes a well-formed multi-candidate list through, canonically re-serialized', () => {
+    expect(okSrcset('/a.jpg 1x, /b.jpg 2x')).toContain('srcset="/a.jpg 1x, /b.jpg 2x"');
+    expect(okSrcset('/a.jpg 400w,/b.jpg 800w')).toContain('srcset="/a.jpg 400w, /b.jpg 800w"');
+    expect(okSrcset('/only.jpg')).toContain('srcset="/only.jpg"');
+    expect(okSrcset('  /a.jpg   1.5x  ,   /b.jpg  ')).toContain('srcset="/a.jpg 1.5x, /b.jpg"');
+    // A trailing comma ends a descriptor-less candidate (WHATWG rule); a
+    // comma with no whitespace after it stays INSIDE the URL token.
+    expect(okSrcset('/a.jpg, /b.jpg 2x')).toContain('srcset="/a.jpg, /b.jpg 2x"');
+    expect(okSrcset('/a,b.jpg 2x')).toContain('srcset="/a,b.jpg 2x"');
+  });
+
+  it('blocks a hostile scheme hiding in a NON-FIRST candidate (the v0.1 hole)', () => {
+    const result = withSrcset('/a.jpg 1x, javascript:alert(1) 2x');
+    if (!result.ok) throw new Error('expected placeholder policy to succeed');
+    expect(result.html).toContain('srcset=""');
+    expect(result.html).not.toContain('javascript');
+    const blocked = result.warnings.filter((w) => w.code === 'O4900');
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0]?.message).toContain('candidate 2');
+  });
+
+  it('rejects malformed descriptors without regex backtracking', () => {
+    for (const bad of ['/a.jpg 1y', '/a.jpg xx', '/a.jpg 0w', '/a.jpg 1.5w', '/a.jpg -2x', '/a.jpg 2 x']) {
+      const r = withSrcset(bad);
+      if (!r.ok) throw new Error('expected placeholder policy to succeed');
+      expect(r.html, bad).toContain('srcset=""');
+    }
+  });
+
+  it("fails the whole attribute under urlPolicy: 'error'", () => {
+    const result = withSrcset('/a.jpg 1x, vbscript:x 2x', { urlPolicy: 'error' });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('O4037');
+    expect(result.error.message).toContain('srcset');
+  });
+
+  it('blanks (never "#"-fills) a rejected srcset so no candidate is fetched', () => {
+    const r = withSrcset('//evil.example 1x');
+    if (!r.ok) throw new Error('expected placeholder policy to succeed');
+    expect(r.html).toContain('srcset=""');
+    expect(r.html).not.toContain('srcset="#"');
+  });
+});
+
+describe('host filters are untrusted foreign code (W-34c)', () => {
+  const boomFilters = [
+    ...HOST_FILTERS,
+    {
+      name: 'boom',
+      params: [t.string()],
+      returns: t.string(),
+      impl: (): never => {
+        throw new TypeError('host internals: db pool exhausted at /srv/app/db.ts:41');
+      },
+    },
+  ];
+
+  const files = [pageSource('<p>{boom(collection.title)}</p>')];
+
+  it('a throwing host filter becomes O4036, not an unhandled exception', () => {
+    const program = compileOk(files, boomFilters);
+    const result = render(program, 'collection', {
+      hostFilters: boomFilters,
+      bindings: { collection: { title: 'x', products: [] } },
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('O4036');
+    expect(result.error.template).toBe('collection');
+    expect(result.error.line).toBeGreaterThan(0);
+  });
+
+  it('names the filter and the throw kind, but never the host message or stack', () => {
+    const program = compileOk(files, boomFilters);
+    const result = render(program, 'collection', {
+      hostFilters: boomFilters,
+      bindings: { collection: { title: 'x', products: [] } },
+    });
+    if (result.ok) throw new Error('expected failure');
+    expect(result.error.message).toContain('"boom"');
+    expect(result.error.message).toContain('TypeError');
+    expect(result.error.message).not.toContain('db pool');
+    expect(result.error.message).not.toContain('db.ts');
+  });
+
+  it('a non-Error throw is handled too', () => {
+    const filters = [
+      ...HOST_FILTERS,
+      { name: 'boom', params: [t.string()], returns: t.string(), impl: (): never => { throw 'a bare string'; } },
+    ];
+    const program = compileOk(files, filters);
+    const result = render(program, 'collection', {
+      hostFilters: filters,
+      bindings: { collection: { title: 'x', products: [] } },
+    });
+    if (result.ok) throw new Error('expected failure');
+    expect(result.error.code).toBe('O4036');
+    expect(result.error.message).not.toContain('a bare string');
+  });
+
+  it('the deadline is checked AROUND the call, so a slow filter aborts the render', () => {
+    // The clock only advances while the host filter is running: with the
+    // v0.1 code (charge output only) this rendered fine.
+    let clock = 0;
+    const slow = [
+      ...HOST_FILTERS,
+      {
+        name: 'slow',
+        params: [t.string()],
+        returns: t.string(),
+        impl: (args: readonly unknown[]): string => {
+          clock += 10_000;
+          return String(args[0]);
+        },
+      },
+    ];
+    const program = compileOk([pageSource('<p>{slow(collection.title)}</p>')], slow);
+    const result = render(program, 'collection', {
+      hostFilters: slow,
+      bindings: { collection: { title: 'x', products: [] } },
+      now: () => clock,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('O4003');
   });
 });
 
@@ -101,13 +279,64 @@ describe('settings resolution (W-20)', () => {
     expect(html).toBe('<p class="v--b">yo</p>');
   });
 
-  it('falls back to declared defaults on invalid values, with a warning', () => {
+  it('falls back to declared defaults on invalid values, with a structured warning', () => {
     const { html, warnings } = renderOkPage(files, {
       bindings: { collection: COLLECTION },
       settings: { collection: { variant: 'zzz' } },
     });
     expect(html).toBe('<p class="v--a">hi</p>');
-    expect(warnings.some((w) => w.includes('collection.variant'))).toBe(true);
+    const invalid = warnings.filter((w) => w.code === 'O4901');
+    expect(invalid).toHaveLength(1);
+    expect(invalid[0]?.message).toContain('collection.variant');
+    expect(invalid[0]?.line).toBeGreaterThan(0);
+  });
+
+  it('a Color setting must be six real hex digits, not just "#" + length 7', () => {
+    const colorFiles = [
+      pageSource('<p class="c">{settings.brand}</p>', 'settings {\n  brand: Color = #112233\n}\n'),
+    ];
+    const good = renderOkPage(colorFiles, {
+      bindings: { collection: COLLECTION },
+      settings: { collection: { brand: '#AABBCC' } },
+    });
+    expect(good.html).toBe('<p class="c">#AABBCC</p>');
+    expect(good.warnings).toHaveLength(0);
+
+    // `#<scrip"` is exactly 7 characters and starts with '#'.
+    for (const hostile of ['#<scrip"', '#zzzzzz', '#12345', '#1234567', 'aabbccd']) {
+      const bad = renderOkPage(colorFiles, {
+        bindings: { collection: COLLECTION },
+        settings: { collection: { brand: hostile } },
+      });
+      expect(bad.html, hostile).toBe('<p class="c">#112233</p>');
+      expect(bad.warnings.map((w) => w.code), hostile).toContain('O4901');
+    }
+  });
+});
+
+describe('warnings are structured and bounded', () => {
+  it('records an O4902 whenever an unsafeHtml host filter emits raw HTML', () => {
+    const { html, warnings } = renderOkPage([pageSource('<div>{richtext(collection.title)}</div>')], {
+      bindings: { collection: { title: '<b>x</b>', products: [] } },
+    });
+    expect(html).toBe('<div><b>x</b></div>');
+    expect(warnings.map((w) => w.code)).toContain('O4902');
+  });
+
+  it('caps the warning list and says so instead of growing without bound', () => {
+    const { warnings } = renderOkPage(
+      [pageSource('<for p of={collection.products}><a href={p.url}>x</a></for>')],
+      {
+        bindings: {
+          collection: {
+            title: 'x',
+            products: Array.from({ length: 250 }, () => product({ url: 'javascript:alert(1)' })),
+          },
+        },
+      },
+    );
+    expect(warnings.length).toBeLessThanOrEqual(101);
+    expect(warnings[warnings.length - 1]?.code).toBe('O4909');
   });
 });
 
@@ -216,6 +445,198 @@ describe('determinism + statelessness (W-17, W-32)', () => {
     expect(storeB.html).not.toContain('Store A');
   });
 });
+
+describe('component-entry props are runtime-validated (W-34b)', () => {
+  const TYPED: SourceFile = {
+    name: 'components/typed.orbit',
+    source: `---
+component Typed
+props {
+  title: String
+  count: Int
+  ratio: Float
+  flag: Bool
+  hue: Color
+  tags: List<String>
+  note: String?
+  fallback: Int = 7
+}
+---
+<p>{title}{count}</p>`,
+  };
+
+  const OK_PROPS = {
+    title: 'a',
+    count: 1,
+    ratio: 1.5,
+    flag: true,
+    hue: '#aabbcc',
+    tags: ['x'],
+  };
+
+  function renderTyped(props: Record<string, unknown>) {
+    return render(compileOk([TYPED]), 'Typed', { hostFilters: HOST_FILTERS, props });
+  }
+
+  it('accepts a well-shaped prop set (optionals and defaults may be omitted)', () => {
+    const result = renderTyped(OK_PROPS);
+    if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
+    expect(result.html).toBe('<p>a1</p>');
+  });
+
+  it('fails with O4038 naming the prop and the expected vs actual shape', () => {
+    const cases: [string, unknown, string][] = [
+      ['title', 42, 'String'],
+      ['count', 1.5, 'Int'],
+      ['count', '3', 'Int'],
+      ['ratio', 'x', 'Float'],
+      ['flag', 'true', 'Bool'],
+      ['hue', '#<scrip"', 'Color'],
+      ['tags', 'x', 'List<String>'],
+      ['tags', { 0: 'x' }, 'List<String>'],
+      ['note', 5, 'String?'],
+    ];
+    for (const [prop, value, expected] of cases) {
+      const result = renderTyped({ ...OK_PROPS, [prop]: value });
+      expect(result.ok, `${prop}=${JSON.stringify(value)}`).toBe(false);
+      if (result.ok) continue;
+      expect(result.error.code).toBe('O4038');
+      expect(result.error.message).toContain(JSON.stringify(prop));
+      expect(result.error.message).toContain(expected);
+      expect(result.error.message).toContain('got ');
+    }
+  });
+
+  it('Int is accepted where Float is declared (matching `assignable`)', () => {
+    const result = renderTyped({ ...OK_PROPS, ratio: 2 });
+    expect(result.ok).toBe(true);
+  });
+
+  it('a required prop with no default cannot simply be omitted', () => {
+    const { title: _omitted, ...rest } = OK_PROPS;
+    const result = renderTyped(rest);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('O4038');
+    expect(result.error.message).toContain('required prop "title"');
+  });
+
+  it('optionals accept none explicitly; declared defaults still apply', () => {
+    const result = renderTyped({ ...OK_PROPS, note: null });
+    expect(result.ok).toBe(true);
+  });
+
+  it('validation is O(props): a huge list prop is not walked', () => {
+    const huge = Array.from({ length: 200_000 }, (_v, i) => String(i));
+    const result = renderTyped({ ...OK_PROPS, tags: huge });
+    expect(result.ok).toBe(true);
+  });
+
+  it('warns (O4903) about supplied props the component never declared', () => {
+    const result = renderTyped({ ...OK_PROPS, nope: 1 });
+    if (!result.ok) throw new Error('expected success');
+    expect(result.warnings.map((w) => w.code)).toContain('O4903');
+  });
+
+  it('host object/opaque props are checked for presence only (representation is host-private)', () => {
+    const card = cardSource('<p>{product.title}</p>');
+    const program = compileOk([card]);
+    const missing = render(program, 'Card', { hostFilters: HOST_FILTERS, props: { product: null } });
+    expect(missing.ok).toBe(false);
+    if (missing.ok) return;
+    expect(missing.error.code).toBe('O4038');
+
+    const present = render(program, 'Card', { hostFilters: HOST_FILTERS, props: { product: product() } });
+    expect(present.ok).toBe(true);
+  });
+});
+
+describe('prototype pollution cannot reach anything (W-36d)', () => {
+  it('a filter named __proto__ / constructor / prototype resolves to nothing', () => {
+    for (const name of ['__proto__', 'constructor', 'prototype']) {
+      expect(STDLIB.get(name)).toBeUndefined();
+      expect(STDLIB.has(name)).toBe(false);
+    }
+  });
+
+  it('the stdlib registry is frozen and exposes no mutator', () => {
+    const asAny = STDLIB as unknown as Record<string, unknown>;
+    expect(asAny['set']).toBeUndefined();
+    expect(asAny['delete']).toBeUndefined();
+    expect(asAny['clear']).toBeUndefined();
+    expect(Object.isFrozen(STDLIB)).toBe(true);
+    expect(Object.getPrototypeOf(STDLIB)).toBeNull();
+  });
+
+  it('member access to a reserved property fails with O4039, never returns Object.prototype', () => {
+    for (const property of ['__proto__', 'constructor', 'prototype']) {
+      const program = poisonedMemberProgram(property);
+      const result = render(program, 'collection', {
+        hostFilters: HOST_FILTERS,
+        bindings: { collection: COLLECTION },
+      });
+      expect(result.ok, property).toBe(false);
+      if (result.ok) continue;
+      expect(result.error.code).toBe('O4039');
+    }
+  });
+
+  it('inherited members are invisible: only OWN data properties are readable', () => {
+    const proto = { secret: 'leaked' };
+    const data = Object.create(proto) as Record<string, unknown>;
+    data['title'] = 'own';
+    data['products'] = [];
+    const result = renderPage([pageSource('<p>{collection.title}</p>')], {
+      bindings: { collection: data },
+    });
+    if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
+    expect(result.html).toBe('<p>own</p>');
+    expect(result.html).not.toContain('leaked');
+  });
+
+  it('a prop named __proto__ supplied by the host is ignored, not merged', () => {
+    const program = compileOk([cardSource('<p>{product.title}</p>')]);
+    const props = JSON.parse('{"product": {"title": "ok"}, "__proto__": {"polluted": true}}') as Record<
+      string,
+      unknown
+    >;
+    const result = render(program, 'Card', { hostFilters: HOST_FILTERS, props });
+    if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
+    expect(result.html).toBe('<p>ok</p>');
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+  });
+
+  it('sortBy/where keys cannot reach the prototype chain', () => {
+    const sortBy = STDLIB.get('sortBy');
+    const where = STDLIB.get('where');
+    const rt = {
+      fail: (code: string, message: string): never => {
+        throw new Error(`${code}: ${message}`);
+      },
+      capString: (s: string) => s,
+      capList: <T,>(l: readonly T[]) => l,
+      locale: DEFAULT_LOCALE,
+    };
+    const items = [{ a: 1 }, { a: 2 }];
+    expect(sortBy?.eval([items, 'constructor'], rt)).toEqual(items);
+    expect(where?.eval([items, '__proto__', Object.prototype], rt)).toEqual([]);
+    expect(where?.eval([items, 'prototype', undefined], rt)).toEqual([]);
+  });
+});
+
+/** Rewrites the page's first interpolation into `collection.<property>`. */
+function poisonedMemberProgram(property: string) {
+  const program = compileOk([pageSource('<p>{collection.title}</p>')]);
+  const data = JSON.parse(JSON.stringify(serializeProgram(program))) as {
+    templates: Record<string, { body: unknown[] }>;
+  };
+  // <p>{…}</p> — the interpolation is the element's only child.
+  const element = data.templates['collection']?.body[0] as { children: { expr: { property: string } }[] };
+  const child = element.children[0];
+  if (child === undefined) throw new Error('unexpected AST shape');
+  child.expr.property = property;
+  return unsafe_loadTrustedAst(data);
+}
 
 describe('components and slots at runtime', () => {
   it('props default when omitted; slot content renders in the caller scope', () => {

@@ -14,6 +14,15 @@
  *
  * Output: a diagnostics list with spans — the checker never throws on bad
  * templates.
+ *
+ * DIAGNOSTIC CODE RANGES (about to become documented public API — v0.5 ships
+ * the error-code index, v1.0 freezes the codes, so every code means exactly
+ * one thing and codes are never recycled):
+ *   O1xxx  lexer + parser (syntax, allowlists, structural caps)
+ *   O2xxx  checker (signatures, types, contracts, filters)
+ *   O3xxx  checker, truthiness rules
+ *   O4xxx  interpreter + escaping (runtime)
+ *   O5xxx  AST re-validation on load
  */
 import {
   groupSlotChildren,
@@ -126,6 +135,19 @@ class Checker {
   private buildSig(template: Template): TemplateSig {
     const props = new Map<string, { type: Type; required: boolean }>();
     for (const decl of template.props) {
+      // v0.2 decision: a `page` cannot declare props. Nothing ever passes them
+      // (a page is an entry point, not a callee), so before this diagnostic a
+      // declared page prop was silently dead and only surfaced downstream as a
+      // generic "unknown identifier". Page-prop semantics are unspecified and
+      // v1.0 freezes the surface, so this rejects rather than guesses.
+      if (template.templateKind === 'page') {
+        this.report(
+          'O2017',
+          `page ${JSON.stringify(template.name)} cannot declare props (prop ${JSON.stringify(decl.name)}) — pages are entry points, not callees`,
+          decl.span,
+          `remove the props block; the host supplies page data as top-level bindings (\`pageGlobals\` in CheckOptions), so \`${decl.name}\` should be declared there`,
+        );
+      }
       if (props.has(decl.name)) {
         this.report('O2010', `duplicate prop ${JSON.stringify(decl.name)}`, decl.span);
         continue;
@@ -159,6 +181,7 @@ class Checker {
       seenSettings.add(decl.name);
       const type = settingType(decl.setting);
       settingsFields[decl.name] = type;
+      this.checkSettingControl(decl.name, decl.setting, decl.span);
       this.checkSettingDefault(decl.name, decl.setting, decl.defaultValue, decl.span);
     }
 
@@ -180,6 +203,46 @@ class Checker {
       settingsType: t.record(settingsFields),
       declaredSlots,
     };
+  }
+
+  /**
+   * Validate the CONTROL itself, independently of its default. A `Range` whose
+   * bounds are inverted or whose step is zero produces a control no merchant
+   * UI can render (and, for step 0, an infinite stepper); checking only that
+   * the default sat inside the bounds let all of that through.
+   */
+  private checkSettingControl(name: string, control: SettingControl, span: Span): void {
+    if (control.control !== 'range') return;
+    if (control.min > control.max) {
+      this.report(
+        'O2018',
+        `setting ${JSON.stringify(name)}: Range min (${control.min}) is greater than max (${control.max})`,
+        span,
+        `write Range(${control.max}, ${control.min}${control.step === 1 ? '' : `, step: ${control.step}`})`,
+      );
+      return;
+    }
+    if (control.step <= 0) {
+      this.report(
+        'O2019',
+        `setting ${JSON.stringify(name)}: Range step must be greater than 0 (found ${control.step})`,
+        span,
+        'write step: 1',
+      );
+      return;
+    }
+    // Cheap reachability check: with a step that does not divide the span, the
+    // declared maximum is not selectable.
+    const spanSize = control.max - control.min;
+    if (spanSize % control.step !== 0) {
+      this.report(
+        'O2020',
+        `setting ${JSON.stringify(name)}: step ${control.step} never reaches max (${control.min}..${control.max} is ${spanSize} wide)`,
+        span,
+        `use a step that divides ${spanSize}, or set max to ${control.min + Math.floor(spanSize / control.step) * control.step}`,
+        'warning',
+      );
+    }
   }
 
   private checkSettingDefault(name: string, control: SettingControl, def: Expr, span: Span): void {
@@ -512,7 +575,15 @@ class Checker {
       } else if (prop.value.form === 'parts') {
         argType = t.string(); // parser guarantees static-text-only parts
       } else {
-        this.report('O2082', `prop ${JSON.stringify(prop.name)} cannot use ?= (pass a Bool expression instead)`, prop.span);
+        // Distinct from O2082 ("no such prop"): the prop exists, the SYNTAX is
+        // wrong. `?=` is the conditional-attribute form and has no meaning on
+        // a component prop.
+        this.report(
+          'O2092',
+          `prop ${JSON.stringify(prop.name)} cannot use ?= (that form is for conditional HTML attributes)`,
+          prop.span,
+          `write ${prop.name}={someBoolExpr}`,
+        );
         continue;
       }
       if (argType.kind === 'html') {
@@ -736,6 +807,8 @@ class Checker {
         const left = this.typeOf(expr.left, scope, narrowed);
         const right = this.typeOf(expr.right, scope, narrowed);
         if (left.kind !== 'optional' && left.kind !== 'invalid' && left.kind !== 'none') {
+          // O2072 is the redundant-`??` warning ONLY; the redundant-`?.`
+          // warning is O2093 (they were the same code before v0.2).
           this.report('O2072', `left of ?? is never none (${typeToString(left)})`, expr.left.span, undefined, 'warning');
           return left;
         }
@@ -771,7 +844,8 @@ class Checker {
         return t.invalid();
       }
     } else if (expr.optional) {
-      this.report('O2072', `?. on a value that is never none (${typeToString(objType)})`, expr.span, 'use plain . here', 'warning');
+      // Distinct from O2072 (redundant `??`): this is a redundant `?.`.
+      this.report('O2093', `?. on a value that is never none (${typeToString(objType)})`, expr.span, 'use plain . here', 'warning');
     }
 
     let fieldType: Type | undefined;
@@ -954,9 +1028,16 @@ class Checker {
     const stdlib = STDLIB.get(expr.callee);
     if (stdlib !== undefined) {
       // Stdlib filters never accept branded opaques (Money/Image/Url stay terminal).
+      // O2060 is the Money-terminality code and O2061 the Image-terminality
+      // code EVERYWHERE else in the checker; reporting both here under O2060
+      // made one code mean two things and duplicated O2061's meaning.
       for (const arg of argTypes) {
-        if (isOpaqueNamed(arg.type, 'Money') || isOpaqueNamed(arg.type, 'Image')) {
-          this.report('O2060', `${typeToString(arg.type)} can only be passed to host filters that declare it`, arg.expr.span);
+        if (isOpaqueNamed(arg.type, 'Money')) {
+          this.report('O2060', 'Money can only be passed to host filters that declare it', arg.expr.span);
+          return t.invalid();
+        }
+        if (isOpaqueNamed(arg.type, 'Image')) {
+          this.report('O2061', 'Image can only be passed to host filters that declare it', arg.expr.span);
           return t.invalid();
         }
       }

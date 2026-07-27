@@ -1,8 +1,18 @@
 {
+  // CommonJS half of the dual build -> dist/cjs.
+  //
+  // `node16` (not the legacy `node10`) is the modern resolver that understands
+  // `exports` maps and per-directory package types. Because the root
+  // package.json declares "type": "commonjs", every src/*.ts is a CJS module
+  // here, so extensionless relative specifiers are legal and tsc emits
+  // `require()`. scripts/fixup-dist.mjs then drops a {"type":"commonjs"}
+  // marker into dist/cjs so the format is pinned even if the root type changes.
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
     "noEmit": false,
-    "outDir": "dist",
+    "outDir": "dist/cjs",
     "rootDir": "src"
   },
   "include": ["src"],

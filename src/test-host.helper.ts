@@ -78,22 +78,28 @@ export interface CompiledProgram {
 }
 
 /** Parse + check; throws on PARSE errors (tests assert check diagnostics). */
-export function compile(files: readonly SourceFile[]): CompiledProgram {
+export function compile(
+  files: readonly SourceFile[],
+  hostFilters: readonly HostFilterDecl[] = HOST_FILTERS,
+): CompiledProgram {
   const parsed = parseProgram(files);
   if (!parsed.ok) {
     throw new Error('parse failed:\n' + parsed.diagnostics.map((d) => `${d.code}: ${d.message}`).join('\n'));
   }
   const result = check(parsed.program, {
     registry: makeRegistry(),
-    hostFilters: HOST_FILTERS,
+    hostFilters,
     pageGlobals: PAGE_GLOBALS,
   });
   return { program: parsed.program, result };
 }
 
 /** Compile and require zero errors (warnings allowed). */
-export function compileOk(files: readonly SourceFile[]): Program {
-  const { program, result } = compile(files);
+export function compileOk(
+  files: readonly SourceFile[],
+  hostFilters: readonly HostFilterDecl[] = HOST_FILTERS,
+): Program {
+  const { program, result } = compile(files, hostFilters);
   const errors = result.diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) {
     throw new Error('check failed:\n' + errors.map((d) => `${d.code}: ${d.message}`).join('\n'));

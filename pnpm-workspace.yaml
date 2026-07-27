@@ -1,0 +1,19 @@
+# pnpm settings for this repository.
+#
+# This is a SINGLE-package repo, not a workspace — there is no `packages:` key.
+# The file exists because pnpm 10+ moved its settings here: the `pnpm` field in
+# package.json is no longer read (pnpm 11 warns and ignores it), so this is the
+# only place a build-script allowlist takes effect.
+#
+# Dependencies may not run install scripts unless named here. esbuild unpacks a
+# platform binary in postinstall and cannot work without it; it is a
+# devDependency only and never ships in the published package
+# (`@orbitlang/core` has zero runtime dependencies).
+#
+# Without this, `pnpm install --frozen-lockfile` fails with
+# ERR_PNPM_IGNORED_BUILDS and CI never reaches the test step. pnpm writes a
+# `set this to true or false` placeholder here when the answer is missing —
+# if that reappears, a new dependency wants to run a build script and someone
+# must make an explicit decision about it rather than deleting the prompt.
+allowBuilds:
+  esbuild: true

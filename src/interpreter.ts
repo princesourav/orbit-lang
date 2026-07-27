@@ -24,12 +24,36 @@ import {
   type Program,
   type SettingDecl,
   type Template,
+  type TypeExpr,
 } from './ast';
-import { OrbitRenderError, type Span } from './diagnostics';
-import { escapeAttr, escapeRcdata, escapeText, sanitizeUrl, serializeJsonLd } from './escape';
+import { OrbitRenderError, type RenderWarning, type Span } from './diagnostics';
+import {
+  escapeAttr,
+  escapeRcdata,
+  escapeText,
+  frozenMap,
+  isForbiddenKey,
+  isHexColorLiteral,
+  sanitizeSrcset,
+  sanitizeUrl,
+  serializeJsonLd,
+} from './escape';
 import { isHtmlValue, unsafeHtmlValue, type HostFilterDecl } from './host';
 import { LIMITS } from './limits';
 import { DEFAULT_LOCALE, STDLIB, type FilterRuntime, type LocaleData } from './stdlib';
+
+/**
+ * What happens when the URL sink rejects a value (`href={product.url}` where
+ * the data says `javascript:…`).
+ *
+ * - `'placeholder'` — emit a neutral value (`#`, or `""` for `srcset`) and
+ *   record an O4900 `RenderWarning`. The page still renders. This is the
+ *   default because it is v0.1's behavior.
+ * - `'error'` — fail the render with O4037, like every other integrity
+ *   violation in the engine. Recommended for production: a blocked URL almost
+ *   always means the DATA is wrong, and a silent `#` hides that for months.
+ */
+export type UrlPolicy = 'placeholder' | 'error';
 
 export interface RenderOptions {
   /** Host filter implementations (money, img, …). */
@@ -48,6 +72,8 @@ export interface RenderOptions {
   /** Injected clock for the deadline ONLY (defaults to Date.now). */
   now?: () => number;
   locale?: LocaleData;
+  /** Sink policy for blocked URLs. Defaults to `'placeholder'` (W-11d). */
+  urlPolicy?: UrlPolicy;
 }
 
 export interface RenderErrorInfo {
@@ -59,8 +85,16 @@ export interface RenderErrorInfo {
 }
 
 export type RenderResult =
-  | { ok: true; html: string; warnings: string[] }
-  | { ok: false; error: RenderErrorInfo; warnings: string[] };
+  | { ok: true; html: string; warnings: RenderWarning[] }
+  | { ok: false; error: RenderErrorInfo; warnings: RenderWarning[] };
+
+/**
+ * Per-render warning cap. Warnings are accumulated in memory and returned to
+ * the host, so an unbounded list is an unbounded allocation inside a fuel
+ * budget that does not charge for it. Engine-local constant (not in
+ * limits.ts) because nothing outside the interpreter observes it.
+ */
+const MAX_RENDER_WARNINGS = 100;
 
 interface Scope {
   vars: Map<string, unknown>;
@@ -119,7 +153,7 @@ export function render(program: Program, entry: string, options: RenderOptions =
 }
 
 class Interpreter {
-  readonly warnings: string[] = [];
+  readonly warnings: RenderWarning[] = [];
   currentTemplate = '<render>';
 
   private readonly out: string[] = [];
@@ -131,8 +165,9 @@ class Interpreter {
   private readonly deadlineMs: number;
   private readonly now: () => number;
   private readonly startedAt: number;
-  private readonly hostFilters: Map<string, HostFilterDecl>;
+  private readonly hostFilters: ReadonlyMap<string, HostFilterDecl>;
   private readonly locale: LocaleData;
+  private readonly urlPolicy: UrlPolicy;
 
   constructor(
     private readonly program: Program,
@@ -144,8 +179,11 @@ class Interpreter {
     this.deadlineMs = options.deadlineMs ?? LIMITS.defaultDeadlineMs;
     this.now = options.now ?? Date.now;
     this.startedAt = this.now();
-    this.hostFilters = new Map((options.hostFilters ?? []).map((f) => [f.name, f]));
+    // Frozen null-prototype view: a filter name from the AST can never resolve
+    // to an inherited member of the lookup object (see `frozenMap`).
+    this.hostFilters = frozenMap((options.hostFilters ?? []).map((f) => [f.name, f] as const));
     this.locale = options.locale ?? DEFAULT_LOCALE;
+    this.urlPolicy = options.urlPolicy ?? 'placeholder';
   }
 
   renderEntry(entry: string): string {
@@ -156,10 +194,21 @@ class Interpreter {
     this.currentTemplate = template.name;
     const vars = new Map<string, unknown>();
     if (template.templateKind === 'page') {
-      for (const [k, v] of Object.entries(this.options.bindings ?? {})) vars.set(k, v);
+      // Page bindings have no declared type IN THE AST (page globals live in
+      // the host's TypeRegistry, which the interpreter does not receive), so
+      // the engine cannot shape-check them here; the checker did that against
+      // the registry at compile time.
+      const bindings = this.options.bindings;
+      if (bindings !== undefined) {
+        for (const [k, v] of Object.entries(bindings)) {
+          if (isForbiddenKey(k)) continue;
+          vars.set(k, v);
+        }
+      }
     } else {
+      this.validateEntryProps(template);
       for (const decl of template.props) {
-        const provided = this.options.props?.[decl.name];
+        const provided = pick(this.options.props, decl.name);
         vars.set(decl.name, provided !== undefined ? provided : this.defaultPropValue(decl.defaultValue));
       }
     }
@@ -172,6 +221,26 @@ class Interpreter {
 
   private fail(code: string, message: string, span?: Span): never {
     throw new OrbitRenderError(code, message, this.currentTemplate, span);
+  }
+
+  /** Structured, span-carrying warning (see `RenderWarning`), capped. */
+  private warn(code: string, message: string, span?: Span): void {
+    if (this.warnings.length > MAX_RENDER_WARNINGS) return;
+    if (this.warnings.length === MAX_RENDER_WARNINGS) {
+      this.warnings.push({
+        code: 'O4909',
+        message: `warning list truncated at ${MAX_RENDER_WARNINGS} entries`,
+        template: this.currentTemplate,
+      });
+      return;
+    }
+    this.warnings.push({
+      code,
+      message,
+      template: this.currentTemplate,
+      line: span?.start.line,
+      col: span?.start.col,
+    });
   }
 
   private emit(s: string, span?: Span): void {
@@ -227,16 +296,19 @@ class Interpreter {
   }
 
   private resolveSettings(template: Template): Record<string, unknown> {
-    const provided = this.options.settings?.[template.name] ?? {};
-    const out: Record<string, unknown> = {};
+    const provided = pick(this.options.settings, template.name);
+    // Null-prototype: `settings` is indexed by AST-supplied names.
+    const out = Object.create(null) as Record<string, unknown>;
     for (const decl of template.settings) {
-      const value = provided[decl.name];
+      const value = isRecordValue(provided) ? pick(provided, decl.name) : undefined;
       if (value !== undefined && this.settingValueValid(decl, value)) {
         out[decl.name] = value;
       } else {
         if (value !== undefined) {
-          this.warnings.push(
-            `setting ${template.name}.${decl.name}: provided value is invalid for its control; using the declared default`,
+          this.warn(
+            'O4901',
+            `setting ${template.name}.${decl.name}: provided value is invalid for its ${decl.setting.control} control; using the declared default`,
+            decl.span,
           );
         }
         out[decl.name] = this.evalExpr(decl.defaultValue, { vars: new Map() });
@@ -261,7 +333,60 @@ class Interpreter {
           value <= decl.setting.max
         );
       case 'color':
-        return typeof value === 'string' && value.length === 7 && value.startsWith('#');
+        // v0.1 accepted any 7-character string starting with '#', so the
+        // merchant-controlled value `#<scrip"` passed as a Color and reached
+        // the attribute sink. All six characters must be hex digits.
+        return typeof value === 'string' && isHexColorLiteral(value);
+    }
+  }
+
+  // -- component-entry prop validation (W-34b) ------------------------------
+
+  /**
+   * Props supplied at a COMPONENT ENTRY come from the host, not from a checked
+   * call site, so nothing has verified them against the declared prop types.
+   * This is a deliberately SHALLOW check — O(declared props), never a walk of
+   * the data — mirroring `settingValueValid`: it catches "you passed a string
+   * where the template declared `List<Product>`", not "element 4,912 of this
+   * list is missing a field".
+   *
+   * Host object/opaque types (`Product`, `Money`, …) have a host-private
+   * representation the engine cannot inspect, so for those the only assertion
+   * the engine can honestly make is "not none".
+   */
+  private validateEntryProps(template: Template): void {
+    const supplied = this.options.props;
+    for (const decl of template.props) {
+      const value = pick(supplied, decl.name);
+      if (value === undefined) {
+        if (decl.defaultValue === undefined && decl.type.kind !== 'optional') {
+          this.fail(
+            'O4038',
+            `component entry ${JSON.stringify(template.name)}: required prop ${JSON.stringify(decl.name)} of type ${typeExprToString(decl.type)} was not supplied and has no default`,
+            decl.span,
+          );
+        }
+        continue;
+      }
+      if (!propShapeValid(decl.type, value)) {
+        this.fail(
+          'O4038',
+          `component entry ${JSON.stringify(template.name)}: prop ${JSON.stringify(decl.name)} expects ${typeExprToString(decl.type)}, got ${shapeName(value)}`,
+          decl.span,
+        );
+      }
+    }
+    if (supplied !== undefined) {
+      const declared = new Set(template.props.map((p) => p.name));
+      for (const key of Object.keys(supplied)) {
+        if (!declared.has(key)) {
+          this.warn(
+            'O4903',
+            `component entry ${JSON.stringify(template.name)}: prop ${JSON.stringify(key)} is not declared by the component and was ignored`,
+            template.span,
+          );
+        }
+      }
     }
   }
 
@@ -278,6 +403,10 @@ class Interpreter {
           const value = this.evalExpr(node.expr, scope);
           if (isHtmlValue(value)) {
             if (ctx.rcdata) this.fail('O4034', 'Html cannot render inside <title>/<textarea>', node.span);
+            // The one unescaped sink in the engine. The checker warns at the
+            // call site; this records that it actually fired at RUNTIME, so a
+            // host can audit which pages really emit host-sanitized HTML.
+            this.warn('O4902', 'emitted Html from an unsafeHtml host filter without escaping', node.span);
             this.emit(value.__orbitHtml, node.span);
             break;
           }
@@ -402,12 +531,17 @@ class Interpreter {
 
   private emitAttrValue(attr: Attr, raw: string, span: Span): void {
     if (attr.isUrl) {
-      const checked = sanitizeUrl(raw, attr.name);
+      // `srcset` is a comma-separated CANDIDATE LIST, not a URL: each
+      // candidate is sanitized independently (W-11c).
+      const checked = attr.name === 'srcset' ? sanitizeSrcset(raw) : sanitizeUrl(raw, attr.name);
       if (!checked.ok) {
-        this.warnings.push(
-          `${this.currentTemplate}:${span.start.line}:${span.start.col} blocked unsafe URL in ${attr.name}: ${checked.reason}`,
-        );
-        this.emit(` ${attr.name}="#"`, span);
+        if (this.urlPolicy === 'error') {
+          this.fail('O4037', `blocked unsafe URL in ${attr.name}: ${checked.reason}`, span);
+        }
+        this.warn('O4900', `blocked unsafe URL in ${attr.name}: ${checked.reason}`, span);
+        // A blank candidate list is the only neutral srcset; '#' would be a
+        // single relative candidate the browser would actually try to fetch.
+        this.emit(attr.name === 'srcset' ? ` ${attr.name}=""` : ` ${attr.name}="#"`, span);
         return;
       }
       this.emit(` ${attr.name}="${escapeAttr(checked.url)}"`, span);
@@ -538,8 +672,15 @@ class Interpreter {
         return out;
       }
       case 'record': {
-        const out: Record<string, unknown> = {};
-        for (const field of expr.fields) out[field.key] = this.evalExpr(field.value, scope);
+        // Null-prototype: record literals are keyed by AST-supplied names and
+        // are later re-indexed by member access.
+        const out = Object.create(null) as Record<string, unknown>;
+        for (const field of expr.fields) {
+          if (isForbiddenKey(field.key)) {
+            this.fail('O4039', `record field ${JSON.stringify(field.key)} is a reserved property name`, expr.span);
+          }
+          out[field.key] = this.evalExpr(field.value, scope);
+        }
         return out;
       }
       case 'range': {
@@ -557,6 +698,18 @@ class Interpreter {
         if (typeof obj !== 'object' || Array.isArray(obj)) {
           this.fail('O4011', `value has no property ${JSON.stringify(expr.property)}`, expr.span);
         }
+        if (isForbiddenKey(expr.property)) {
+          this.fail(
+            'O4039',
+            `property ${JSON.stringify(expr.property)} is a reserved name and can never be read from data`,
+            expr.span,
+          );
+        }
+        // OWN properties only: an inherited member is not data. Orbit has no
+        // dynamic member access, so this can only trip on a hand-built AST or
+        // on host data carrying behavior on its prototype — both of which
+        // should read as absent, not as a live JS object.
+        if (!Object.hasOwn(obj, expr.property)) return null;
         const v = (obj as Record<string, unknown>)[expr.property];
         return v === undefined ? null : v;
       }
@@ -647,7 +800,31 @@ class Interpreter {
     };
     const host = this.hostFilters.get(name);
     if (host !== undefined) {
-      const result = host.impl(args);
+      // Host filter implementations are FOREIGN CODE inside the engine's
+      // budget. Two things follow.
+      //
+      // (1) Deadline before AND after. v0.1 only byte-charged the filter's
+      //     output, so a filter that blocked for a second blew the wall-clock
+      //     deadline and was noticed only once it returned. Checking on both
+      //     sides means a slow filter trips O4003 at the first call boundary
+      //     after it, and the render aborts instead of running to completion.
+      // (2) A throw is a RENDER failure, not an unhandled exception. v0.1 let
+      //     it escape `render()` entirely, past OrbitRenderError handling and
+      //     past the `{ ok: false }` contract. We name the filter and the
+      //     thrown value's constructor; the message and stack are the host's
+      //     internals and are deliberately not surfaced.
+      this.checkDeadline(span);
+      let result: unknown;
+      try {
+        result = host.impl(args);
+      } catch (err) {
+        this.fail(
+          'O4036',
+          `host filter ${JSON.stringify(name)} threw ${describeThrown(err)}; host filters must handle their own failures`,
+          span,
+        );
+      }
+      this.checkDeadline(span);
       if (typeof result === 'string') this.capString(result, span);
       if (Array.isArray(result)) this.capList(result, span);
       // Byte-charge filter output so "produce huge, emit nothing" still burns fuel.
@@ -684,5 +861,102 @@ class Interpreter {
       this.fail('O4012', 'rendered value is none — data violated its declared type', span);
     }
     this.fail('O4014', 'cannot render a structured value', span);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Host-object access helpers
+// ---------------------------------------------------------------------------
+
+function isRecordValue(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+/**
+ * Read `key` from a HOST-supplied plain object. Reserved names and inherited
+ * members are invisible: `pick(props, '__proto__')` is `undefined`, never
+ * `Object.prototype`.
+ */
+function pick(source: Record<string, unknown> | undefined, key: string): unknown {
+  if (source === undefined || source === null) return undefined;
+  if (isForbiddenKey(key)) return undefined;
+  if (!Object.hasOwn(source, key)) return undefined;
+  return source[key];
+}
+
+/** Names the thrown value's kind WITHOUT leaking the host's message or stack. */
+function describeThrown(err: unknown): string {
+  if (err instanceof Error) {
+    let name = 'Error';
+    try {
+      const n: unknown = err.name;
+      if (typeof n === 'string' && n.length > 0 && n.length <= 64) name = n;
+    } catch {
+      // a hostile `name` getter changes nothing: we fall back to 'Error'
+    }
+    return `a ${name}`;
+  }
+  return `a non-Error value of type ${typeof err}`;
+}
+
+// ---------------------------------------------------------------------------
+// Shallow prop-shape validation (component entries)
+// ---------------------------------------------------------------------------
+
+function typeExprToString(te: TypeExpr): string {
+  switch (te.kind) {
+    case 'name':
+      return te.name;
+    case 'list':
+      return `List<${typeExprToString(te.inner)}>`;
+    case 'optional':
+      return `${typeExprToString(te.inner)}?`;
+  }
+}
+
+/** The shape the engine actually received, for the error message. */
+function shapeName(v: unknown): string {
+  if (v === null || v === undefined) return 'none';
+  if (Array.isArray(v)) return 'List';
+  switch (typeof v) {
+    case 'string':
+      return 'String';
+    case 'boolean':
+      return 'Bool';
+    case 'number':
+      return Number.isInteger(v) ? 'Int' : 'Float';
+    case 'object':
+      return 'Record';
+    default:
+      return typeof v;
+  }
+}
+
+/**
+ * O(1) per prop. Lists are checked for array-ness only — the elements are
+ * NOT walked, so validating a 5,000-item catalog prop costs one `isArray`.
+ */
+function propShapeValid(te: TypeExpr, v: unknown): boolean {
+  if (te.kind === 'optional') {
+    return v === null || v === undefined ? true : propShapeValid(te.inner, v);
+  }
+  if (v === null || v === undefined) return false;
+  if (te.kind === 'list') return Array.isArray(v);
+  switch (te.name) {
+    case 'Int':
+      return typeof v === 'number' && Number.isInteger(v);
+    case 'Float':
+      // Int is assignable to Float (see types.ts `assignable`).
+      return typeof v === 'number' && Number.isFinite(v);
+    case 'String':
+      return typeof v === 'string';
+    case 'Bool':
+      return typeof v === 'boolean';
+    case 'Color':
+      return typeof v === 'string' && isHexColorLiteral(v);
+    default:
+      // Host object / opaque type: the representation is host-private, so
+      // "present" is the strongest honest assertion the engine can make.
+      return true;
   }
 }

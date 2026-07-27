@@ -2,8 +2,14 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "commonjs",
-    "moduleResolution": "node10",
+    // Typecheck-only config. `preserve` + `bundler` is the modern, emit-agnostic
+    // pair: it accepts the extensionless relative specifiers used in src/ and
+    // resolves devDependencies (vitest, fast-check) through their `exports` maps
+    // regardless of the format the emitted artifacts end up in. The two build
+    // configs (tsconfig.build.json / tsconfig.esm.json) pick the real module
+    // format; nothing is emitted from here.
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,

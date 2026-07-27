@@ -11,6 +11,7 @@
  */
 import { type Expr } from './ast';
 import { type Diagnostic, type Span } from './diagnostics';
+import { frozenMap, isForbiddenKey } from './escape';
 import { t, type Type, typeToString, unwrapOptional } from './types';
 
 // ---------------------------------------------------------------------------
@@ -525,8 +526,16 @@ function objectField(_ctx: FilterCheckCtx, element: Type, _key: string): Type | 
   return undefined;
 }
 
+/**
+ * `sortBy`/`where` keys are string literals from the AST, but the OBJECT is
+ * host data — so the lookup is still key-on-untrusted-shape. Reserved keys are
+ * refused and inherited members are invisible: `sortBy(list, "constructor")`
+ * sorts by `null`, it does not reach `Object`.
+ */
 function fieldValue(v: unknown, key: string): unknown {
+  if (isForbiddenKey(key)) return null;
   if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+    if (!Object.hasOwn(v, key)) return null;
     return (v as Record<string, unknown>)[key] ?? null;
   }
   return null;
@@ -618,6 +627,15 @@ function formatDatePattern(d: IsoDate, pattern: string, locale: LocaleData): str
   return out;
 }
 
-export const STDLIB: ReadonlyMap<string, StdlibFilter> = new Map(filters.map((f) => [f.name, f]));
+/**
+ * The stdlib registry is a FROZEN, null-prototype map view (see `frozenMap`):
+ * it cannot be extended at runtime, and a user-controlled filter name can
+ * never resolve to an inherited member — `STDLIB.get('__proto__')` is
+ * `undefined`. Each filter object is frozen too, so a rogue import cannot
+ * swap an `eval` out from under the interpreter.
+ */
+export const STDLIB: ReadonlyMap<string, StdlibFilter> = frozenMap(
+  filters.map((f) => [f.name, Object.freeze(f)] as const),
+);
 
-export const STDLIB_FILTER_NAMES: readonly string[] = [...STDLIB.keys()];
+export const STDLIB_FILTER_NAMES: readonly string[] = Object.freeze([...STDLIB.keys()]);

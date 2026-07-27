@@ -45,6 +45,44 @@ export function formatDiagnostic(d: Diagnostic): string {
   return `${d.severity}[${d.code}]: ${d.message}\n  --> ${where}${help}`;
 }
 
+// ---------------------------------------------------------------------------
+// Render warnings
+// ---------------------------------------------------------------------------
+
+/**
+ * A non-fatal runtime finding, shaped like a diagnostic so hosts can ROUTE it
+ * programmatically (to a theme-developer console, a lint dashboard, a metric)
+ * instead of pattern-matching English.
+ *
+ * v0.1 pushed bare strings; a host had to `.includes('blocked unsafe URL')` to
+ * find anything, which is not an API. Warnings now carry the same
+ * `code` + `message` + template/line/col shape as `RenderErrorInfo`.
+ *
+ * Codes are stable and namespaced O49xx (render, non-fatal):
+ *   O4900  a URL was blocked at the sink and replaced with a placeholder
+ *   O4901  a merchant setting value was invalid; the declared default was used
+ *   O4902  an `unsafeHtml` host filter's output was emitted raw
+ *   O4903  a prop supplied at a component entry is not declared
+ *   O4909  the warning list hit its per-render cap and was truncated
+ */
+export interface RenderWarning {
+  code: string;
+  message: string;
+  template?: string;
+  /** 1-based line of the responsible AST node, when one is known. */
+  line?: number;
+  /** 1-based column of the responsible AST node, when one is known. */
+  col?: number;
+}
+
+export function formatRenderWarning(w: RenderWarning): string {
+  const where =
+    w.line !== undefined
+      ? `${w.template ?? '<template>'}:${w.line}:${w.col ?? 1}`
+      : (w.template ?? '<template>');
+  return `warning[${w.code}]: ${w.message}\n  --> ${where}`;
+}
+
 /** Thrown internally by the parser; callers receive `{ ok: false, diagnostics }`. */
 export class OrbitParseError extends Error {
   constructor(readonly diagnostic: Diagnostic) {

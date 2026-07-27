@@ -10,6 +10,14 @@ export const LIMITS = {
   maxElementDepth: 64,
   maxExprDepth: 32,
   maxExprTokens: 512,
+  /**
+   * Total decimal digits allowed in one numeric literal (integer part plus
+   * fractional part, sign and `.` excluded). Orbit numbers are IEEE-754
+   * doubles: past this width a literal cannot be distinguished from its
+   * neighbours, so the parser rejects it instead of silently rounding.
+   * Literals inside this cap are ADDITIONALLY required to round-trip exactly.
+   */
+  maxNumberDigits: 20,
 
   /** Loop discipline: `limit` must be a compile-time literal and <= this. */
   maxLoopLimit: 250,

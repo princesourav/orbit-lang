@@ -1,0 +1,53 @@
+name: OpenSSF Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    # Weekly, Monday 07:11 UTC. Off-the-hour to avoid GitHub's cron stampede.
+    - cron: '11 7 * * 1'
+  push:
+    branches: [main]
+
+# Read-only by default; the analysis job widens only what it must.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Upload the SARIF result to the code-scanning dashboard.
+      security-events: write
+      # Publish the results to the OpenSSF API so the badge can render.
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # publish_results makes the score visible on the OpenSSF badge and
+          # feeds the public dataset. It requires id-token: write above.
+          publish_results: true
+
+      # Keep the raw SARIF for 5 days so a regression can be diffed even if the
+      # code-scanning upload is rate-limited.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif

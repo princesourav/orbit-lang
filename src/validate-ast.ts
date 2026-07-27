@@ -12,7 +12,9 @@
  * (red-team W-36c): misuse must be visible in review. Integrity/authenticity
  * (an HMAC over `(store_id, theme_version_id, ast_bytes)` minted at submit)
  * lives HOST-SIDE — the open engine has no key material and no notion of a
- * store; verify the HMAC before calling either loader.
+ * store; verify the HMAC before calling either loader. `astAuthMessage` /
+ * `verifyAstTag` below give you the canonicalization and the constant-time
+ * compare without the engine ever seeing a key.
  */
 import {
   EXPR_KINDS,
@@ -31,6 +33,7 @@ import {
   VOID_ELEMENTS,
 } from './allowlists';
 import { OrbitAstError, type Diagnostic } from './diagnostics';
+import { isForbiddenKey, isHexColorLiteral } from './escape';
 import { LIMITS } from './limits';
 
 export interface SerializedProgram {
@@ -220,7 +223,9 @@ class AstValidator {
           break;
         }
         case 'let':
-          if (typeof node.name !== 'string' || node.name === 'settings') this.invalid('malformed let binding');
+          if (typeof node.name !== 'string' || node.name === 'settings' || isForbiddenKey(node.name)) {
+            this.invalid('malformed let binding');
+          }
           this.validateExpr(node.expr, 0);
           break;
         case 'component': {
@@ -326,8 +331,10 @@ class AstValidator {
       case 'none':
         return;
       case 'color':
-        if (typeof expr.value !== 'string' || expr.value.length !== 7 || !expr.value.startsWith('#')) {
-          this.invalid('malformed color literal');
+        // All six characters must be real hex digits: `#<scrip"` is exactly
+        // 7 characters and starts with '#'.
+        if (typeof expr.value !== 'string' || !isHexColorLiteral(expr.value)) {
+          this.invalid('malformed color literal (expected #rrggbb with hex digits)');
         }
         return;
       case 'list':
@@ -347,6 +354,9 @@ class AstValidator {
             this.invalid('malformed record field');
             continue;
           }
+          if (isForbiddenKey(field['key'])) {
+            this.invalid(`record field ${JSON.stringify(field['key'])} is a reserved property name`);
+          }
           this.validateExpr(field.value, depth + 1);
         }
         return;
@@ -356,6 +366,9 @@ class AstValidator {
         return;
       case 'member':
         if (typeof expr.property !== 'string' || expr.property.length > 64) this.invalid('malformed member access');
+        else if (isForbiddenKey(expr.property)) {
+          this.invalid(`member access to reserved property ${JSON.stringify(expr.property)} is not allowed`);
+        }
         if (typeof expr.optional !== 'boolean') this.invalid('malformed member access');
         this.validateExpr(expr.object, depth + 1);
         return;
@@ -434,4 +447,165 @@ export function unsafe_loadTrustedAst(data: unknown): Program {
     ]);
   }
   return { templates: new Map(Object.entries(root.templates)) };
+}
+
+// ---------------------------------------------------------------------------
+// Stored-AST authentication (host-supplied primitive)
+// ---------------------------------------------------------------------------
+
+/**
+ * An HMAC over a message, supplied BY THE HOST.
+ *
+ * The engine deliberately does not implement one. Orbit is zero-I/O and
+ * zero-dependency: importing `node:crypto` would break both, and the engine
+ * must never hold key material. The host closes over its key and passes this
+ * function in; the engine contributes only the parts that are easy to get
+ * wrong and identical for every host — canonical byte assembly, domain
+ * separation, and a constant-time tag comparison.
+ *
+ * Implement it with a real HMAC (`crypto.createHmac('sha256', key)` in Node,
+ * `crypto.subtle.sign('HMAC', …)` in a worker). It must be deterministic and
+ * must not throw on any input.
+ */
+export type HmacFn = (message: Uint8Array) => Uint8Array;
+
+/** The tuple a stored-AST tag is bound to. */
+export interface AstAuthContext {
+  /** Tenant identifier. Binding it stops a theme moving between stores. */
+  storeId: string;
+  /** Immutable version identifier. Binding it stops rollback to an old AST. */
+  themeVersionId: string;
+}
+
+/**
+ * Domain-separation prefix. Any other use of the host's key produces messages
+ * that cannot collide with an Orbit AST tag. Bump the suffix if the message
+ * layout ever changes, so old tags stop verifying instead of being
+ * reinterpreted.
+ */
+const AST_AUTH_DOMAIN = 'orbit.ast-auth.v1';
+
+/**
+ * Canonical, unambiguous message bytes for `(storeId, themeVersionId,
+ * astBytes)`.
+ *
+ * Every field is LENGTH-PREFIXED with a 4-byte big-endian count, so no choice
+ * of field contents can shift a byte from one field into another —
+ * `("ab", "c")` and `("a", "bc")` produce different messages. That is the
+ * whole point: a concatenation-based scheme lets a tenant with control over
+ * one field forge a tag for a different tuple.
+ */
+export function astAuthMessage(ctx: AstAuthContext, astBytes: Uint8Array | string): Uint8Array {
+  const fields = [
+    utf8Bytes(AST_AUTH_DOMAIN),
+    utf8Bytes(ctx.storeId),
+    utf8Bytes(ctx.themeVersionId),
+    typeof astBytes === 'string' ? utf8Bytes(astBytes) : astBytes,
+  ];
+  let total = 0;
+  for (const f of fields) total += 4 + f.length;
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const f of fields) {
+    const n = f.length;
+    out[at] = (n >>> 24) & 0xff;
+    out[at + 1] = (n >>> 16) & 0xff;
+    out[at + 2] = (n >>> 8) & 0xff;
+    out[at + 3] = n & 0xff;
+    at += 4;
+    out.set(f, at);
+    at += n;
+  }
+  return out;
+}
+
+/**
+ * Mint the tag to store alongside the AST row. Call at SUBMIT time, with the
+ * exact bytes you will later persist and load.
+ */
+export function signAst(ctx: AstAuthContext, astBytes: Uint8Array | string, hmac: HmacFn): Uint8Array {
+  return hmac(astAuthMessage(ctx, astBytes));
+}
+
+/**
+ * Verify a stored tag. Call BEFORE `loadCheckedAst` / `unsafe_loadTrustedAst`,
+ * and pass the byte-identical `astBytes` that were signed — re-serializing a
+ * parsed object can reorder keys and will not verify.
+ *
+ * SECURITY CONTRACT
+ * - Authenticity only. A valid tag says "this host minted these bytes for this
+ *   store and version"; it says nothing about the AST being structurally
+ *   valid. Keep using `loadCheckedAst` unless you own the whole pipeline.
+ * - Returns `false` rather than throwing, on every failure path, so a caller
+ *   cannot accidentally treat a thrown error as a pass.
+ * - The comparison is constant time in the tag CONTENTS. Tag LENGTH is
+ *   compared first and leaks (it is a public parameter of the MAC, not a
+ *   secret).
+ */
+export function verifyAstTag(
+  ctx: AstAuthContext,
+  astBytes: Uint8Array | string,
+  tag: Uint8Array,
+  hmac: HmacFn,
+): boolean {
+  let expected: Uint8Array;
+  try {
+    expected = hmac(astAuthMessage(ctx, astBytes));
+  } catch {
+    return false;
+  }
+  return timingSafeEqualBytes(expected, tag);
+}
+
+/**
+ * Byte-wise comparison whose running time depends only on the length of the
+ * inputs, never on WHERE they first differ. A naive `===`/early-return
+ * compare over a MAC tag leaks the matching prefix length, which is enough to
+ * forge a tag one byte at a time.
+ */
+export function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  }
+  return diff === 0;
+}
+
+/**
+ * UTF-8 encoder. Hand-rolled because `TextEncoder` is a platform global the
+ * engine's tsconfig deliberately does not admit (`"types": []`, no DOM lib).
+ * Unpaired surrogates become U+FFFD so the encoding is total and canonical.
+ */
+function utf8Bytes(s: string): Uint8Array {
+  const out: number[] = [];
+  for (let i = 0; i < s.length; i += 1) {
+    let code = s.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
+        i += 1;
+      } else {
+        code = 0xfffd;
+      }
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      code = 0xfffd;
+    }
+    if (code < 0x80) {
+      out.push(code);
+    } else if (code < 0x800) {
+      out.push(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+    } else if (code < 0x10000) {
+      out.push(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+    } else {
+      out.push(
+        0xf0 | (code >> 18),
+        0x80 | ((code >> 12) & 0x3f),
+        0x80 | ((code >> 6) & 0x3f),
+        0x80 | (code & 0x3f),
+      );
+    }
+  }
+  return Uint8Array.from(out);
 }

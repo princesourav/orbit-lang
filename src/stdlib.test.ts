@@ -49,6 +49,50 @@ describe('stdlib shape', () => {
     expect(STDLIB.has('money')).toBe(false);
     expect(STDLIB.has('img')).toBe(false);
   });
+
+  it('is a frozen, null-prototype registry (no post-hoc filter injection)', () => {
+    expect(Object.isFrozen(STDLIB)).toBe(true);
+    expect(Object.getPrototypeOf(STDLIB)).toBeNull();
+    const asAny = STDLIB as unknown as Record<string, unknown>;
+    expect(asAny['set']).toBeUndefined();
+    expect(asAny['delete']).toBeUndefined();
+    expect(asAny['clear']).toBeUndefined();
+    for (const filter of STDLIB.values()) {
+      expect(Object.isFrozen(filter), filter.name).toBe(true);
+    }
+  });
+
+  it('a reserved name never resolves to an inherited member', () => {
+    for (const key of ['__proto__', 'constructor', 'prototype', 'toString', 'valueOf', 'hasOwnProperty']) {
+      expect(STDLIB.get(key), key).toBeUndefined();
+      expect(STDLIB.has(key), key).toBe(false);
+    }
+    expect(STDLIB_FILTER_NAMES).not.toContain('__proto__');
+  });
+});
+
+describe('field lookups cannot walk the prototype chain', () => {
+  it('sortBy/where treat reserved and inherited keys as absent', () => {
+    const proto = { rank: 99 };
+    const inherited = Object.create(proto) as Record<string, unknown>;
+    inherited['name'] = 'i';
+    const items = [{ name: 'a', rank: 2 }, inherited, { name: 'c', rank: 1 }];
+
+    // `inherited.rank` is on the PROTOTYPE: it must sort as a null, last.
+    const sorted = run('sortBy', items, 'rank') as { name: string }[];
+    expect(sorted.map((x) => x.name)).toEqual(['c', 'a', 'i']);
+
+    // Reserved keys resolve to null for every element, so ordering is stable
+    // and nothing reaches Object/Function.
+    expect((run('sortBy', items, 'constructor') as { name: string }[]).map((x) => x.name)).toEqual([
+      'a',
+      'i',
+      'c',
+    ]);
+    expect(run('where', items, '__proto__', Object.prototype)).toEqual([]);
+    expect(run('where', items, 'prototype', undefined)).toEqual([]);
+    expect(run('where', items, 'rank', 99)).toEqual([]); // inherited, not own
+  });
 });
 
 describe('string filters', () => {

@@ -1,0 +1,20 @@
+{
+  // ES module half of the dual build -> dist/esm.
+  //
+  // `es2022` modules with `bundler` resolution so the extensionless relative
+  // specifiers in src/ typecheck unchanged (src/ stays free of build-format
+  // concerns). The emitted specifiers are therefore also extensionless, which
+  // real Node ESM rejects — scripts/fixup-dist.mjs rewrites them to explicit
+  // ./x.js in the emitted dist/esm/*.js and *.d.ts, and writes the
+  // {"type":"module"} marker.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "outDir": "dist/esm",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.helper.ts"]
+}

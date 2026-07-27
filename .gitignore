@@ -1,3 +1,16 @@
-﻿node_modules/
+node_modules/
 dist/
 *.tsbuildinfo
+
+# Build/verification artifacts
+coverage/
+*.tgz
+sbom.json
+sbom.cdx.json
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

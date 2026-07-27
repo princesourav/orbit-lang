@@ -1,0 +1,134 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build, attest and publish
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      # Mint the OIDC token npm exchanges for a short-lived publish credential
+      # (trusted publishing) and that Sigstore uses to sign the provenance
+      # attestation. This is why there is no NPM_TOKEN secret anywhere.
+      id-token: write
+      # Create the GitHub release and upload the SBOM to it.
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.1. Node 22 ships an
+      # older npm, so upgrade the CLI explicitly and assert the version rather
+      # than discovering the gap at publish time.
+      - name: Upgrade npm for trusted publishing
+        run: |
+          set -euo pipefail
+          npm install -g npm@latest
+          NPM_VERSION="$(npm --version)"
+          echo "npm $NPM_VERSION"
+          NPM_VERSION="$NPM_VERSION" node -e "
+            const got = process.env.NPM_VERSION.split('-')[0].split('.').map(Number);
+            const min = [11, 5, 1];
+            for (let i = 0; i < 3; i++) {
+              if (got[i] > min[i]) break;
+              if (got[i] < min[i]) {
+                throw new Error('npm >= 11.5.1 is required for trusted publishing, got ' + process.env.NPM_VERSION);
+              }
+            }
+          "
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify the tag matches package.json version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "tag v$TAG does not match package.json version $PKG"
+            exit 1
+          fi
+          echo "releasing $PKG"
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Claims audit
+        run: node scripts/audit-claims.mjs
+
+      - name: Build (dual ESM/CJS)
+        run: npm run build
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          set -euo pipefail
+          # Deterministic timestamp: the tagged commit's own commit time, so
+          # re-running the release for the same tag yields a byte-identical SBOM.
+          SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)" \
+            node scripts/sbom.mjs --out sbom.cdx.json
+
+      - name: Show SBOM summary
+        run: |
+          node -e "
+            const d = require('./sbom.cdx.json');
+            console.log(d.bomFormat, d.specVersion, '|', d.metadata.component.purl);
+            console.log('runtime deps:', (d.dependencies.find(x => x.ref === d.metadata.component['bom-ref']).dependsOn || []).length);
+            console.log('build-time components:', d.components.length);
+          "
+
+      # Trusted publishing: npm exchanges the GitHub OIDC token for a
+      # short-lived credential. No NODE_AUTH_TOKEN / NPM_TOKEN is set here on
+      # purpose — if one were present it would take precedence and defeat the
+      # whole point.
+      #
+      # ONE-TIME HUMAN SETUP REQUIRED: a maintainer must configure the trusted
+      # publisher once in the npm UI —
+      #   npmjs.com -> @orbitlang/core -> Settings -> Trusted publisher
+      #   Publisher: GitHub Actions
+      #   Organization/user: princesourav
+      #   Repository:        orbit-lang
+      #   Workflow filename: release.yml
+      #   Environment:       release
+      # Until that is saved, this step fails with "Unable to authenticate".
+      # It cannot be automated from CI; it is the trust anchor.
+      - name: Publish to npm (trusted publishing + provenance)
+        run: npm publish --access public --provenance
+
+      - name: Create the GitHub release with the SBOM attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag \
+            sbom.cdx.json
+
+      - name: Attest build provenance for the SBOM
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: sbom.cdx.json

@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { OrbitParseError } from './diagnostics';
-import { lexExpression, Scanner } from './lexer';
+import { lexExpression, numberLiteralProblem, Scanner } from './lexer';
+import { LIMITS } from './limits';
 
 function lex(exprBody: string) {
   // lexExpression expects the scanner positioned just AFTER the opening `{`.
   return lexExpression(new Scanner(exprBody));
+}
+
+function codeOf(exprBody: string): string {
+  try {
+    lex(exprBody);
+  } catch (err) {
+    if (err instanceof OrbitParseError) return err.diagnostic.code;
+    throw err;
+  }
+  throw new Error('expected a lex error');
 }
 
 describe('expression lexer', () => {
@@ -53,6 +64,50 @@ describe('expression lexer', () => {
       expect(err).toBeInstanceOf(OrbitParseError);
       expect((err as OrbitParseError).diagnostic.code).toBe('O1001');
     }
+  });
+
+  // The cap is checked after each push, so the boundary is exact: N tokens
+  // lex, N+1 do not. Before v0.2 the check ran before the push, which let
+  // maxExprTokens + 1 through while the message claimed the limit was N.
+  describe('expression token cap (O1002)', () => {
+    const tokens = (n: number) => Array.from({ length: n }, () => 'a').join(' ') + '}';
+
+    it('accepts exactly maxExprTokens tokens', () => {
+      expect(lex(tokens(LIMITS.maxExprTokens))).toHaveLength(LIMITS.maxExprTokens);
+    });
+
+    it('rejects maxExprTokens + 1 tokens', () => {
+      expect(codeOf(tokens(LIMITS.maxExprTokens + 1))).toBe('O1002');
+    });
+
+    it('counts punctuation and record braces too', () => {
+      // '{' + ('a' ':' '1' ',') * k ... every token pushed is charged.
+      const inner = Array.from({ length: LIMITS.maxExprTokens }, (_, i) => `a${i}: 1`).join(', ');
+      expect(codeOf(`{${inner}}}`)).toBe('O1002');
+    });
+  });
+
+  describe('numeric literal hygiene (O1024 / O1025)', () => {
+    it('rejects literals past the digit cap', () => {
+      expect(codeOf(`${'9'.repeat(400)}}`)).toBe('O1024');
+      expect(codeOf(`0.${'1'.repeat(LIMITS.maxNumberDigits)}1}`)).toBe('O1024');
+    });
+
+    it('rejects literals that do not round-trip exactly', () => {
+      expect(codeOf('9007199254740993}')).toBe('O1025');
+      expect(codeOf('1.00000000000000001}')).toBe('O1025');
+    });
+
+    it('keeps `1..5` a range, not a float', () => {
+      expect(lex('1..5}').map((t) => t.text)).toEqual(['1', '..', '5']);
+    });
+
+    it('numberLiteralProblem is exact at the digit-cap boundary', () => {
+      expect(numberLiteralProblem('1'.repeat(LIMITS.maxNumberDigits))?.code).toBe('O1025');
+      expect(numberLiteralProblem('1'.repeat(LIMITS.maxNumberDigits + 1))?.code).toBe('O1024');
+      expect(numberLiteralProblem('0', '0'.repeat(LIMITS.maxNumberDigits - 2) + '1')).toBeUndefined();
+      expect(numberLiteralProblem(String(Number.MAX_SAFE_INTEGER))).toBeUndefined();
+    });
   });
 
   it('carries line/col spans', () => {

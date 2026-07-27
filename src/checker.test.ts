@@ -131,6 +131,18 @@ describe('Money terminality (W-23/W-24)', () => {
     expect(errorsOf([cardSource('<p>{product.cover}</p>')])[0]?.code).toBe('O2061');
     expectCodes([cardSource('<img src={imgUrl(product.cover, 480)} alt={product.title}>')], []);
   });
+
+  // Both opaques reaching a stdlib filter used to report O2060, which made
+  // that code mean "Money is terminal" AND "Image is terminal" while O2061
+  // already meant the latter. Each opaque now keeps one code in every context.
+  it('Image reaching a stdlib filter reports O2061, not Money’s O2060', () => {
+    const imageErr = errorsOf([cardSource('<p>{upper(product.cover)}</p>')])[0];
+    expect(imageErr?.code).toBe('O2061');
+    expect(imageErr?.message).toContain('Image');
+    const moneyErr = errorsOf([cardSource('<p>{upper(product.price)}</p>')])[0];
+    expect(moneyErr?.code).toBe('O2060');
+    expect(moneyErr?.message).toContain('Money');
+  });
 });
 
 describe('Html terminality (W-13)', () => {
@@ -252,6 +264,85 @@ describe('settings typing', () => {
     expect(
       errorsOf([cardSource('<p>x</p>', 'settings {\n  per: Range(12, 48) = 60\n}\n')])[0]?.code,
     ).toBe('O2015');
+  });
+
+  // v0.1 validated only "is the default inside the bounds?", so an inverted or
+  // zero-step Range produced a control no merchant UI can render.
+  describe('Range control validation', () => {
+    it('rejects min > max with a swap fix-it (O2018)', () => {
+      const errors = errorsOf([cardSource('<p>x</p>', 'settings {\n  per: Range(48, 12) = 24\n}\n')]);
+      expect(errors[0]?.code).toBe('O2018');
+      expect(errors[0]?.suggestion).toContain('Range(12, 48');
+    });
+
+    it('rejects step <= 0 (O2019)', () => {
+      const zero = errorsOf([cardSource('<p>x</p>', 'settings {\n  per: Range(0, 48, step: 0) = 24\n}\n')]);
+      expect(zero[0]?.code).toBe('O2019');
+      expect(zero[0]?.suggestion).toContain('step: 1');
+      expect(
+        errorsOf([cardSource('<p>x</p>', 'settings {\n  per: Range(0, 48, step: -4) = 24\n}\n')])[0]?.code,
+      ).toBe('O2019');
+    });
+
+    it('warns when the step never reaches max (O2020)', () => {
+      const warnings = warningsOf([cardSource('<p>x</p>', 'settings {\n  per: Range(0, 50, step: 12) = 24\n}\n')]);
+      expect(warnings[0]?.code).toBe('O2020');
+      expect(warnings[0]?.suggestion).toContain('48');
+    });
+
+    it('accepts a well-formed Range with no diagnostics', () => {
+      const { result } = compile([cardSource('<p>x</p>', 'settings {\n  per: Range(12, 48, step: 12) = 24\n}\n')]);
+      expect(result.diagnostics).toEqual([]);
+      expect(
+        compile([cardSource('<p>x</p>', 'settings {\n  per: Range(1, 5) = 3\n}\n')]).result.diagnostics,
+      ).toEqual([]);
+    });
+  });
+});
+
+describe('page props are rejected (O2017)', () => {
+  it('rejects a props block on a page with a pageGlobals fix-it', () => {
+    const errors = errorsOf([pageSource('<p>x</p>', 'props {\n  title: String\n}\n')]);
+    expect(errors[0]?.code).toBe('O2017');
+    expect(errors[0]?.message).toContain('"title"');
+    expect(errors[0]?.suggestion).toContain('pageGlobals');
+  });
+
+  it('reports every declared page prop, not just the first', () => {
+    const errors = errorsOf([pageSource('<p>x</p>', 'props {\n  a: String\n  b: Int\n}\n')]);
+    expect(errors.map((d) => d.code)).toEqual(['O2017', 'O2017']);
+  });
+
+  it('page props are not injected into scope — the prop stays unbound', () => {
+    const errors = errorsOf([pageSource('<p>{title}</p>', 'props {\n  title: String\n}\n')]);
+    expect(errors.map((d) => d.code)).toEqual(['O2017', 'O2030']);
+  });
+
+  it('components keep their props', () => {
+    expectCodes([cardSource('<p>{product.title}</p>')], []);
+  });
+});
+
+describe('distinct diagnostic codes (v0.5 publishes the code index)', () => {
+  const inner: SourceFile = {
+    name: 'inner2.orbit',
+    source: '---\ncomponent Inner2\nprops {\n  label: String\n  flag: Bool = false\n}\n---\n<p>{label}</p>',
+  };
+
+  it('O2082 is only "no such prop"; ?= on a real prop is O2092', () => {
+    expect(errorsOf([inner, cardSource('<Inner2 label="x" nope={1}/>')])[0]?.code).toBe('O2082');
+    const conditional = errorsOf([inner, cardSource('<Inner2 label="x" flag?={showVendor}/>')]);
+    expect(conditional[0]?.code).toBe('O2092');
+    expect(conditional[0]?.suggestion).toContain('flag={someBoolExpr}');
+  });
+
+  it('O2072 is only the redundant ??; the redundant ?. is O2093', () => {
+    expect(
+      warningsOf([cardSource('<p>{product.title ?? "x"}</p>')]).map((d) => d.code),
+    ).toEqual(['O2072']);
+    expect(
+      warningsOf([cardSource('<p>{product?.title}</p>')]).map((d) => d.code),
+    ).toEqual(['O2093']);
   });
 });
 

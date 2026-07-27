@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseTemplate } from './parser';
 import { type IfNode, type ForNode, type ElementNode } from './ast';
+import { LIMITS } from './limits';
 
 const HEADER = '---\ncomponent Card\n---\n';
 
@@ -168,6 +169,18 @@ describe('tree strictness', () => {
     const close = Array.from({ length: 70 }, () => '</div>').join('');
     expect(bad(open + 'x' + close).code).toBe('O1101');
   });
+
+  // All three structural caps must abort DURING construction — an over-cap
+  // template must never finish parsing, so no post-hoc walk can skip them.
+  it('enforces the AST node cap at construction (O1100)', () => {
+    const under = '<br>'.repeat(LIMITS.maxAstNodesPerTemplate);
+    expect(ok(under).nodeCount).toBe(LIMITS.maxAstNodesPerTemplate);
+    expect(bad('<br>'.repeat(LIMITS.maxAstNodesPerTemplate + 1)).code).toBe('O1100');
+  });
+
+  it('enforces the expression depth cap at construction (O1009)', () => {
+    expect(bad(`<p>{${'('.repeat(40)}1${')'.repeat(40)}}</p>`).code).toBe('O1009');
+  });
 });
 
 describe('RCDATA (<title>/<textarea>)', () => {
@@ -246,15 +259,151 @@ describe('components', () => {
 });
 
 describe('expressions', () => {
-  it('parses precedence: pipe binds tighter than *, ?? above ternary', () => {
-    const template = ok('<p>{a |> round * 2}</p><p>{x ?? y ? "a" : "b"}</p>');
+  /** Pull the expression out of `<p>{...}</p>`. */
+  function exprOf(body: string) {
+    const el = ok(`<p>{${body}}</p>`).body[0] as ElementNode;
+    const interp = el.children[0];
+    if (interp?.kind !== 'interpolation') throw new Error('unreachable');
+    return interp.expr;
+  }
+
+  // v0.2 REVERSED v0.1 here: `|>` used to bind TIGHTER than `*` and `+`, so
+  // `a + b |> f` silently meant `a + (b |> f)`. It is now the loosest
+  // computation operator, matching Elixir/F#/Julia.
+  describe('pipe precedence (|> is deliberately loosest)', () => {
+    it('pipes the whole additive expression', () => {
+      expect(exprOf('a + b |> round')).toMatchObject({
+        kind: 'call',
+        callee: 'round',
+        viaPipe: true,
+        args: [{ kind: 'binary', op: '+', left: { name: 'a' }, right: { name: 'b' } }],
+      });
+    });
+
+    it('pipes the whole multiplicative expression', () => {
+      expect(exprOf('a * b |> round')).toMatchObject({
+        kind: 'call',
+        callee: 'round',
+        args: [{ kind: 'binary', op: '*' }],
+      });
+    });
+
+    it('pipes the whole comparison and logical expression', () => {
+      expect(exprOf('a < b |> yesno')).toMatchObject({
+        kind: 'call',
+        callee: 'yesno',
+        args: [{ kind: 'binary', op: '<' }],
+      });
+      expect(exprOf('a && b |> yesno')).toMatchObject({
+        kind: 'call',
+        callee: 'yesno',
+        args: [{ kind: 'binary', op: '&&' }],
+      });
+    });
+
+    it('binds tighter than ?? — the pipeline result is what falls back', () => {
+      expect(exprOf('items |> first ?? "-"')).toMatchObject({
+        kind: 'coalesce',
+        left: { kind: 'call', callee: 'first', viaPipe: true },
+        right: { kind: 'string', value: '-' },
+      });
+    });
+
+    it('binds tighter than ?: — a pipeline can be the ternary condition', () => {
+      expect(exprOf('a |> isBlank ? "x" : "y"')).toMatchObject({
+        kind: 'cond',
+        test: { kind: 'call', callee: 'isBlank', viaPipe: true },
+      });
+    });
+
+    it('binds looser than unary and postfix', () => {
+      expect(exprOf('-a |> abs')).toMatchObject({
+        kind: 'call',
+        callee: 'abs',
+        args: [{ kind: 'unary', op: '-' }],
+      });
+      expect(exprOf('a.b.c |> upper')).toMatchObject({
+        kind: 'call',
+        callee: 'upper',
+        args: [{ kind: 'member', property: 'c' }],
+      });
+      expect(exprOf('items[0] |> upper')).toMatchObject({
+        kind: 'call',
+        callee: 'upper',
+        args: [{ kind: 'index' }],
+      });
+    });
+
+    it('chains left-to-right', () => {
+      expect(exprOf('a |> upper |> truncate(40)')).toMatchObject({
+        kind: 'call',
+        callee: 'truncate',
+        args: [{ kind: 'call', callee: 'upper' }, { kind: 'int', value: 40 }],
+      });
+    });
+
+    it('rejects a tighter operator after a pipeline with a parenthesize fix-it (O1019)', () => {
+      const d = bad('<p>{a |> round * 2}</p>');
+      expect(d.code).toBe('O1019');
+      const result = parseTemplate(HEADER + '<p>{a |> round * 2}</p>', 'test.orbit');
+      if (result.ok) throw new Error('expected error');
+      expect(result.diagnostics[0]?.suggestion).toContain('(… |> round) *');
+      expect(bad('<p>{a |> round + 2}</p>').code).toBe('O1019');
+      expect(bad('<p>{a |> len > 2}</p>').code).toBe('O1019');
+    });
+
+    it('parenthesizing restores the tight reading', () => {
+      expect(exprOf('(a |> round) * 2')).toMatchObject({
+        kind: 'binary',
+        op: '*',
+        left: { kind: 'call', callee: 'round', viaPipe: true },
+      });
+    });
+  });
+
+  it('parses ?? above ternary', () => {
+    const template = ok('<p>{x ?? y ? "a" : "b"}</p>');
     const first = template.body[0] as ElementNode;
     const interp = first.children[0];
     if (interp?.kind !== 'interpolation') throw new Error('unreachable');
-    expect(interp.expr).toMatchObject({
-      kind: 'binary',
-      op: '*',
-      left: { kind: 'call', callee: 'round', viaPipe: true },
+    expect(interp.expr).toMatchObject({ kind: 'cond', test: { kind: 'coalesce' } });
+  });
+
+  describe('numeric literal hygiene', () => {
+    it('rejects literals wider than the digit cap (O1024)', () => {
+      const huge = '9'.repeat(400);
+      expect(bad(`<p>{${huge}}</p>`).code).toBe('O1024');
+      expect(bad(`<p>{1.${'1'.repeat(400)}}</p>`).code).toBe('O1024');
+      expect(bad('<p>x</p>', `---\ncomponent Card\nprops { n: Int = ${huge} }\n---\n`).code).toBe('O1024');
+    });
+
+    it('rejects integers above MAX_SAFE_INTEGER that would round (O1025)', () => {
+      expect(bad('<p>{9007199254740993}</p>').code).toBe('O1025');
+      expect(bad('<p>{12345678901234567890}</p>').code).toBe('O1025');
+      expect(bad('<p>x</p>', '---\ncomponent Card\nprops { n: Int = 9007199254740993 }\n---\n').code).toBe('O1025');
+    });
+
+    it('rejects fractions that lose precision (O1025)', () => {
+      expect(bad('<p>{1.00000000000000001}</p>').code).toBe('O1025');
+      expect(bad('<p>{0.12345678901234567}</p>').code).toBe('O1025');
+    });
+
+    it('accepts exactly-representable literals, including small fractions', () => {
+      expect(exprOf('9007199254740991')).toMatchObject({ kind: 'int', value: 9007199254740991 });
+      expect(exprOf('0.0000001')).toMatchObject({ kind: 'float', value: 1e-7 });
+      expect(exprOf('1.50')).toMatchObject({ kind: 'float', value: 1.5 });
+      expect(exprOf('007')).toMatchObject({ kind: 'int', value: 7 });
+      expect(exprOf('0.1')).toMatchObject({ kind: 'float', value: 0.1 });
+      expect(exprOf('10000000000000000')).toMatchObject({ kind: 'int', value: 1e16 });
+    });
+
+    it('never yields Infinity or a silently rounded value', () => {
+      // The v0.1 path was a bare Number(digits): these are the two silent
+      // failures it produced.
+      expect(Number('9'.repeat(400))).toBe(Infinity);
+      expect(Number('9007199254740993')).toBe(9007199254740992);
+      expect(bad(`<p>{${'9'.repeat(400)}}</p>`).code).toBe('O1024');
+      expect(bad('<p>{9007199254740993}</p>').code).toBe('O1025');
     });
   });
 

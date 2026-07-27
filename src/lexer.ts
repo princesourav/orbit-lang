@@ -122,17 +122,25 @@ export function lexExpression(scanner: Scanner): Token[] {
   const tokens: Token[] = [];
   let depth = 0;
 
-  for (;;) {
-    scanner.skipWhitespace();
-    if (scanner.eof()) {
-      scanner.fail('O1001', 'unterminated expression: missing closing `}`');
-    }
+  // The cap is checked AFTER each push, so exactly `maxExprTokens` tokens are
+  // accepted and the (N+1)th is rejected — matching what O1002 says. Checking
+  // before the push let N+1 tokens through whenever the expression ended on
+  // the very next character.
+  const push = (token: Token): void => {
+    tokens.push(token);
     if (tokens.length > LIMITS.maxExprTokens) {
       scanner.fail(
         'O1002',
         `expression too long (more than ${LIMITS.maxExprTokens} tokens)`,
         'split the expression with <let>',
       );
+    }
+  };
+
+  for (;;) {
+    scanner.skipWhitespace();
+    if (scanner.eof()) {
+      scanner.fail('O1001', 'unterminated expression: missing closing `}`');
     }
 
     const start = scanner.posNow();
@@ -145,29 +153,29 @@ export function lexExpression(scanner: Scanner): Token[] {
       }
       depth -= 1;
       scanner.next();
-      tokens.push({ kind: 'punct', text: '}', span: spanFrom(start, scanner) });
+      push({ kind: 'punct', text: '}', span: spanFrom(start, scanner) });
       continue;
     }
 
     if (c === '{') {
       depth += 1;
       scanner.next();
-      tokens.push({ kind: 'punct', text: '{', span: spanFrom(start, scanner) });
+      push({ kind: 'punct', text: '{', span: spanFrom(start, scanner) });
       continue;
     }
 
     if (c === '"') {
-      tokens.push(lexString(scanner));
+      push(lexString(scanner));
       continue;
     }
 
     if (c === '#') {
-      tokens.push(lexColor(scanner));
+      push(lexColor(scanner));
       continue;
     }
 
     if (isDigit(c)) {
-      tokens.push(lexNumber(scanner));
+      push(lexNumber(scanner));
       continue;
     }
 
@@ -177,13 +185,13 @@ export function lexExpression(scanner: Scanner): Token[] {
         scanner.next();
       }
       const text = scanner.src.slice(start.offset, scanner.pos);
-      tokens.push({ kind: 'ident', text, span: spanFrom(start, scanner) });
+      push({ kind: 'ident', text, span: spanFrom(start, scanner) });
       continue;
     }
 
     const punct = matchPunctuator(scanner);
     if (punct !== undefined) {
-      tokens.push({ kind: 'punct', text: punct, span: spanFrom(start, scanner) });
+      push({ kind: 'punct', text: punct, span: spanFrom(start, scanner) });
       continue;
     }
 
@@ -244,16 +252,83 @@ function lexColor(scanner: Scanner): Token {
   return { kind: 'color', text: `#${hex.toLowerCase()}`, span: spanFrom(start, scanner) };
 }
 
+// ---------------------------------------------------------------------------
+// Numeric literal hygiene (shared with the frontmatter literal parser)
+// ---------------------------------------------------------------------------
+
+export interface LiteralProblem {
+  code: string;
+  message: string;
+  suggestion?: string;
+}
+
+/** Drop leading zeros, keeping at least one digit ("007" -> "7", "000" -> "0"). */
+function stripLeadingZeros(digits: string): string {
+  let i = 0;
+  while (i < digits.length - 1 && digits[i] === '0') i += 1;
+  return digits.slice(i);
+}
+
+/**
+ * A literal is accepted only if the double it parses to prints back to the
+ * digits the author wrote. `toFixed` is exact for the fraction width we allow
+ * (the digit cap is checked first, so it is always <= 100) and never switches
+ * to exponent form below 1e21, which the cap also excludes.
+ */
+function roundTripsExactly(intDigits: string, fracDigits: string | undefined, value: number): boolean {
+  const normalizedInt = stripLeadingZeros(intDigits);
+  if (fracDigits === undefined) return String(value) === normalizedInt;
+  return value.toFixed(fracDigits.length) === `${normalizedInt}.${fracDigits}`;
+}
+
+/**
+ * Validate a decimal literal's digits. Numbers in Orbit are IEEE-754 doubles,
+ * so a literal that is too wide, or that rounds to a different value than the
+ * one written, is REJECTED rather than silently mis-evaluated: `Number(digits)`
+ * on its own quietly turns 400 digits into `Infinity` and
+ * `9007199254740993` into `9007199254740992`.
+ *
+ * Returns `undefined` when the literal is exact.
+ */
+export function numberLiteralProblem(
+  intDigits: string,
+  fracDigits?: string,
+): LiteralProblem | undefined {
+  const digitCount = intDigits.length + (fracDigits?.length ?? 0);
+  if (digitCount > LIMITS.maxNumberDigits) {
+    return {
+      code: 'O1024',
+      message: `numeric literal has ${digitCount} digits (the limit is ${LIMITS.maxNumberDigits})`,
+      suggestion: 'Orbit numbers are IEEE-754 doubles; a wider literal cannot be represented',
+    };
+  }
+  const text = fracDigits === undefined ? intDigits : `${intDigits}.${fracDigits}`;
+  const value = Number(text);
+  if (!Number.isFinite(value) || !roundTripsExactly(intDigits, fracDigits, value)) {
+    return {
+      code: 'O1025',
+      message: `numeric literal ${text} cannot be represented exactly (it would round to ${String(value)})`,
+      suggestion: `write ${String(value)} if that is what you meant, or keep integers within ±${String(Number.MAX_SAFE_INTEGER)}`,
+    };
+  }
+  return undefined;
+}
+
 function lexNumber(scanner: Scanner): Token {
   const start = scanner.posNow();
   while (!scanner.eof() && isDigit(scanner.peek())) scanner.next();
+  const intDigits = scanner.src.slice(start.offset, scanner.pos);
   // `1..5` — the first '.' belongs to the range operator, not the number.
   if (scanner.peek() === '.' && isDigit(scanner.peek(1))) {
     scanner.next();
+    const fracFrom = scanner.pos;
     while (!scanner.eof() && isDigit(scanner.peek())) scanner.next();
-    const text = scanner.src.slice(start.offset, scanner.pos);
-    return { kind: 'float', text, span: spanFrom(start, scanner) };
+    const fracDigits = scanner.src.slice(fracFrom, scanner.pos);
+    const problem = numberLiteralProblem(intDigits, fracDigits);
+    if (problem !== undefined) scanner.fail(problem.code, problem.message, problem.suggestion, start);
+    return { kind: 'float', text: `${intDigits}.${fracDigits}`, span: spanFrom(start, scanner) };
   }
-  const text = scanner.src.slice(start.offset, scanner.pos);
-  return { kind: 'int', text, span: spanFrom(start, scanner) };
+  const problem = numberLiteralProblem(intDigits);
+  if (problem !== undefined) scanner.fail(problem.code, problem.message, problem.suggestion, start);
+  return { kind: 'int', text: intDigits, span: spanFrom(start, scanner) };
 }
