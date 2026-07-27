@@ -1,0 +1,45 @@
+{
+  "name": "@orbitlang/core",
+  "version": "0.1.0",
+  "description": "Orbit — a typed, non-Turing-complete, HTML-strict template language for storefronts and content sites. Parser, typechecker, six-context autoescaping interpreter, fuel-metered deterministic rendering. Bring your own object model.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/princesourav/orbit-lang.git"
+  },
+  "homepage": "https://github.com/princesourav/orbit-lang#readme",
+  "bugs": "https://github.com/princesourav/orbit-lang/issues",
+  "keywords": [
+    "template-language",
+    "templates",
+    "typed",
+    "autoescaping",
+    "deterministic",
+    "storefront",
+    "orbit"
+  ],
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.9"
+  }
+}
