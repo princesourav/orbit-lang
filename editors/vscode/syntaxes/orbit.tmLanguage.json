@@ -30,6 +30,14 @@
           }
         },
         {
+          "comment": "orbit <version> pins the LANGUAGE version, not the package version.",
+          "match": "\\b(orbit)\\s+([0-9]+)",
+          "captures": {
+            "1": { "name": "keyword.control.declaration.orbit" },
+            "2": { "name": "constant.numeric.language-version.orbit" }
+          }
+        },
+        {
           "match": "\\b(props|settings|slots)\\b",
           "name": "keyword.control.block.orbit"
         },
@@ -203,6 +211,7 @@
         { "include": "#numeric" },
         { "include": "#constant" },
         { "include": "#operator" },
+        { "include": "#named-argument" },
         { "include": "#filter-call" },
         { "include": "#property-access" },
         {
@@ -210,6 +219,15 @@
           "name": "variable.other.orbit"
         }
       ]
+    },
+
+    "named-argument": {
+      "comment": "A named filter argument's label is a parameter, not a variable. Anchoring on the preceding `(` or `,` keeps it away from the ternary's colon, which never follows an argument boundary directly.",
+      "match": "([,(]\\s*)([a-z][A-Za-z0-9]*)(\\s*:)",
+      "captures": {
+        "2": { "name": "variable.parameter.orbit" },
+        "3": { "name": "punctuation.separator.key-value.orbit" }
+      }
     },
 
     "filter-call": {

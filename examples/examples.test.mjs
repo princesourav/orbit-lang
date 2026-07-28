@@ -86,10 +86,22 @@ const HOST_FILTERS = [
     },
   },
   {
+    // Width is required — an image without one is a layout bug. Everything
+    // else is a named optional, so the host can add a knob later without
+    // renumbering the arguments every theme in the wild already wrote.
     name: 'imgUrl',
     params: [t.image(), t.int()],
+    optionalParams: [
+      { name: 'crop', type: t.string() },
+      { name: 'format', type: t.string() },
+    ],
     returns: t.url(),
-    impl: (args) => `/cdn/${args[0].key}?w=${String(args[1])}`,
+    impl: (args) => {
+      let url = `/cdn/${args[0].key}?w=${String(args[1])}`;
+      if (args[2] !== undefined && args[2] !== null) url += `&crop=${String(args[2])}`;
+      if (args[3] !== undefined && args[3] !== null) url += `&format=${String(args[3])}`;
+      return url;
+    },
   },
   {
     // Untrusted merchant markdown in, safe HTML out. The sanctioned path, so

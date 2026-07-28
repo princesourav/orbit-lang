@@ -83,9 +83,49 @@ const filters: HostFilterDecl[] = [
 ];
 ```
 
+### Optional parameters are named
+
+`params` is the required, positional part of the signature. Everything else goes
+in `optionalParams`, where each entry carries a **name** a template may pass it
+by:
+
+```ts
+{
+  name: 'imgUrl',
+  params: [t.image(), t.int()],
+  optionalParams: [
+    { name: 'crop', type: t.string() },
+    { name: 'format', type: t.string() },
+  ],
+  returns: t.url(),
+  impl: ([image, width, crop, format]) => { /* … */ },
+}
+```
+
+```orbit
+<img src={imgUrl(product.cover, 800, format: "webp")} alt=""/>
+```
+
+This is the one part of the host seam designed around a *future* you: a filter
+that starts as `imgUrl(image, width)` grows `crop`, then `format`, then
+`quality`, and by then every theme in the wild has frozen the positions.
+`imgUrl(cover, 800, 2, true)` is unreadable and unamendable. Names let you add a
+parameter without renumbering anything, and let a call site say which knob it is
+turning.
+
+A skipped optional arrives at `impl` as `null` — the optional law means no
+argument can ever *be* null, so a null slot means "not supplied" and nothing
+else. Trailing optionals nobody passed are simply absent from the array, so a
+positional call passes exactly what it always did.
+
+Required parameters are deliberately not nameable. There are few of them, they
+are the subject of the call, and `truncate(text: body, length: 40)` is ceremony
+rather than clarity.
+
 Rules the engine enforces, at declaration time via `assertValidHostFilters`:
 
 - Names are camelCase and may not collide with a stdlib filter.
+- Optional parameter names are camelCase and unique within the filter.
 - `Html` may only be a **top-level return** type — never nested in a list,
   record or optional.
 - `Html` may be a **parameter** in exactly one shape: the first parameter of an

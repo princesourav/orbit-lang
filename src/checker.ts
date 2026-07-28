@@ -35,7 +35,15 @@ import {
   type TypeExpr,
 } from './ast';
 import { type Diagnostic, type Span } from './diagnostics';
-import { warnsAtUseSite, type HostFilterDecl } from './host';
+import {
+  bindHostFilterArgs,
+  describeParam,
+  namedParamsOf,
+  paramTypeAt,
+  warnsAtUseSite,
+  type ArgBindProblem,
+  type HostFilterDecl,
+} from './host';
 import { LIMITS } from './limits';
 import { STDLIB, STDLIB_FILTER_NAMES, type FilterArg } from './stdlib';
 import {
@@ -1015,7 +1023,10 @@ class Checker {
   }
 
   private typeOfCall(expr: Expr & { kind: 'call' }, scope: Scope, narrowed: ReadonlySet<string>): Type {
-    const argTypes: FilterArg[] = expr.args.map((a) => ({ expr: a, type: this.typeOf(a, scope, narrowed) }));
+    const argTypes: FilterArg[] = expr.args.map((a) => ({
+      expr: a.value,
+      type: this.typeOf(a.value, scope, narrowed),
+    }));
 
     /*
      * Terminality rules first: these hold for EVERY filter, with one carved
@@ -1062,19 +1073,23 @@ class Checker {
 
     const host = this.hostFilters.get(expr.callee);
     if (host !== undefined) {
-      const min = host.params.length;
-      const max = min + (host.optionalParams?.length ?? 0);
-      if (expr.args.length < min || expr.args.length > max) {
-        this.report('O2100', `${expr.callee} takes ${min === max ? String(min) : `${min}–${max}`} arguments, got ${expr.args.length}`, expr.span);
+      const binding = bindHostFilterArgs(host, expr.args);
+      if (!binding.ok) {
+        this.reportBindProblem(expr, host, binding.problem);
         return t.invalid();
       }
-      const declared = [...host.params, ...(host.optionalParams ?? [])];
       for (let i = 0; i < argTypes.length; i += 1) {
         const arg = argTypes[i];
-        const want = declared[i];
-        if (arg === undefined || want === undefined) continue;
+        const slot = binding.slotOf[i];
+        if (arg === undefined || slot === undefined) continue;
+        const want = paramTypeAt(host, slot);
+        if (want === undefined) continue;
         if (!assignable(arg.type, want)) {
-          this.report('O2101', `${expr.callee}: argument ${i + 1} must be ${typeToString(want)}, found ${typeToString(arg.type)}`, arg.expr.span);
+          this.report(
+            'O2101',
+            `${expr.callee}: ${describeParam(host, slot)} must be ${typeToString(want)}, found ${typeToString(arg.type)}`,
+            arg.expr.span,
+          );
           return t.invalid();
         }
       }
@@ -1106,6 +1121,22 @@ class Checker {
 
     const stdlib = STDLIB.get(expr.callee);
     if (stdlib !== undefined) {
+      /*
+       * Names bind against a host filter's declared optional parameters, and a
+       * stdlib filter has none to bind against: its signature is a `check`
+       * function, not a parameter list. Saying so is better than reporting a
+       * near-miss suggestion drawn from an empty set.
+       */
+      const named = expr.args.find((a) => a.label !== undefined);
+      if (named?.label !== undefined) {
+        this.report(
+          'O2105',
+          `${expr.callee} takes positional arguments only — named arguments are a host-filter feature`,
+          named.label.span,
+          `write ${expr.callee}(…) with the value in place`,
+        );
+        return t.invalid();
+      }
       // Stdlib filters never accept branded opaques (Money/Image/Url stay terminal).
       // O2060 is the Money-terminality code and O2061 the Image-terminality
       // code EVERYWHERE else in the checker; reporting both here under O2060
@@ -1137,6 +1168,78 @@ class Checker {
       this.suggestName(expr.callee, [...STDLIB_FILTER_NAMES, ...this.hostFilters.keys()]),
     );
     return t.invalid();
+  }
+
+  /**
+   * Turn a failed argument binding into a diagnostic pointed at what the author
+   * wrote — the name, not the slot it would have filled.
+   */
+  private reportBindProblem(
+    expr: Expr & { kind: 'call' },
+    decl: HostFilterDecl,
+    problem: ArgBindProblem,
+  ): void {
+    const min = decl.params.length;
+    const names = namedParamsOf(decl);
+    const max = min + names.length;
+
+    if (problem.kind === 'tooFew' || problem.kind === 'tooMany') {
+      const arity = min === max ? String(min) : `${min}–${max}`;
+      // Only qualify the count as "positional" when names are actually in play;
+      // otherwise this is the same message it has always been.
+      const usesNames = expr.args.some((a) => a.label !== undefined);
+      const got = usesNames ? `${problem.got} positional` : String(problem.got);
+      this.report(
+        'O2100',
+        `${decl.name} takes ${arity} arguments, got ${got}`,
+        expr.span,
+        names.length > 0 && !usesNames
+          ? `its optional arguments can also be given by name: ${names.map((n) => `${n}:`).join(', ')}`
+          : undefined,
+      );
+      return;
+    }
+
+    const arg = expr.args[problem.index];
+    const label = arg?.label;
+    if (label === undefined) return; // both remaining problems are about a name
+
+    if (problem.kind === 'unknownName') {
+      if (names.length === 0) {
+        this.report(
+          'O2105',
+          `${decl.name} has no named arguments — all ${max} of its parameters are positional`,
+          label.span,
+          'pass the value positionally',
+        );
+        return;
+      }
+      this.report(
+        'O2105',
+        `${decl.name} has no argument named ${JSON.stringify(label.name)}`,
+        label.span,
+        this.suggestName(label.name, names) ?? `it accepts ${names.map((n) => `${n}:`).join(', ')}`,
+      );
+      return;
+    }
+
+    /*
+     * One slot, two arguments. Saying which of the two came first matters:
+     * filling an optional slot positionally and then naming it is a different
+     * mistake from naming it twice, and only the first has a second thing to
+     * delete.
+     */
+    const firstWasPositional = expr.args[problem.firstIndex]?.label === undefined;
+    this.report(
+      'O2106',
+      firstWasPositional
+        ? `${decl.name}: ${describeParam(decl, problem.slot)} was already given positionally`
+        : `${decl.name}: ${describeParam(decl, problem.slot)} was given twice`,
+      label.span,
+      firstWasPositional
+        ? 'drop the positional argument, or drop the name'
+        : 'remove one of the two',
+    );
   }
 
   /** Replace List<Object>/Object with structural records for filter checks. */

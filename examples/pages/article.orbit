@@ -25,7 +25,7 @@ page article
       <if {article.author.avatar != none}>
         <img
           class="article__avatar"
-          src={imgUrl(article.author.avatar, 96)}
+          src={imgUrl(article.author.avatar, 96, crop: "face")}
           alt={article.author.name}
           width="96"
           height="96"

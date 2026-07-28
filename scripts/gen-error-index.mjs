@@ -133,6 +133,11 @@ const NOTES = new Map(Object.entries({
   O1098: 'Template names are the program-wide key — rename one of the two templates.',
   O1100: 'Split the template into components; the per-template node cap is structural.',
   O1101: 'Flatten the markup or extract a component; element nesting is capped.',
+  O1102: 'Move the positional argument before the first `name:` one, or give it a name too.',
+  O1103: 'The `on:` and `@` attribute forms are reserved. Behaviour ships as platform runtime islands configured through `data-*`.',
+  O1104: 'Upgrade the engine, or change the `orbit` pragma if the version was a typo.',
+  O1105: 'Write the version: `orbit 2026`.',
+  O1106: 'Remove the second `orbit` line; a template declares one language version.',
 
   // -- O2xxx: signatures ------------------------------------------------------
   O2010: 'Remove the duplicate prop declaration.',
@@ -196,6 +201,8 @@ const NOTES = new Map(Object.entries({
   O2102: 'The argument must be a literal so the filter stays statically analyzable.',
   O2103: 'The field does not exist on the element type, or is not sortable.',
   O2104: 'THE OPTIONAL LAW: decide what happens when the value is absent. Use `{x ?? fallback}`, or narrow with `<if {x != none}>`.',
+  O2105: 'No such named argument. Names bind to a host filter\'s optional parameters; stdlib filters take positional arguments only.',
+  O2106: 'One parameter, two arguments. Drop the positional one, or drop the name.',
 
   // -- O3xxx: truthiness ------------------------------------------------------
   O3007: 'There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`.',
@@ -246,6 +253,31 @@ const NOTES = new Map(Object.entries({
   O5000: 'Structural re-validation of a stored AST failed. The row is malformed or was not produced by this engine version; re-compile from source.',
   O5001: 'The stored AST has no `templates` record — the row is not an Orbit program.',
 }));
+
+/**
+ * Codes that legitimately raise more than one message.
+ *
+ * One code, one MEANING — but a meaning can be worded differently at different
+ * sites: `O1046` reports five ways a `Range(…)` control is malformed, `O4001`
+ * names which budget ran out. That is fine, and the index prints every phrasing.
+ *
+ * What is NOT fine is a code quietly acquiring a SECOND meaning, which is how
+ * `O1096` came to mean both "`slot=` must be static" and "`on:` is reserved".
+ * Nothing in the generated index made that visible: both messages appeared
+ * under one authored note, and the note only described one of them.
+ *
+ * So the set is pinned. A code that starts raising a second message fails the
+ * build until someone either gives the new diagnostic its own code — the usual
+ * answer — or adds it here on purpose.
+ */
+const MULTI_MESSAGE = new Set([
+  'O1041', 'O1045', 'O1046', 'O1054', 'O1060', 'O1062', 'O1063', 'O1068',
+  'O2011', 'O2015', 'O2031', 'O2037', 'O2060', 'O2061', 'O2074',
+  'O2100', 'O2101', 'O2102', 'O2103', 'O2105',
+  'O3007',
+  'O4001', 'O4011', 'O4013', 'O4016', 'O4020', 'O4024', 'O4025', 'O4026',
+  'O4038', 'O4039',
+]);
 
 // ---------------------------------------------------------------------------
 // Extraction
@@ -542,6 +574,28 @@ function main(argv) {
   const known = new Set(entries.map((e) => e.code));
   const missing = entries.filter((e) => !NOTES.has(e.code)).map((e) => e.code);
   const stale = [...NOTES.keys()].filter((code) => !known.has(code));
+
+  const newlyShared = entries.filter((e) => e.messages.length > 1 && !MULTI_MESSAGE.has(e.code));
+  if (newlyShared.length > 0) {
+    console.error(
+      `gen-error-index: ${newlyShared.length} code(s) raise more than one message but are not in MULTI_MESSAGE:`,
+    );
+    for (const e of newlyShared) {
+      console.error(`  ${e.code}  (${e.sites.join(', ')})`);
+      for (const m of e.messages) console.error(`      - ${m}`);
+    }
+    console.error('  give the new diagnostic its own code, or add this one to MULTI_MESSAGE deliberately');
+    return 1;
+  }
+  const noLongerShared = [...MULTI_MESSAGE].filter(
+    (code) => !entries.some((e) => e.code === code && e.messages.length > 1),
+  );
+  if (noLongerShared.length > 0) {
+    console.error(
+      `gen-error-index: MULTI_MESSAGE lists ${noLongerShared.length} code(s) that no longer share: ${noLongerShared.join(', ')}`,
+    );
+    return 1;
+  }
 
   if (stale.length > 0) {
     console.error(

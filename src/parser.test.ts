@@ -289,7 +289,7 @@ describe('expressions', () => {
         kind: 'call',
         callee: 'round',
         viaPipe: true,
-        args: [{ kind: 'binary', op: '+', left: { name: 'a' }, right: { name: 'b' } }],
+        args: [{ value: { kind: 'binary', op: '+', left: { name: 'a' }, right: { name: 'b' } } }],
       });
     });
 
@@ -297,7 +297,7 @@ describe('expressions', () => {
       expect(exprOf('a * b |> round')).toMatchObject({
         kind: 'call',
         callee: 'round',
-        args: [{ kind: 'binary', op: '*' }],
+        args: [{ value: { kind: 'binary', op: '*' } }],
       });
     });
 
@@ -305,12 +305,12 @@ describe('expressions', () => {
       expect(exprOf('a < b |> yesno')).toMatchObject({
         kind: 'call',
         callee: 'yesno',
-        args: [{ kind: 'binary', op: '<' }],
+        args: [{ value: { kind: 'binary', op: '<' } }],
       });
       expect(exprOf('a && b |> yesno')).toMatchObject({
         kind: 'call',
         callee: 'yesno',
-        args: [{ kind: 'binary', op: '&&' }],
+        args: [{ value: { kind: 'binary', op: '&&' } }],
       });
     });
 
@@ -333,17 +333,17 @@ describe('expressions', () => {
       expect(exprOf('-a |> abs')).toMatchObject({
         kind: 'call',
         callee: 'abs',
-        args: [{ kind: 'unary', op: '-' }],
+        args: [{ value: { kind: 'unary', op: '-' } }],
       });
       expect(exprOf('a.b.c |> upper')).toMatchObject({
         kind: 'call',
         callee: 'upper',
-        args: [{ kind: 'member', property: 'c' }],
+        args: [{ value: { kind: 'member', property: 'c' } }],
       });
       expect(exprOf('items[0] |> upper')).toMatchObject({
         kind: 'call',
         callee: 'upper',
-        args: [{ kind: 'index' }],
+        args: [{ value: { kind: 'index' } }],
       });
     });
 
@@ -351,7 +351,7 @@ describe('expressions', () => {
       expect(exprOf('a |> upper |> truncate(40)')).toMatchObject({
         kind: 'call',
         callee: 'truncate',
-        args: [{ kind: 'call', callee: 'upper' }, { kind: 'int', value: 40 }],
+        args: [{ value: { kind: 'call', callee: 'upper' } }, { value: { kind: 'int', value: 40 } }],
       });
     });
 
@@ -464,13 +464,13 @@ describe('reserved syntax', () => {
    */
   it('rejects on:name as reserved, not as a namespaced attribute', () => {
     const d = bad('<button on:click={x}>y</button>');
-    expect(d.code).toBe('O1096');
+    expect(d.code).toBe('O1103');
     expect(d.message).toContain('reserved');
   });
 
   it('rejects @name as reserved, not as a missing attribute name', () => {
     const d = bad('<button @click={x}>y</button>');
-    expect(d.code).toBe('O1096');
+    expect(d.code).toBe('O1103');
     expect(d.message).toContain('reserved');
   });
 

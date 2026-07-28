@@ -22,6 +22,8 @@
 
 "component" @keyword
 "page" @keyword
+"orbit" @keyword
+(language_version version: (version_number) @number)
 
 (template_name) @type
 
@@ -91,6 +93,11 @@
 (identifier) @variable
 (property_identifier) @property
 (function_name) @function.call
+
+; A named argument's label is a parameter of the filter, not a variable in
+; scope, so the grammar aliases it away from `identifier` and it colours as a
+; parameter regardless of pattern order.
+(named_argument name: (argument_name) @variable.parameter)
 
 (integer) @number
 (float) @number.float

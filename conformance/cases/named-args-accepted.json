@@ -1,0 +1,181 @@
+{
+  "category": "named-args-accepted",
+  "cases": [
+    {
+      "id": "named-args-accepted/positional-only",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, 1, \"z\", 3)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=1][b=z][c=3]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/single-name",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: 1)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=1]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/skips-a-middle-slot",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: 1, c: 3)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=1][c=3]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/names-out-of-order",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, c: 3, b: \"z\", a: 1)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=1][b=z][c=3]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/positional-then-named",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, 1, c: 3)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=1][c=3]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/no-optionals-at-all",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/through-a-pipe",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{data.text |> knobs(b: \"z\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[b=z]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "named-args-accepted/expression-valued-name",
+      "category": "named-args-accepted",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: data.count + 1)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 4,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x[a=5]</p>",
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -53,17 +53,17 @@ describe('the orbit pragma', () => {
     // Rendering a template written against a later language under whatever
     // rules this engine happens to have is the failure mode being prevented.
     const d = firstError('---\norbit 2099\npage p\n---\n<p>x</p>\n');
-    expect(d?.code).toBe('O1097');
+    expect(d?.code).toBe('O1104');
     expect(d?.message).toContain('2099');
     expect(d?.suggestion).toContain(DEFAULT_LANGUAGE_VERSION);
   });
 
   it('rejects a missing version rather than assuming one', () => {
-    expect(firstError('---\norbit\npage p\n---\n<p>x</p>\n')?.code).toBe('O1097');
+    expect(firstError('---\norbit\npage p\n---\n<p>x</p>\n')?.code).toBe('O1105');
   });
 
   it('rejects a duplicate declaration', () => {
-    expect(firstError('---\norbit 2026\norbit 2026\npage p\n---\n<p>x</p>\n')?.code).toBe('O1037');
+    expect(firstError('---\norbit 2026\norbit 2026\npage p\n---\n<p>x</p>\n')?.code).toBe('O1106');
   });
 
   it('lists itself among the valid frontmatter keywords', () => {

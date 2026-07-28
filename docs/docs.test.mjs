@@ -43,6 +43,7 @@ function makeRegistry() {
     vendor: t.optional(t.string()),
     brand: t.optional(t.string()),
     price: t.money(),
+    cover: t.image(),
     tags: t.list(t.string()),
     available: t.bool(),
     rating: t.optional(t.float()),
@@ -65,6 +66,18 @@ const HOST_FILTERS = [
     params: [t.money()],
     returns: t.moneyText(),
     impl: () => 'INR 0.00',
+  },
+  {
+    // The named-argument example the docs use, declared here so those snippets
+    // are compiled rather than merely plausible.
+    name: 'imgUrl',
+    params: [t.image(), t.int()],
+    optionalParams: [
+      { name: 'crop', type: t.string() },
+      { name: 'format', type: t.string() },
+    ],
+    returns: t.url(),
+    impl: () => '/cdn/x',
   },
 ];
 

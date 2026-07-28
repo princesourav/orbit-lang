@@ -14,7 +14,14 @@
  * template author cannot introduce an unescaped sink, choose one, or opt out of
  * escaping at a call site; that decision is fixed at embed time.
  */
-import { groupSlotChildren, type Expr, type Node, type Program, type Template } from './ast';
+import {
+  groupSlotChildren,
+  type CallArg,
+  type Expr,
+  type Node,
+  type Program,
+  type Template,
+} from './ast';
 import { type Type, type TypeRegistry } from './types';
 import { STDLIB } from './stdlib';
 
@@ -22,11 +29,30 @@ import { STDLIB } from './stdlib';
 // Host filters
 // ---------------------------------------------------------------------------
 
+/**
+ * An optional parameter of a host filter.
+ *
+ * Optional parameters are NAMED because their order is the thing that rots.
+ * A filter grows `width`, then `crop`, then `quality`, and every theme in the
+ * wild has already frozen the positions; `img(x, 800, 2, true)` then means
+ * whatever the fourth slot happened to be. Names let a call site say which knob
+ * it is turning, and let the host add a knob without renumbering the others.
+ *
+ * Required parameters are deliberately NOT named: there are few of them, they
+ * are the subject of the call, and `truncate(text: body, length: 40)` is
+ * ceremony, not clarity.
+ */
+export interface HostFilterParam {
+  /** camelCase; this is the name a template writes before the `:`. */
+  name: string;
+  type: Type;
+}
+
 export interface HostFilterDecl {
   /** camelCase filter name; must not collide with the stdlib. */
   name: string;
   params: readonly Type[];
-  optionalParams?: readonly Type[];
+  optionalParams?: readonly HostFilterParam[];
   returns: Type;
 
   /*
@@ -81,6 +107,89 @@ export interface HostFilterDecl {
   htmlTransform?: true;
 
   impl(args: readonly unknown[]): unknown;
+}
+
+/**
+ * Why a call site's arguments do not bind to a filter's parameters.
+ *
+ * `index` is an index into the WRITTEN argument list, so a diagnostic can point
+ * at the argument the author typed rather than at a slot number they never saw.
+ */
+export type ArgBindProblem =
+  | { kind: 'tooFew'; min: number; got: number }
+  | { kind: 'tooMany'; max: number; got: number }
+  | { kind: 'unknownName'; index: number }
+  /** `slot` was already filled by written argument `firstIndex`. */
+  | { kind: 'duplicate'; index: number; slot: number; firstIndex: number };
+
+/**
+ * `slotOf[i]` is the parameter slot written argument `i` fills. Slots run
+ * `params` first, then `optionalParams`.
+ */
+export type ArgBinding =
+  | { ok: true; slotOf: readonly number[] }
+  | { ok: false; problem: ArgBindProblem };
+
+/**
+ * Bind a call site's arguments to a host filter's parameters.
+ *
+ * Shared by the checker and the interpreter on purpose. If the two computed
+ * slots independently they could disagree, and a disagreement here means an
+ * argument type-checked in one position and was passed in another — the kind of
+ * bug that produces a correctly-typed program with wrong output.
+ */
+export function bindHostFilterArgs(decl: HostFilterDecl, args: readonly CallArg[]): ArgBinding {
+  const min = decl.params.length;
+  const optional = decl.optionalParams ?? [];
+  const max = min + optional.length;
+
+  const slotOf: number[] = [];
+  const filledBy: (number | undefined)[] = new Array<number | undefined>(max).fill(undefined);
+  let positional = 0;
+
+  for (let i = 0; i < args.length; i += 1) {
+    const label = args[i]?.label;
+    if (label === undefined) {
+      slotOf.push(positional);
+      if (positional < max) filledBy[positional] = i;
+      positional += 1;
+      continue;
+    }
+    const which = optional.findIndex((p) => p.name === label.name);
+    if (which < 0) return { ok: false, problem: { kind: 'unknownName', index: i } };
+    const slot = min + which;
+    const firstIndex = filledBy[slot];
+    if (firstIndex !== undefined) {
+      return { ok: false, problem: { kind: 'duplicate', index: i, slot, firstIndex } };
+    }
+    filledBy[slot] = i;
+    slotOf.push(slot);
+  }
+
+  // Arity is judged on POSITIONAL count: named arguments each land in a
+  // distinct optional slot, so they can neither overflow nor satisfy a
+  // required parameter.
+  if (positional > max) return { ok: false, problem: { kind: 'tooMany', max, got: positional } };
+  if (positional < min) return { ok: false, problem: { kind: 'tooFew', min, got: positional } };
+  return { ok: true, slotOf };
+}
+
+/** The declared type of parameter `slot`, or undefined if there is no such slot. */
+export function paramTypeAt(decl: HostFilterDecl, slot: number): Type | undefined {
+  const required = decl.params[slot];
+  if (required !== undefined) return required;
+  return decl.optionalParams?.[slot - decl.params.length]?.type;
+}
+
+/** How to refer to parameter `slot` in a message: its name if it has one. */
+export function describeParam(decl: HostFilterDecl, slot: number): string {
+  const optional = decl.optionalParams?.[slot - decl.params.length];
+  return optional !== undefined ? `\`${optional.name}\`` : `argument ${slot + 1}`;
+}
+
+/** The names a call site may use, in declaration order. */
+export function namedParamsOf(decl: HostFilterDecl): readonly string[] {
+  return (decl.optionalParams ?? []).map((p) => p.name);
 }
 
 /** The three Html obligations, in declaration order. */
@@ -153,6 +262,21 @@ export function assertValidHostFilters(decls: readonly HostFilterDecl[]): void {
      * type exists to prevent.
      */
     const optional = d.optionalParams ?? [];
+    const optionalNames = new Set<string>();
+    for (const p of optional) {
+      if (!isCamelCaseIdent(p.name)) {
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)}: optional parameter names are camelCase identifiers (got ${JSON.stringify(p.name)})`,
+        );
+      }
+      if (optionalNames.has(p.name)) {
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)}: duplicate optional parameter ${JSON.stringify(p.name)}`,
+        );
+      }
+      optionalNames.add(p.name);
+    }
+
     d.params.forEach((p, i) => {
       const isTransformSubject = obligation === 'htmlTransform' && i === 0;
       if (isTransformSubject) {
@@ -170,7 +294,7 @@ export function assertValidHostFilters(decls: readonly HostFilterDecl[]): void {
       }
     });
     for (const p of optional) {
-      if (containsHtmlType(p)) {
+      if (containsHtmlType(p.type)) {
         throw new Error(
           `host filter ${JSON.stringify(d.name)}: Html cannot be an optional parameter type`,
         );
@@ -482,7 +606,7 @@ class PlanExtractor {
         // may over-fetch one of them; it will not miss the real one.
         const bases: string[] = [];
         for (const arg of expr.args) {
-          for (const base of this.walkExpr(arg, env)) {
+          for (const base of this.walkExpr(arg.value, env)) {
             bases.push(base, elementOf(base));
           }
         }

@@ -24,11 +24,29 @@ export type Expr =
   | { kind: 'range'; start: Expr; end: Expr; span: Span }
   | { kind: 'member'; object: Expr; property: string; optional: boolean; span: Span }
   | { kind: 'index'; object: Expr; index: Expr; span: Span }
-  | { kind: 'call'; callee: string; args: Expr[]; viaPipe: boolean; span: Span }
+  | { kind: 'call'; callee: string; args: CallArg[]; viaPipe: boolean; span: Span }
   | { kind: 'unary'; op: '!' | '-'; operand: Expr; span: Span }
   | { kind: 'binary'; op: BinaryOp; left: Expr; right: Expr; span: Span }
   | { kind: 'coalesce'; left: Expr; right: Expr; span: Span }
   | { kind: 'cond'; test: Expr; then: Expr; else: Expr; span: Span };
+
+/**
+ * One argument at a filter call site.
+ *
+ * `label` is present only when the argument was written `name: value`. Named
+ * arguments bind against a host filter's OPTIONAL parameters — the ones whose
+ * order would otherwise be frozen the moment themes exist, and the ones that
+ * make `img(x, 800, 2, true)` unreadable. Required parameters stay positional:
+ * there are few of them, they are the subject of the call, and naming them adds
+ * ceremony without adding information.
+ *
+ * The name and the value are bundled rather than kept in a parallel array so a
+ * label cannot exist without a value or drift onto the wrong one.
+ */
+export interface CallArg {
+  label?: { name: string; span: Span };
+  value: Expr;
+}
 
 export type BinaryOp =
   | '*'

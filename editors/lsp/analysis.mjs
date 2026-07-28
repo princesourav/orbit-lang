@@ -47,30 +47,55 @@ export const KIND = {
  * allowlists, the syntax — and a server whose output is mostly noise gets
  * turned off. Suppressed unless the client supplies a host description.
  */
-export const HOST_DEPENDENT_CODES = new Set(['O2030', 'O2031', 'O2032']);
+export const HOST_DEPENDENT_CODES = new Set([
+  'O2030', // unknown identifier
+  'O2031', // no such property
+  'O2032', // property of a non-record
+  /*
+   * The filter-signature codes belong here for the same reason. A buffer with
+   * no host description has no host filters at all, so every `imgUrl(cover,
+   * 96, crop: "face")` reads as an unknown filter with a wrong argument count
+   * and an invented parameter name. Four red squiggles on correct code is how
+   * a language server gets switched off.
+   */
+  'O2070', // unknown filter
+  'O2100', // wrong argument count
+  'O2101', // wrong argument type
+  'O2105', // no such named argument
+  'O2106', // one parameter, two arguments
+]);
 
+/**
+ * Stdlib signatures.
+ *
+ * Parameter roles are written as `name=Type` rather than `name: Type`. The
+ * colon form is now real syntax — a NAMED argument — and it binds only to a
+ * host filter's optional parameters. A stdlib filter has none, so showing
+ * `replace(String, from: String, …)` in a completion popup would be teaching a
+ * call site the checker rejects with O2105.
+ */
 export const FILTER_DOCS = {
   upper: 'upper(String) -> String — uppercase',
   lower: 'lower(String) -> String — lowercase',
   capitalize: 'capitalize(String) -> String — uppercase the first character only',
   trim: 'trim(String) -> String — strip leading and trailing whitespace',
   truncate:
-    'truncate(String, Num, ellipsis?: String) -> String — shorten; the ellipsis counts toward the limit',
-  replace: 'replace(String, from: String, to: String) -> String — literal, no patterns',
-  split: 'split(String, sep: String) -> List<String>',
+    'truncate(String, Num, ellipsis?=String) -> String — shorten; the ellipsis counts toward the limit',
+  replace: 'replace(String, from=String, to=String) -> String — literal, no patterns',
+  split: 'split(String, sep=String) -> List<String>',
   slugify: 'slugify(String) -> String — ASCII-oriented; does not transliterate',
   urlEncode: 'urlEncode(String) -> String — percent-encode for a query string',
-  join: 'join(List<primitive>, sep: String) -> String',
+  join: 'join(List<primitive>, sep=String) -> String',
   size: 'size(List | String) -> Int',
   first: 'first(List<T>) -> T? — optional, because the list may be empty',
   last: 'last(List<T>) -> T? — optional, because the list may be empty',
   reverse: 'reverse(List<T>) -> List<T>',
-  sortBy: 'sortBy(List<T>, key: string-literal) -> List<T> — stable, missing values last',
-  where: 'where(List<T>, key: string-literal, value) -> List<T> — strict equality',
-  round: 'round(Num, places?: literal 0-6) -> Int | Float',
-  clamp: 'clamp(Num, min: Num, max: Num) -> Int | Float',
+  sortBy: 'sortBy(List<T>, key=string-literal) -> List<T> — stable, missing values last',
+  where: 'where(List<T>, key=string-literal, value) -> List<T> — strict equality',
+  round: 'round(Num, places?=literal 0-6) -> Int | Float',
+  clamp: 'clamp(Num, min=Num, max=Num) -> Int | Float',
   formatDate:
-    'formatDate(iso: String, pattern: String) -> String — applies NO timezone conversion',
+    'formatDate(iso=String, pattern=String) -> String — applies NO timezone conversion',
 };
 
 const CONTROL_TAGS = ['if', 'else-if', 'else', 'for', 'empty', 'let', 'slot', 'json-ld'];

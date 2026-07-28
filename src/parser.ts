@@ -15,6 +15,7 @@
 import {
   type Attr,
   type AttrPart,
+  type CallArg,
   type Expr,
   type ForNode,
   type IfNode,
@@ -243,20 +244,14 @@ class ExprParser {
       }
       this.next();
       lastFilter = t.text;
-      const args: Expr[] = [left];
+      // The piped subject is the call's first POSITIONAL argument; a pipe is
+      // stored as an ordinary call so nothing downstream has two shapes to
+      // handle.
+      const args: CallArg[] = [{ value: left }];
       let end = t.span.end;
       if (this.isPunct('(')) {
         this.next();
-        if (!this.isPunct(')')) {
-          for (;;) {
-            args.push(this.parseTernary());
-            if (this.isPunct(',')) {
-              this.next();
-              continue;
-            }
-            break;
-          }
-        }
+        this.parseArgList(args);
         end = this.expectPunct(')').span.end;
       }
       left = {
@@ -282,6 +277,52 @@ class ExprParser {
       }
     }
     return left;
+  }
+
+  /**
+   * Argument list after `(`, appended to `args`, stopping before `)`.
+   *
+   * An argument is `name: value` when it starts with an identifier followed by
+   * `:`. That lookahead is unambiguous: the only other `:` in an expression is
+   * the ternary's, and a ternary always shows its `?` first.
+   *
+   * `args` may already hold the piped subject, which is why positional-ness is
+   * tracked against what is in the list rather than against this call's own
+   * count — `x |> f(a: 1, 2)` is the same mistake as `f(x, a: 1, 2)`.
+   */
+  private parseArgList(args: CallArg[]): void {
+    if (this.isPunct(')')) return;
+    let named: string | undefined;
+    for (;;) {
+      const t = this.peek();
+      const label =
+        t !== undefined && t.kind === 'ident' && this.isPunct(':', 1)
+          ? (this.next(), this.next(), { name: t.text, span: t.span })
+          : undefined;
+      if (label !== undefined) {
+        named = label.name;
+      } else if (named !== undefined) {
+        /*
+         * Positional-after-named is rejected in the GRAMMAR rather than left to
+         * the checker, because there is no reading of it that binds: once a
+         * name has been given, the next slot a positional argument would fill
+         * is not determined by where it was written.
+         */
+        this.fail(
+          'O1102',
+          'a positional argument cannot follow a named one',
+          `move it before \`${named}:\`, or give it a name too`,
+          t?.span,
+        );
+      }
+      const value = this.parseTernary();
+      args.push(label === undefined ? { value } : { label, value });
+      if (this.isPunct(',')) {
+        this.next();
+        continue;
+      }
+      break;
+    }
   }
 
   private parseUnary(): Expr {
@@ -351,17 +392,8 @@ class ExprParser {
             );
           }
           this.next();
-          const args: Expr[] = [];
-          if (!this.isPunct(')')) {
-            for (;;) {
-              args.push(this.parseTernary());
-              if (this.isPunct(',')) {
-                this.next();
-                continue;
-              }
-              break;
-            }
-          }
+          const args: CallArg[] = [];
+          this.parseArgList(args);
           const close = this.expectPunct(')');
           expr = {
             kind: 'call',
@@ -760,13 +792,13 @@ class TemplateParser {
        */
       if (keyword === 'orbit') {
         if (languageVersion !== undefined) {
-          this.fail('O1037', 'duplicate orbit version declaration', undefined, at);
+          this.fail('O1106', 'duplicate orbit version declaration', undefined, at);
         }
         this.s.skipWhitespace();
         const version = this.readLanguageVersion();
         if (!LANGUAGE_VERSIONS.includes(version)) {
           this.fail(
-            'O1097',
+            'O1104',
             `this engine does not implement Orbit language version ${JSON.stringify(version)}`,
             `supported: ${LANGUAGE_VERSIONS.join(', ')} — upgrade the engine, or change the pragma if this was a typo`,
             at,
@@ -1486,7 +1518,7 @@ class TemplateParser {
       // "reserved, not implemented" rather than "namespaced attributes are not
       // allowed" — which is true of it and tells the author nothing.
       const reserved = reservedAttrSyntax(name);
-      if (reserved !== undefined) this.fail('O1096', reserved, 'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes', at);
+      if (reserved !== undefined) this.fail('O1103', reserved, 'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes', at);
 
       if (!isComponent) {
         const reason = attrRejection(name);
@@ -1539,7 +1571,7 @@ class TemplateParser {
     while (isDigit(this.s.peek())) this.s.next();
     const text = this.s.src.slice(from, this.s.pos);
     if (text === '') {
-      this.fail('O1097', 'expected a language version after `orbit`', `for example: orbit ${DEFAULT_LANGUAGE_VERSION}`, at);
+      this.fail('O1105', 'expected a language version after `orbit`', `for example: orbit ${DEFAULT_LANGUAGE_VERSION}`, at);
     }
     return text;
   }
@@ -1562,7 +1594,7 @@ class TemplateParser {
      */
     if (this.s.peek() === '@') {
       this.fail(
-        'O1096',
+        'O1103',
         'the `@name` attribute form is reserved for a future version of Orbit and is not implemented',
         'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes',
         at,

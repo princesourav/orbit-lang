@@ -198,6 +198,37 @@ that it is still known at a sink the value reached through a component prop.
 `/` **MUST** yield `Float` for all operands, including two `Int`s. `%` **MUST**
 be `Int`-only. `+` **MUST NOT** concatenate strings.
 
+### 5.5 Filter arguments
+
+A host filter declares an ordered list of **required** parameters and an ordered
+list of **optional** parameters, each optional parameter carrying a name.
+
+An argument at a call site is either positional or named (`name: value`). An
+implementation **MUST** bind them as follows:
+
+1. Positional arguments fill parameter slots in order, required slots first,
+   then optional slots.
+2. A named argument fills the optional slot with that name.
+3. A positional argument **MUST NOT** follow a named one. This is a syntax
+   rule, so an implementation **MUST** reject it without consulting the host.
+4. Two arguments **MUST NOT** bind to the same slot, whether by repeating a
+   name or by naming a slot a positional argument already filled.
+5. A name that matches no optional parameter **MUST** be rejected. Required
+   parameters are positional-only and are therefore never matched by name.
+6. Arity **MUST** be judged on the count of POSITIONAL arguments. Named
+   arguments each occupy a distinct optional slot, so they can neither overflow
+   the parameter list nor satisfy a required parameter.
+
+Arguments **MUST** be evaluated in written order, independently of the slots
+they bind to.
+
+An optional parameter that no argument bound to **MUST** be passed to the host
+implementation as the absent value. Because §5.1 forbids an optional operand,
+no argument can itself be absent, so an absent parameter slot is unambiguous.
+
+Filters other than host filters have no named parameters, and an implementation
+**MUST** reject a named argument passed to one.
+
 ## 6. Evaluation
 
 ### 6.1 Budgets
@@ -301,6 +332,25 @@ An implementation is **not** required to defend against:
 - **Request-rate exhaustion.** Budgets bound one render.
 
 ## 10. Versioning
+
+### 10.1 Language versions
+
+The language is versioned separately from any implementation. A template **MAY**
+declare the version it targets with an `orbit <version>` frontmatter pragma;
+omitting it **MUST** mean the implementation's default version.
+
+An implementation **MUST** reject a template declaring a version it does not
+implement, and **SHOULD** report the versions it does. Rendering a template
+written against a later language under whatever rules the implementation happens
+to have is a worse outcome than a parse error.
+
+A stored syntax tree (§8) **MUST** carry its language version, and loading one
+whose version the implementation does not implement **MUST** fail.
+
+Language versions **MUST NOT** fork the security rules: a security change under
+the exception below applies to every version.
+
+### 10.2 Implementation versions
 
 Within a major version, an implementation **MUST NOT** change rendered bytes for
 a program that previously rendered successfully, **MUST NOT** repurpose a

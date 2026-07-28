@@ -37,6 +37,38 @@ export const HOST_FILTERS = [
     impl: ([s]) => String(s).toUpperCase(),
   },
 
+  {
+    /**
+     * The named-argument filter: one required subject and three optional knobs.
+     *
+     * Specified: join the supplied knobs, in DECLARATION order, as
+     * `subject[a=…][b=…][c=…]`, skipping any that were not supplied. A skipped
+     * optional arrives as `null` — no argument can ever be null, since the
+     * optional law rejects a `T?` operand — so a null slot means "absent" and
+     * nothing else. The visible order is what makes an implementation that
+     * passes arguments in WRITTEN order rather than declared order fail here.
+     *   ("x", a: 1)          -> "x[a=1]"
+     *   ("x", c: 3, a: 1)    -> "x[a=1][c=3]"
+     *   ("x", 1, 2, 3)       -> "x[a=1][b=2][c=3]"
+     */
+    name: 'knobs',
+    params: [t.string()],
+    optionalParams: [
+      { name: 'a', type: t.int() },
+      { name: 'b', type: t.string() },
+      { name: 'c', type: t.int() },
+    ],
+    returns: t.string(),
+    impl: (args) => {
+      let out = String(args[0]);
+      ['a', 'b', 'c'].forEach((label, i) => {
+        const value = args[i + 1];
+        if (value !== undefined && value !== null) out += `[${label}=${String(value)}]`;
+      });
+      return out;
+    },
+  },
+
   /*
    * One filter per Html obligation. The DECLARATIONS are what the checker and
    * interpreter key their behaviour on; the `impl`s are specified exactly so

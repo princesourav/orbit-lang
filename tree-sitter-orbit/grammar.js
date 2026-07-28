@@ -128,6 +128,7 @@ module.exports = grammar({
         alias('---', $.frontmatter_fence),
         repeat(
           choice(
+            $.language_version,
             $.template_declaration,
             $.props_block,
             $.settings_block,
@@ -136,6 +137,16 @@ module.exports = grammar({
         ),
         alias('---', $.frontmatter_fence),
       ),
+
+    /**
+     * `orbit 2026` pins the LANGUAGE version (src/parser.ts, O1104–O1106).
+     *
+     * The version is matched as digits rather than as one of the known values:
+     * this grammar highlights, it does not decide which versions an engine
+     * implements, and a template pinning a version this checkout has never
+     * heard of should still colour correctly.
+     */
+    language_version: ($) => seq('orbit', field('version', alias(/[0-9]+/, $.version_number))),
 
     template_declaration: ($) =>
       seq(
@@ -528,8 +539,18 @@ module.exports = grammar({
         ),
       ),
 
-    arguments: ($) =>
-      seq('(', optional(seq($._expression, repeat(seq(',', $._expression)))), ')'),
+    /*
+     * Positional arguments first, then named ones. The grammar permits any
+     * order and leaves "no positional after a named one" to the parser (O1102)
+     * so a file mid-edit still produces a usable tree instead of collapsing to
+     * ERROR — highlighting has to survive states the compiler rejects.
+     */
+    arguments: ($) => seq('(', optional(seq($._argument, repeat(seq(',', $._argument)))), ')'),
+
+    _argument: ($) => choice($.named_argument, $._expression),
+
+    named_argument: ($) =>
+      seq(field('name', alias($.identifier, $.argument_name)), ':', field('value', $._expression)),
 
     unary_expression: ($) =>
       prec.right(

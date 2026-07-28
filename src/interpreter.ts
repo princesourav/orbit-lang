@@ -38,7 +38,7 @@ import {
   sanitizeUrl,
   serializeJsonLd,
 } from './escape';
-import { isHtmlValue, htmlValue, type HostFilterDecl } from './host';
+import { bindHostFilterArgs, isHtmlValue, htmlValue, type HostFilterDecl } from './host';
 import { LIMITS } from './limits';
 import { DEFAULT_LOCALE, STDLIB, type FilterRuntime, type LocaleData } from './stdlib';
 
@@ -731,8 +731,11 @@ class Interpreter {
       }
       case 'call': {
         this.checkDeadline(expr.span);
-        const args = expr.args.map((a) => this.evalExpr(a, scope));
-        return this.applyFilter(expr.callee, args, expr.span);
+        // Written order, always: a reader expects the leftmost argument to be
+        // evaluated first, and the slot a value lands in is a separate question
+        // from when it is computed.
+        const written = expr.args.map((a) => this.evalExpr(a.value, scope));
+        return this.applyFilter(expr.callee, this.placeArgs(expr, written), expr.span);
       }
       case 'unary': {
         const v = this.evalExpr(expr.operand, scope);
@@ -795,6 +798,36 @@ class Interpreter {
       default:
         this.fail('O4027', `unknown operator ${String(op)}`, expr.span);
     }
+  }
+
+  /**
+   * Move written arguments into parameter slots.
+   *
+   * A skipped optional in the middle of the list arrives as `null`, which is
+   * unambiguous: the optional law means no argument can ever BE null, so a null
+   * in a slot can only mean "not supplied". Trailing skipped optionals are left
+   * off entirely, so a call written positionally passes exactly the array it
+   * always did.
+   */
+  private placeArgs(expr: Expr & { kind: 'call' }, written: readonly unknown[]): readonly unknown[] {
+    const decl = this.hostFilters.get(expr.callee);
+    if (decl === undefined) return written;
+    const binding = bindHostFilterArgs(decl, expr.args);
+    // The checker rejected anything that does not bind, and a stored AST is
+    // re-checked on load; an unbindable call cannot reach here.
+    if (!binding.ok) return written;
+    if (binding.slotOf.every((slot, i) => slot === i)) return written;
+
+    const slots: unknown[] = [];
+    let highest = -1;
+    for (let i = 0; i < written.length; i += 1) {
+      const slot = binding.slotOf[i];
+      if (slot === undefined) continue;
+      while (slots.length <= slot) slots.push(null);
+      slots[slot] = written[i];
+      if (slot > highest) highest = slot;
+    }
+    return slots.slice(0, highest + 1);
   }
 
   private applyFilter(name: string, args: readonly unknown[], span: Span): unknown {

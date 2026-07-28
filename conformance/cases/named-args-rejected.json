@@ -1,0 +1,194 @@
+{
+  "category": "named-args-rejected",
+  "cases": [
+    {
+      "id": "named-args-rejected/positional-after-named",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: 1, \"z\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1102"
+      }
+    },
+    {
+      "id": "named-args-rejected/unknown-name",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, zz: 1)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2105"
+      }
+    },
+    {
+      "id": "named-args-rejected/duplicate-name",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: 1, a: 2)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2106"
+      }
+    },
+    {
+      "id": "named-args-rejected/name-repeats-a-positional",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, 1, a: 2)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2106"
+      }
+    },
+    {
+      "id": "named-args-rejected/wrong-type-for-a-name",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, a: \"not an int\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2101"
+      }
+    },
+    {
+      "id": "named-args-rejected/name-on-a-stdlib-filter",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(length: 3)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2105"
+      }
+    },
+    {
+      "id": "named-args-rejected/name-on-a-filter-with-no-optionals",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{shout(data.text, loud: true)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2105"
+      }
+    },
+    {
+      "id": "named-args-rejected/names-cannot-satisfy-a-required-parameter",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(a: 1)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2100"
+      }
+    },
+    {
+      "id": "named-args-rejected/optional-operand-under-a-name",
+      "category": "named-args-rejected",
+      "template": "---\npage page\n---\n<p>{knobs(data.text, b: data.note)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2104"
+      }
+    }
+  ]
+}

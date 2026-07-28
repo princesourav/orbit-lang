@@ -151,7 +151,36 @@ list    ::= "[" (expr ("," expr)*)? "]"
 record  ::= "{" (key ":" expr ("," key ":" expr)*)? "}"
 key     ::= name | string
 call    ::= filterName "(" args ")"
+args    ::= (arg ("," arg)*)?
+arg     ::= expr | name ":" expr          -- named args come after positional
 ```
+
+### Named arguments
+
+A host filter's **optional** parameters may be passed by name:
+
+```orbit
+<img src={imgUrl(product.cover, 800, crop: "face", format: "webp")} alt=""/>
+```
+
+The rules, and why each one is there:
+
+| Rule | Diagnostic | Reason |
+|---|---|---|
+| Names bind to a host filter's **optional** parameters | `O2105` | Required parameters are the subject of the call. `truncate(text: body, length: 40)` is ceremony, not clarity. |
+| **Stdlib filters take positional arguments only** | `O2105` | Their signatures are check functions, not parameter lists; there is nothing to bind a name to. |
+| A positional argument may not **follow** a named one | `O1102` | Once a name is given, the slot a positional would fill is no longer determined by where it sits. A grammar rule, so it holds without knowing the host. |
+| One parameter, one argument | `O2106` | Covers both naming it twice and naming one already filled positionally. |
+| Arity counts **positional** arguments | `O2100` | Names land in distinct optional slots, so they can neither overflow the list nor satisfy a required parameter. |
+
+Order among names is free — that is the point. `imgUrl(cover, 800, format:
+"webp", crop: "face")` and `imgUrl(cover, 800, crop: "face", format: "webp")`
+are the same call, and the formatter preserves whichever order was written
+rather than sorting them.
+
+A skipped optional reaches the host implementation as `none`. No argument can
+ever *be* `none` — the optional law rejects a `T?` operand — so a `none` in a
+parameter slot means "not supplied" and nothing else.
 
 Record keys may be identifiers or quoted strings. Keys that are not valid
 identifiers — `"@type"`, `"@context"` — must be quoted.

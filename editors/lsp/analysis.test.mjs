@@ -65,6 +65,21 @@ describe('diagnostics', () => {
     expect(withHost.length).toBeGreaterThanOrEqual(withoutHost.length);
   });
 
+  it('stays silent on a host filter call it has no signature for', () => {
+    // The whole point of a named argument is a call site like this one, and
+    // without a project host the server knows neither the filter nor its
+    // parameter names. Four squiggles on correct code is how a language server
+    // gets switched off.
+    const source = `---\npage shop\n---\n<img src={imgUrl(cover, 96, crop: "face")} alt=""/>\n`;
+    expect(diagnose(source, { hasProjectHost: false })).toEqual([]);
+  });
+
+  it('still flags a positional argument after a named one, which needs no host', () => {
+    // A grammar rule, so it holds whatever the host declares.
+    const source = `---\npage shop\n---\n<img src={imgUrl(cover, crop: "face", 96)} alt=""/>\n`;
+    expect(diagnose(source, { hasProjectHost: false }).map((d) => d.code)).toContain('O1102');
+  });
+
   it('still reports allowlist and syntax errors without a host', () => {
     const diags = diagnose(`---\npage shop\n---\n<blink>{product.title}</blink>\n`);
     expect(diags.map((d) => d.code)).toContain('O1081');

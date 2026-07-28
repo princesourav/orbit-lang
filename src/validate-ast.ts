@@ -402,14 +402,39 @@ class AstValidator {
         this.validateExpr(expr.object, depth + 1);
         this.validateExpr(expr.index, depth + 1);
         return;
-      case 'call':
+      case 'call': {
         if (typeof expr.callee !== 'string' || expr.callee.length > 64) this.invalid('malformed call');
         if (!Array.isArray(expr.args)) {
           this.invalid('malformed call args');
           return;
         }
-        for (const arg of expr.args) this.validateExpr(arg, depth + 1);
+        /*
+         * Named arguments are re-validated structurally, not just typed:
+         * "no positional after a named one" is a grammar rule the parser
+         * enforces, and a stored tree did not come through the parser.
+         */
+        let named = false;
+        for (const arg of expr.args) {
+          if (arg === null || typeof arg !== 'object') {
+            this.invalid('malformed call argument');
+            return;
+          }
+          const { label } = arg as { label?: unknown };
+          if (label !== undefined) {
+            const name = (label as { name?: unknown })?.name;
+            if (typeof name !== 'string' || name.length === 0 || name.length > 64) {
+              this.invalid('malformed named argument');
+              return;
+            }
+            named = true;
+          } else if (named) {
+            this.invalid('positional argument after a named one');
+            return;
+          }
+          this.validateExpr((arg as { value: unknown }).value, depth + 1);
+        }
         return;
+      }
       case 'unary':
         if (expr.op !== '!' && expr.op !== '-') this.invalid('unknown unary operator');
         this.validateExpr(expr.operand, depth + 1);

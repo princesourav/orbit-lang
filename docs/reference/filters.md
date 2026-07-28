@@ -22,6 +22,13 @@ Some arguments must be **literals**, noted below. That restriction is what keeps
 templates statically analyzable — a sort key that could be computed at runtime
 would defeat the static access plan.
 
+**Every stdlib filter is positional.** The `name: Type` in the headings below is
+signature notation, not call syntax: writing `truncate(title, max: 40)` is
+`O2105`. Named arguments exist, but they bind to a *host* filter's optional
+parameters — see [named arguments](grammar.md#named-arguments). Stdlib filters
+have short, fixed signatures that will not grow a fourth positional knob, which
+is the problem names solve.
+
 ---
 
 ## Strings

@@ -43,6 +43,7 @@
 import type {
   Attr,
   AttrPart,
+  CallArg,
   Expr,
   Node,
   PropDecl,
@@ -256,15 +257,20 @@ function printExprInner(e: Expr): string {
   }
 }
 
+function printArg(a: CallArg): string {
+  const value = printExpr(a.value);
+  return a.label === undefined ? value : `${a.label.name}: ${value}`;
+}
+
 function printCall(e: Extract<Expr, { kind: 'call' }>): string {
   if (!e.viaPipe) {
-    return `${e.callee}(${e.args.map((a) => printExpr(a)).join(', ')})`;
+    return `${e.callee}(${e.args.map(printArg).join(', ')})`;
   }
   // A pipe is stored as a call whose FIRST argument is the piped subject, so
   // printing it back as `subject |> filter(rest)` is what round-trips.
   const [subject, ...rest] = e.args;
-  const head = subject === undefined ? '' : printExpr(subject, PREC.pipe);
-  const tail = rest.length > 0 ? `(${rest.map((a) => printExpr(a)).join(', ')})` : '';
+  const head = subject === undefined ? '' : printExpr(subject.value, PREC.pipe);
+  const tail = rest.length > 0 ? `(${rest.map(printArg).join(', ')})` : '';
   return `${head} |> ${e.callee}${tail}`;
 }
 

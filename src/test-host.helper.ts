@@ -58,6 +58,30 @@ export const HOST_FILTERS: HostFilterDecl[] = [
       return `/img/${img.key}?w=${String(args[1])}`;
     },
   },
+  {
+    /*
+     * The named-argument case, and the reason the feature exists: this filter
+     * has four knobs and no call site should have to remember their order.
+     * A skipped optional arrives as `null` — the optional law means no argument
+     * can ever BE null, so a null slot can only mean "not supplied".
+     */
+    name: 'imgTag',
+    params: [t.image()],
+    optionalParams: [
+      { name: 'width', type: t.int() },
+      { name: 'crop', type: t.string() },
+      { name: 'quality', type: t.int() },
+    ],
+    returns: t.url(),
+    impl: (args) => {
+      const img = args[0] as { key: string };
+      const parts: string[] = [];
+      if (args[1] !== undefined && args[1] !== null) parts.push(`w=${String(args[1])}`);
+      if (args[2] !== undefined && args[2] !== null) parts.push(`c=${String(args[2])}`);
+      if (args[3] !== undefined && args[3] !== null) parts.push(`q=${String(args[3])}`);
+      return parts.length === 0 ? `/img/${img.key}` : `/img/${img.key}?${parts.join('&')}`;
+    },
+  },
   /*
    * One filter per Html obligation, so tests can exercise all three branches.
    * The `impl`s are stand-ins — what matters here is the DECLARATION, since
