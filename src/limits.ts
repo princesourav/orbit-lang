@@ -5,6 +5,17 @@
  * RenderOptions; the per-value caps and structural caps here are hard.
  */
 export const LIMITS = {
+  /**
+   * Parse errors collected from one template before the parser gives up on it.
+   *
+   * Error recovery exists so an editor can show every problem in a file at
+   * once, but recovery is also attacker-reachable work: a file crafted to
+   * error on every character would otherwise make the parser resynchronize
+   * that many times. Past this count the remaining diagnostics are almost
+   * certainly cascades of the first few anyway, so stopping loses nothing a
+   * human would have read.
+   */
+  maxParseErrorsPerTemplate: 100,
   /** AST construction caps — enforced while parsing, not after. */
   maxAstNodesPerTemplate: 20_000,
   maxElementDepth: 64,

@@ -217,6 +217,35 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | Unknown names carry did-you-mean suggestions — "did-you-mean on properties" | src/checker.test.ts | test |
 | Diagnostic formatting is stable and includes location plus help text | src/diagnostics.ts | artifact |
 | Diagnostic code ranges are `O1xxx` parse / `O2xxx`–`O3xxx` check / `O4xxx` runtime / `O5xxx` stored-AST | CONTRIBUTING.md | artifact |
+| The code frame renders a source excerpt with a caret run spanning the whole diagnostic — "puts the caret under the exact span, not just its start" | src/codeframe.test.ts | test |
+| Caret alignment survives tabs and East-Asian wide glyphs — "expands tabs so the caret still lands under the right character", "keeps wide characters aligned" | src/codeframe.test.ts | test |
+| CRLF files produce the same line numbers as LF files — "numbers CRLF files identically to LF and drops the \r for display" | src/codeframe.test.ts | test |
+| ANSI colour is opt-in; output is plain text by default — "emits no ANSI escapes by default and escapes only when asked" | src/codeframe.test.ts | test |
+| A diagnostic whose source text is unavailable degrades to location-only rather than being dropped — "degrades a diagnostic to location-only rather than dropping it when its source is missing" | src/codeframe.test.ts | test |
+| The error-code index is generated from the source, not hand-maintained, and CI can fail on drift | scripts/gen-error-index.mjs | artifact |
+
+## Parse error recovery
+
+| claim | evidence | kind |
+|---|---|---|
+| One parse pass reports every independent error in a file, not only the first — "reports every independent error in one pass, not just the first" | src/recovery.test.ts | test |
+| Recovered diagnostics are reported in source order — "reports diagnostics in source order" | src/recovery.test.ts | test |
+| The first diagnostic is unchanged from fail-fast behaviour — "reports the same first diagnostic a fail-fast parser would have" | src/recovery.test.ts | test |
+| Cascading diagnostics are suppressed: the closer of an already-rejected element is not reported again — "does not report the closing tag of an element it already rejected" | src/recovery.test.ts | test |
+| Genuinely stray closing tags are still reported — "still reports a genuinely stray closing tag" | src/recovery.test.ts | test |
+| Recovery is bounded by `LIMITS.maxParseErrorsPerTemplate` — "caps the number of recovered errors instead of working without bound" | src/recovery.test.ts | test |
+| A template that needed recovery is never returned to a caller and cannot be serialized or rendered — "never returns a template when any error was recovered", "never yields a program a caller could serialize or render" | src/recovery.test.ts | test |
+| Damaged frontmatter fails the file outright rather than inventing body diagnostics — "fails the whole file when frontmatter is damaged, without inventing body errors" | src/recovery.test.ts | test |
+| Recovery always terminates and makes forward progress, including on adversarial input — "makes forward progress on adversarial input" | src/recovery.test.ts | test |
+| Every recovered diagnostic carries a span the code frame can render — "never emits a diagnostic without a span" | src/recovery.test.ts | test |
+
+## Editor tooling
+
+| claim | evidence | kind |
+|---|---|---|
+| The tree-sitter grammar parses every shipped example with no ERROR or MISSING nodes, and every highlight query compiles | tree-sitter-orbit/verify.mjs | artifact |
+| The TextMate grammar's regexes all compile, every include resolves and no repository key is orphaned | editors/vscode/validate-grammar.mjs | artifact |
+| Every shipped example parses and typechecks with zero error diagnostics | examples/examples.test.mjs | test |
 
 ## Packaging and process
 

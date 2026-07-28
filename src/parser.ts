@@ -482,6 +482,14 @@ interface BodyCtx {
 class TemplateParser {
   private readonly s: Scanner;
   private readonly budget: NodeBudget;
+  /**
+   * Parse errors recovered from, in source order. Empty on a clean parse.
+   *
+   * See `parseNodes` for the recovery contract — the short version is that a
+   * template with ANY entry here is discarded, never checked and never
+   * rendered. These exist to be reported, not to make a broken file usable.
+   */
+  private readonly recovered: Diagnostic[] = [];
 
   constructor(
     source: string,
@@ -491,22 +499,113 @@ class TemplateParser {
     this.budget = new NodeBudget(template);
   }
 
-  parse(): Template {
+  parse(): { template: Template; diagnostics: Diagnostic[] } {
     const start = this.s.posNow();
     this.skipLeadingTrivia();
+    // Frontmatter is deliberately NOT recovered: it declares the template's
+    // name, kind, props and slots, so a damaged header makes every downstream
+    // diagnostic guesswork. Failing fast here yields one true error instead of
+    // a page of invented ones.
     const fm = this.parseFrontmatter();
     const body = this.parseNodes(undefined, { depth: 0, preserve: false, verbatim: false });
     return {
-      kind: 'template',
-      name: fm.name,
-      templateKind: fm.templateKind,
-      props: fm.props,
-      settings: fm.settings,
-      slots: fm.slots,
-      body,
-      nodeCount: this.budget.count,
-      span: { start, end: this.s.posNow() },
+      template: {
+        kind: 'template',
+        name: fm.name,
+        templateKind: fm.templateKind,
+        props: fm.props,
+        settings: fm.settings,
+        slots: fm.slots,
+        body,
+        nodeCount: this.budget.count,
+        span: { start, end: this.s.posNow() },
+      },
+      diagnostics: this.recovered,
     };
+  }
+
+  /** Diagnostics recovered so far — used when a throw ends recovery early. */
+  takeDiagnostics(): Diagnostic[] {
+    return this.recovered;
+  }
+
+  /**
+   * Open tags that were reported as errors, and whose closing tags must
+   * therefore be swallowed rather than reported again.
+   *
+   * `<script>alert(1)</script>` is one mistake, not two. Having already said
+   * that `<script>` is banned, reporting `stray closing tag </script>` on the
+   * next line adds nothing and teaches authors that the tail of the list is
+   * noise. Counted rather than a set, so nesting the same tag twice suppresses
+   * exactly two closers.
+   */
+  private readonly orphanedOpenTags = new Map<string, number>();
+
+  private noteOrphanedOpenTag(tag: string): void {
+    this.orphanedOpenTags.set(tag, (this.orphanedOpenTags.get(tag) ?? 0) + 1);
+  }
+
+  /** True when `tag`'s closer should be swallowed; consumes one orphan credit. */
+  private consumeOrphanedCloseTag(tag: string): boolean {
+    const outstanding = this.orphanedOpenTags.get(tag);
+    if (outstanding === undefined || outstanding === 0) return false;
+    if (outstanding === 1) this.orphanedOpenTags.delete(tag);
+    else this.orphanedOpenTags.set(tag, outstanding - 1);
+    return true;
+  }
+
+  /**
+   * Record a recovered parse error and move the scanner somewhere it can
+   * plausibly start reading again.
+   *
+   * Two things keep this from making the parser worse:
+   *
+   *   * **Forward progress is unconditional.** Every call consumes at least
+   *     one character, so no error site can be re-entered. Without this a
+   *     failure that does not itself advance the scanner spins forever, and a
+   *     hang is a far worse failure mode than a lost diagnostic.
+   *   * **Cascades are dropped.** A second error at a position at or before
+   *     the previous one is a knock-on effect of that one — the classic
+   *     "expected `>`" following an already-reported bad tag — and reporting
+   *     it trains authors to ignore the tail of the list.
+   */
+  private recoverFrom(err: OrbitParseError, resumeAfter: Pos): void {
+    const d = err.diagnostic;
+    const prev = this.recovered[this.recovered.length - 1];
+    const isCascade =
+      prev !== undefined &&
+      d.span !== undefined &&
+      prev.span !== undefined &&
+      d.span.start.offset <= prev.span.end.offset;
+    if (!isCascade) this.recovered.push(d);
+
+    if (this.recovered.length >= LIMITS.maxParseErrorsPerTemplate) {
+      // Give up on this file. The throw unwinds to parseTemplate, which
+      // already has every diagnostic collected so far.
+      throw err;
+    }
+    this.resync(resumeAfter);
+  }
+
+  /**
+   * Skip to the next plausible node boundary: a `<` that opens a tag, or a `{`
+   * that opens an interpolation. Both are unambiguous starts in this grammar,
+   * which is what makes resynchronization cheap here.
+   */
+  private resync(resumeAfter: Pos): void {
+    // Rewind to just past where the failed construct began when the failure
+    // left the scanner behind that point (some paths restore on the way out).
+    if (this.s.posNow().offset < resumeAfter.offset) {
+      while (!this.s.eof() && this.s.posNow().offset < resumeAfter.offset) this.s.next();
+    }
+    if (!this.s.eof()) this.s.next(); // unconditional forward progress
+    while (!this.s.eof()) {
+      const c = this.s.peek();
+      if (c === '<' && isIdentStart(this.s.peek(1))) return;
+      if (c === '<' && this.s.peek(1) === '/') return;
+      if (c === '{') return;
+      this.s.next();
+    }
   }
 
   // -- shared helpers -------------------------------------------------------
@@ -878,14 +977,72 @@ class TemplateParser {
 
   // -- body -----------------------------------------------------------------
 
+  /**
+   * Parse a run of sibling nodes, recovering from errors so ONE pass reports
+   * every problem in the file rather than only the first.
+   *
+   * The recovery contract, which is a security boundary and not just ergonomics:
+   * a template that produced any diagnostic is **discarded whole**. Recovery
+   * builds no error placeholder nodes and returns no partial tree to any
+   * caller — `parseTemplate` sees a non-empty diagnostic list and reports
+   * failure, so the checker, the serializer and the interpreter never observe
+   * a half-parsed template. This is deliberate: the alternative (an AST with
+   * error nodes in it) creates a standing risk that some future code path
+   * treats a damaged template as executable, and the value of recovery is in
+   * the diagnostics, not the tree.
+   *
+   * Recovery is confined to this loop because sibling nodes are the grammar's
+   * natural restart point. An error inside an element aborts that element,
+   * then resynchronization finds the next tag or interpolation and carries on.
+   */
   private parseNodes(closeTag: string | undefined, ctx: BodyCtx, forCollector?: { empty?: Node[] }): Node[] {
     const nodes: Node[] = [];
     for (;;) {
+      const nodeStart = this.s.posNow();
+      try {
+        const done = this.parseOneNode(nodes, closeTag, ctx, forCollector);
+        if (done) return nodes;
+      } catch (err) {
+        if (!(err instanceof OrbitParseError)) throw err;
+        // An unterminated construct at EOF has nowhere to resynchronize to;
+        // recording it and looping would spin on eof().
+        if (this.s.eof()) {
+          this.recoverAtEof(err);
+          return nodes;
+        }
+        this.recoverFrom(err, nodeStart);
+      }
+    }
+  }
+
+  /** Record a terminal error and stop; there is no source left to resync to. */
+  private recoverAtEof(err: OrbitParseError): void {
+    const prev = this.recovered[this.recovered.length - 1];
+    const d = err.diagnostic;
+    const isCascade =
+      prev !== undefined &&
+      d.span !== undefined &&
+      prev.span !== undefined &&
+      d.span.start.offset <= prev.span.end.offset;
+    if (!isCascade) this.recovered.push(d);
+  }
+
+  /**
+   * Parse exactly one node into `nodes`. Returns true when the run is over —
+   * either at EOF or on the matching close tag.
+   */
+  private parseOneNode(
+    nodes: Node[],
+    closeTag: string | undefined,
+    ctx: BodyCtx,
+    forCollector?: { empty?: Node[] },
+  ): boolean {
+    {
       if (this.s.eof()) {
         if (closeTag !== undefined) {
           this.fail('O1050', `missing closing tag </${closeTag}>`);
         }
-        return nodes;
+        return true;
       }
       if (this.s.startsWith('</')) {
         const save = this.s.save();
@@ -893,7 +1050,10 @@ class TemplateParser {
         const name = this.readTagName();
         this.s.skipWhitespace();
         if (!this.s.match('>')) this.fail('O1051', `malformed closing tag </${name}`);
-        if (closeTag !== undefined && name === closeTag) return nodes;
+        if (closeTag !== undefined && name === closeTag) return true;
+        // The closer of a tag we already rejected is the same mistake, not a
+        // new one. The scanner is past it now, so simply carry on.
+        if (this.consumeOrphanedCloseTag(name)) return false;
         this.s.restore(save);
         this.fail(
           'O1052',
@@ -904,11 +1064,11 @@ class TemplateParser {
       }
       if (this.s.startsWith('<!--')) {
         this.skipHtmlComment();
-        continue;
+        return false;
       }
       if (!ctx.verbatim && this.s.startsWith('{#')) {
         this.skipComment();
-        continue;
+        return false;
       }
       if (!ctx.verbatim && this.s.peek() === '{') {
         const at = this.s.posNow();
@@ -917,7 +1077,7 @@ class TemplateParser {
         const span = { start: at, end: this.s.posNow() };
         this.budget.charge(span, ctx.depth);
         nodes.push({ kind: 'interpolation', expr, span });
-        continue;
+        return false;
       }
       if (this.s.peek() === '<') {
         const nxt = this.s.peek(1);
@@ -929,9 +1089,10 @@ class TemplateParser {
           if (node.kind === 'if') this.mergeElseSiblings(node, ctx);
           nodes.push(node);
         }
-        continue;
+        return false;
       }
       nodes.push(...this.parseText(ctx));
+      return false;
     }
   }
 
@@ -1154,9 +1315,13 @@ class TemplateParser {
   private parseElement(tag: string, at: Pos, ctx: BodyCtx): Node {
     const banned = BANNED_ELEMENTS.get(tag);
     if (banned !== undefined) {
+      // Void elements have no closer to orphan; everything else will produce
+      // a matching `</tag>` that recovery must not report a second time.
+      if (!VOID_ELEMENTS.has(tag)) this.noteOrphanedOpenTag(tag);
       this.fail('O1080', `<${tag}> is not allowed: ${banned}`, undefined, at);
     }
     if (!ELEMENT_ALLOWLIST.has(tag)) {
+      if (!VOID_ELEMENTS.has(tag)) this.noteOrphanedOpenTag(tag);
       this.fail('O1081', `<${tag}> is not in the element allowlist`, undefined, at);
     }
     const attrs = this.parseAttrs(false, tag);
@@ -1417,12 +1582,29 @@ export type ParseResult =
   | { ok: false; diagnostics: Diagnostic[] };
 
 export function parseTemplate(source: string, templateName = '<template>'): ParseResult {
+  const parser = new TemplateParser(source, templateName);
   try {
-    const template = new TemplateParser(source, templateName).parse();
+    const { template, diagnostics } = parser.parse();
+    // A template that needed recovery is reported as a failure and its tree is
+    // dropped. Recovery exists to collect diagnostics for a human or an
+    // editor — never to hand a half-parsed template to the checker or the
+    // interpreter. See `parseNodes` for the full contract.
+    if (diagnostics.length > 0) return { ok: false, diagnostics };
     return { ok: true, template };
   } catch (err) {
     if (err instanceof OrbitParseError) {
-      return { ok: false, diagnostics: [err.diagnostic] };
+      // Errors recovered from before this one still belong in the report; the
+      // throw means recovery stopped, not that the earlier findings were wrong.
+      const collected = parser.takeDiagnostics();
+      const last = collected[collected.length - 1];
+      const isDuplicate =
+        last !== undefined &&
+        last.code === err.diagnostic.code &&
+        last.span?.start.offset === err.diagnostic.span?.start.offset;
+      return {
+        ok: false,
+        diagnostics: isDuplicate ? collected : [...collected, err.diagnostic],
+      };
     }
     throw err;
   }
