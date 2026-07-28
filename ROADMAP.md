@@ -46,13 +46,21 @@ Two conclusions, neither of which is "add an escape hatch":
    loosens — Orbit already ships JavaScript; what it forbids is *author-written*
    JS in themes. Hardening a language that cannot express a cart drawer is the
    wrong use of the next two quarters.
+   **Designed:** [docs/design/widgets.md](docs/design/widgets.md) — registration,
+   hydration reconciled with E2's inference rule, failure semantics, versioning.
+   Not implemented: it needs a client runtime that mounts components, which
+   scopes E1 down to mount/props/trigger/lifecycle and pulls F's budget rules
+   forward.
 2. **A typed custom-property sink is now a required language addition.** 12.1% of
    blocks carry a `Color` setting with nowhere to go: interpolated `style` is
    banned (correctly — it is a CSS injection sink), `Color` is unbounded so it
    cannot become a class, and CSS cannot read a data attribute as a colour.
    `Color` is already a terminal type whose values are exactly six hex digits, so
    emitting `style="--accent:#1a73e8"` after checking the type opens no new
-   injection surface. This gap has no plan behind it today. It needs one.
+   injection surface.
+   **Shipped** — see [docs/design/custom-properties.md](docs/design/custom-properties.md).
+   It also surfaced a real hole: `Color` was validated at two boundaries and not
+   at a third, so the sink revalidates at emission rather than trusting the type.
 
 Everything below predates that result and is otherwise unchanged.
 

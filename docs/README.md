@@ -39,6 +39,13 @@ types and host filters, and the engine guarantees the rest.
   Read this before proposing a language feature: the question it answers is
   "which invariant are we prepared to weaken?", not "why not?".
 
+**Design**
+
+- [Custom properties](design/custom-properties.md) — the seventh escaping
+  context, and why its safety argument does not generalise.
+- [Platform widgets](design/widgets.md) — registration, hydration, failure
+  semantics and versioning. A proposal; not shipped.
+
 ## Try it without installing anything
 
 The [playground](../playground/) is a single self-contained HTML file. Open it
