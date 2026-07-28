@@ -161,6 +161,38 @@ another.
 
 ---
 
+## JavaScript: what is actually claimed
+
+The short version of this claim would be false, so here is the long one.
+
+**Orbit does not claim a page ships no JavaScript.** Anything interactive runs
+JavaScript; there is no way around that, and a language that pretended otherwise
+would be selling something it cannot deliver.
+
+What holds is narrower:
+
+- A **template author cannot introduce JavaScript.** `<script>` is not in the
+  element allowlist, every `on*` attribute is rejected, and a `javascript:` URL
+  does not survive the sink. All three are enforced at parse or emit time, not
+  by review.
+- A template author **cannot choose what runs**, and cannot opt out of the
+  escaper at a call site.
+- Client behaviour is **platform code** — written, reviewed, versioned and
+  patchable by the embedder — configured from templates through `data-*`
+  attributes.
+
+The security value is not the absence of JavaScript. It is that the JavaScript
+on the page belongs to exactly one party, who can patch all of it centrally,
+rather than being distributed across templates authored by merchants, customers
+or models.
+
+**Current state:** nothing in this repository emits client JavaScript. A
+compiler backend that would generate it is designed but not built. When it
+lands, it becomes the part of the system with ambient authority and the first
+thing that should be audited.
+
+---
+
 ## What Orbit does NOT protect against
 
 Stated plainly, because a security page that only lists strengths is marketing:

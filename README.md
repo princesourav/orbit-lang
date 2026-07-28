@@ -261,6 +261,21 @@ declined by design:
   integration time rather than at each call site.
 - No `eval`, no `new Function`, no runtime compilation to JS.
 - No regex, anywhere.
+- **No author-written JavaScript.** A template cannot contain `<script>`, an
+  `on*` handler, or a `javascript:` URL that survives the sink.
+
+That last point is worth stating precisely, because the shorter version of it
+would be false. **Orbit does not claim that pages ship no JavaScript.** Anything
+genuinely interactive runs JavaScript, and pretending otherwise would be a
+claim this project could not keep.
+
+What it claims is narrower and actually holds: a theme author cannot introduce
+JavaScript, cannot choose what runs, and cannot opt out of the escaper. Client
+behaviour is platform code — written, reviewed, versioned and patchable by the
+embedder — configured from templates through `data-*` attributes. Today that
+means the platform ships its own runtime islands; a compiler backend that
+generates them is designed but **not built**, and nothing in this repository
+emits client JavaScript.
 
 Where a template genuinely needs more power, the sanctioned answer is a typed
 host filter — code the embedder wrote, reviewed and owns.

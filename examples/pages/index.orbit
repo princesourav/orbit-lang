@@ -1,4 +1,5 @@
 ---
+orbit 2026
 page index
 settings {
   storiesHeading: Text = "Latest stories" label "Stories heading"

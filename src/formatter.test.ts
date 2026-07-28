@@ -40,7 +40,10 @@ const HEAD = '---\ncomponent Card\n---\n';
 describe('formatter: canonical output', () => {
   it('normalizes indentation to two spaces', () => {
     const out = fmt(`${HEAD}<div>\n        <p>hi</p>\n</div>`);
-    expect(out).toBe('---\ncomponent Card\n---\n<div>\n  <p>hi</p>\n</div>\n');
+    // The `orbit` pragma is written even when the source omitted it: absent
+    // means the default, so stating it changes no meaning and makes every
+    // formatted template say which language version it targets.
+    expect(out).toBe('---\norbit 2026\ncomponent Card\n---\n<div>\n  <p>hi</p>\n</div>\n');
   });
 
   it('keeps a short element on one line', () => {

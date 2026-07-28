@@ -4,6 +4,23 @@
  * configure their own (lower, unpublished) fuel/iteration budgets through
  * RenderOptions; the per-value caps and structural caps here are hard.
  */
+/**
+ * Language versions this engine implements.
+ *
+ * The LANGUAGE is versioned separately from the package: a patch release of the
+ * engine must not change what a template means, and a template written against
+ * one language version must keep meaning the same thing after an engine upgrade.
+ * See STABILITY.md.
+ *
+ * `orbit <version>` in frontmatter pins a template. Omitting it means
+ * `DEFAULT_LANGUAGE_VERSION`, which is what every template written before the
+ * pragma existed implicitly targeted.
+ */
+export const LANGUAGE_VERSIONS: readonly string[] = ['2026'];
+
+/** Assumed when a template declares no `orbit` pragma. */
+export const DEFAULT_LANGUAGE_VERSION = '2026';
+
 export const LIMITS = {
   /**
    * Parse errors collected from one template before the parser gives up on it.

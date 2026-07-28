@@ -238,6 +238,16 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | A diagnostic whose source text is unavailable degrades to location-only rather than being dropped — "degrades a diagnostic to location-only rather than dropping it when its source is missing" | src/codeframe.test.ts | test |
 | The error-code index is generated from the source, not hand-maintained, and CI can fail on drift | scripts/gen-error-index.mjs | artifact |
 
+## JavaScript
+
+| claim | evidence | kind |
+|---|---|---|
+| A template cannot contain a script element — "rejects unknown elements with O1081", banned table | src/parser.test.ts | test |
+| Every on* attribute is rejected — "rejects on* handlers, srcdoc, ping and namespaced names" | src/parser.test.ts | test |
+| A javascript: URL does not survive the sink — "blocks javascript:, case tricks and control-char splits" | src/escape.test.ts | test |
+| The engine emits no client JavaScript, and contains no eval or runtime code generation | src/interpreter.ts | artifact |
+| What is claimed about JavaScript is stated precisely, including what is NOT claimed | docs/guides/security-model.md | artifact |
+
 ## Comments
 
 | claim | evidence | kind |

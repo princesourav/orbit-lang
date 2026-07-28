@@ -232,6 +232,12 @@ export interface Template {
   /** Component name (PascalCase) or page name (lowercase). */
   name: string;
   templateKind: 'component' | 'page';
+  /**
+   * Language version this template targets, from the `orbit <version>`
+   * frontmatter pragma. Defaults to `DEFAULT_LANGUAGE_VERSION` when absent, so
+   * a template written before the pragma existed keeps meaning what it meant.
+   */
+  languageVersion: string;
   props: PropDecl[];
   settings: SettingDecl[];
   slots: SlotDecl[];

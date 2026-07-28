@@ -34,7 +34,7 @@ import {
 } from './allowlists';
 import { OrbitAstError, type Diagnostic } from './diagnostics';
 import { isForbiddenKey, isHexColorLiteral } from './escape';
-import { LIMITS } from './limits';
+import { LANGUAGE_VERSIONS, LIMITS } from './limits';
 
 export interface SerializedProgram {
   orbit: 1;
@@ -99,6 +99,18 @@ class AstValidator {
     const templateKind = data['templateKind'];
     if (templateKind !== 'component' && templateKind !== 'page') {
       this.invalid(`template ${JSON.stringify(name)}: unknown templateKind`);
+    }
+    /*
+     * A stored AST carries the language version it was checked under. An engine
+     * that does not implement that version must refuse it rather than render it
+     * under whatever rules it happens to have — a stored tree outlives the
+     * engine that produced it, which is the entire reason this validator exists.
+     */
+    const languageVersion = data['languageVersion'];
+    if (typeof languageVersion !== 'string' || !LANGUAGE_VERSIONS.includes(languageVersion)) {
+      this.invalid(
+        `template ${JSON.stringify(name)}: language version ${JSON.stringify(String(languageVersion))} is not implemented by this engine`,
+      );
     }
     if (!Array.isArray(data['props']) || !Array.isArray(data['settings']) || !Array.isArray(data['slots'])) {
       this.invalid(`template ${JSON.stringify(name)}: props/settings/slots must be arrays`);

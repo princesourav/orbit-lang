@@ -642,6 +642,16 @@ function printSlot(s: SlotDecl): string {
  */
 export function formatTemplate(template: Template): string {
   const out: string[] = ['---'];
+  /*
+   * The language version is always emitted, even when the source omitted it.
+   *
+   * Absent means DEFAULT_LANGUAGE_VERSION, so writing it changes no meaning and
+   * keeps the formatter idempotent and AST-preserving. It is written because a
+   * language about to freeze should have every template say which version it
+   * targets, and there are zero themes in the wild — this is the one moment
+   * making it universal costs nobody a migration.
+   */
+  out.push(`orbit ${template.languageVersion}`);
   out.push(`${template.templateKind} ${template.name}`);
 
   if (template.props.length > 0) {

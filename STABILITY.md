@@ -89,24 +89,43 @@ unsafe_loadTrustedAst
 
 Named to be conspicuous. It may change or disappear.
 
-## Editions
+## Language versions
 
-From 1.0, a template may pin the language edition it was written against:
+**The language is versioned separately from the package**, and a template
+declares which version it targets:
 
 ```orbit
 ---
-orbit 2027
+orbit 2026
 component ProductCard
 ---
 ```
 
-An edition freezes syntax and semantics. A later engine understands earlier
-editions, so a change that would otherwise be breaking — the kind that made the
-`|>` precedence fix cheap to make in v0.2 and expensive to make later — can ship
-in a new edition without touching existing templates.
+The two move at different speeds, and conflating them would make every engine
+bug fix a potential semantic change. The rules:
 
-Editions do **not** fork the security rules. A security fix applies to every
-edition, per the exception above.
+- **Language semantics change only across language versions.** Within one, a
+  template means what it meant. An engine upgrade cannot change it.
+- **The checker rejects a version it does not implement** (`O1097`), naming the
+  versions it supports. Rendering a template written against a later language
+  under whatever rules this engine happens to have would be worse than any
+  parse error.
+- **A stored AST carries its language version**, and `loadCheckedAst` refuses
+  one this engine does not implement. A stored tree outlives the engine that
+  produced it.
+- **Omitting the pragma means the default**, which is what every template
+  written before the pragma existed implicitly targeted. The formatter writes it
+  explicitly, so a formatted template always states its version.
+
+A later engine understands earlier versions. That is what makes a change like
+the v0.2 `|>` precedence fix — cheap then, expensive after 1.0 — possible at
+all once themes exist: it ships in a new language version and leaves existing
+templates alone.
+
+Language versions do **not** fork the security rules. A security fix applies to
+every version, per the exception above.
+
+Supported today: `2026`.
 
 ## What "1.0" means here
 

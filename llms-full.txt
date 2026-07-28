@@ -1592,77 +1592,77 @@ Raised before any type exists: syntax, the element and attribute allowlists, and
 | `O1017` | expected a record key | Record keys are identifiers or string literals: `{ name: "x" }`. | `src/parser.ts:436` |
 | `O1018` | unexpected … in expression | The token cannot start an expression — check for a stray operator or an unbalanced bracket. | `src/parser.ts:452` |
 | `O1019` | `…` cannot follow a \|> pipeline — \|> binds looser than every arithmetic and comparison operator | Parenthesize: `(x \|> round) * 2`. `\|>` binds looser than every arithmetic and comparison operator. | `src/parser.ts:277` |
-| `O1020` | expected … | Supply the identifier the parser asked for (a prop, setting, slot or binding name). | `src/parser.ts:627` |
-| `O1021` | expected a tag name after < | A `<` in text must be written `{"<"}`; a tag needs a name immediately after `<`. | `src/parser.ts:637` |
-| `O1022` | (message is constructed at the call site) | Close the comment with `#}`. | `src/parser.ts:664` |
-| `O1023` | (message is constructed at the call site) | Close the comment with `-->`. | `src/parser.ts:664` |
+| `O1020` | expected … | Supply the identifier the parser asked for (a prop, setting, slot or binding name). | `src/parser.ts:628` |
+| `O1021` | expected a tag name after < | A `<` in text must be written `{"<"}`; a tag needs a name immediately after `<`. | `src/parser.ts:638` |
+| `O1022` | (message is constructed at the call site) | Close the comment with `#}`. | `src/parser.ts:665` |
+| `O1023` | (message is constructed at the call site) | Close the comment with `-->`. | `src/parser.ts:665` |
 | `O1024` | numeric literal has … digits (the limit is …) | Orbit numbers are IEEE-754 doubles — a literal this wide has no exact representation. Shorten it. | `src/lexer.ts:300` |
 | `O1025` | numeric literal … cannot be represented exactly (it would round to …) | Write the value the double actually holds, or keep integers within the safe-integer range. | `src/lexer.ts:309` |
-| `O1030` | every template starts with a frontmatter header | Start the file with a `---` frontmatter block declaring `component Name` or `page name`. | `src/parser.ts:718` |
-| `O1031` | unterminated frontmatter (missing closing ---) | Close the frontmatter with a second `---`. | `src/parser.ts:731` |
-| `O1032` | duplicate component/page declaration | A template is either a component or a page, declared exactly once. | `src/parser.ts:736` |
-| `O1033` | component names are PascalCase | Rename the component to PascalCase: `component ProductCard`. | `src/parser.ts:741` |
-| `O1034` | page names are lowercase | Rename the page to lowercase: `page collection`. | `src/parser.ts:744` |
-| `O1035` | unknown frontmatter keyword … | Frontmatter accepts only `component`, `page`, `props`, `settings` and `slots`. | `src/parser.ts:763` |
-| `O1036` | frontmatter must declare `component Name` or `page name` | Add `component Name` or `page name` inside the frontmatter block. | `src/parser.ts:770` |
-| `O1037` | expected { to open the block | Open the block with `{`: `props { … }`. | `src/parser.ts:780` |
-| `O1038` | unterminated frontmatter block | Close the block with `}`. | `src/parser.ts:784` |
-| `O1039` | List needs an element type: List<T> | Write `List<T>` with an element type, e.g. `List<Product>`. | `src/parser.ts:795 (+1 more)` |
-| `O1040` | expected a number | Supply a numeric literal. | `src/parser.ts:859` |
-| `O1041` | expected a literal value, found … | Frontmatter defaults are literals only: numbers, strings, `true`/`false`, `none`, `#rrggbb`. | `src/parser.ts:878 (+1 more)` |
-| `O1042` | `settings` is a reserved binding name | `settings` is the reserved binding for merchant settings — pick another name. | `src/parser.ts:886 (+1 more)` |
-| `O1043` | prop … needs a type | Every prop is typed: `title: String`. | `src/parser.ts:888` |
-| `O1044` | setting … needs a control type | Every setting names a control: `heading: Text = "Sale"`. | `src/parser.ts:908` |
-| `O1045` | Select needs options: Select("a", "b") | Write `Select("a", "b")` with string-literal options. | `src/parser.ts:916 (+2 more)` |
-| `O1046` | Range needs bounds: Range(min, max, step) | Write `Range(0, 12)` or `Range(0, 12, step: 2)` with integer bounds. | `src/parser.ts:930 (+4 more)` |
-| `O1047` | unknown setting control … | Valid controls are `Text`, `Select(...)`, `Range(min, max, step)`, `Toggle`, `Color`. | `src/parser.ts:953` |
-| `O1048` | setting … needs a default | Give the setting a default: `name: Toggle = false`. Merchant settings are always populated. | `src/parser.ts:960` |
-| `O1049` | label must be a string literal | Labels are string literals: `label "Heading"`. | `src/parser.ts:973` |
-| `O1050` | missing closing tag </…> | Close the element. Orbit is HTML-strict: no implied end tags, no auto-closing. | `src/parser.ts:1060 (+1 more)` |
-| `O1051` | malformed closing tag </… | Finish the closing tag with `>`. | `src/parser.ts:1069 (+1 more)` |
-| `O1052` | (message is constructed at the call site) | Tags must nest properly — close the inner element before the outer one. | `src/parser.ts:1076` |
-| `O1053` | unescaped `<` in text | Write `{"<"}` for a literal less-than sign. | `src/parser.ts:1106` |
-| `O1054` | comment exceeds the per-value string cap | Split the text run; a single text node or attribute value is capped. | `src/parser.ts:674 (+3 more)` |
-| `O1055` | <empty> is only valid inside <for> | `<empty>` is the fallback branch of `<for>` and is valid nowhere else. | `src/parser.ts:1163` |
-| `O1056` | duplicate <empty> in <for> | A `<for>` has at most one `<empty>` branch. | `src/parser.ts:1166` |
-| `O1057` | <empty> takes no attributes | `<empty>` takes no attributes: write `<empty>…</empty>`. | `src/parser.ts:1169` |
-| `O1058` | <empty> must be the last child of <for> | Move `<empty>` after every repeated child; it must be the last child of `<for>`. | `src/parser.ts:1174` |
-| `O1059` | <…> without a preceding <if> sibling | `<else-if>` and `<else>` are siblings of `<if>` — put them immediately after `</if>`. | `src/parser.ts:1180` |
-| `O1060` | <else-if> needs a condition: <else-if {cond}> | Write `<else-if {cond}>…</else-if>` with a condition island. | `src/parser.ts:1200 (+1 more)` |
-| `O1061` | malformed <else> | Write `<else>…</else>`; `<else>` takes no condition. | `src/parser.ts:1211` |
-| `O1062` | <if> needs a condition: <if {cond}> | Write `<if {cond}>…</if>` with a condition island. | `src/parser.ts:1223 (+1 more)` |
-| `O1063` | expected `of` in <for>, found … | Write `<for item of={list}>` (optionally `<for item, i of={list}>`). | `src/parser.ts:1244 (+2 more)` |
-| `O1064` | expected limit={n} | Write `limit={12}` with a literal integer. | `src/parser.ts:1252 (+1 more)` |
-| `O1065` | malformed <for> tag | Finish the `<for>` tag with `>`; the only attributes are `of=` and `limit=`. | `src/parser.ts:1257` |
-| `O1066` | <let> needs a value: <let name={expr}/> | Write `<let name={expr}/>`. | `src/parser.ts:1269 (+1 more)` |
-| `O1067` | <let> is self-closing: <let name={expr}/> | `<let>` is self-closing: `<let total={a + b}/>`. | `src/parser.ts:1273` |
-| `O1068` | slot names are static: <slot name="badge"/> | Slot names are static strings: `<slot name="badge"/>`. | `src/parser.ts:1284 (+1 more)` |
-| `O1069` | <slot> is self-closing (no fallback content in v0) | `<slot>` is self-closing and has no fallback content. | `src/parser.ts:1295` |
-| `O1070` | <json-ld> takes no attributes | `<json-ld>` takes no attributes. | `src/parser.ts:1303` |
-| `O1071` | <json-ld> contains exactly one { record expression } | `<json-ld>` wraps exactly one record expression: `<json-ld>{ … }</json-ld>`. | `src/parser.ts:1305 (+1 more)` |
-| `O1072` | components cannot carry slot=; wrap the call in an element | Wrap the component call in an element and put `slot=` on that element. | `src/parser.ts:1320` |
-| `O1073` | malformed <…> tag | Finish the component tag with `>` or `/>`. | `src/parser.ts:1329` |
-| `O1080` | <…> is not allowed: … | The element is banned for the stated reason — there is no flag to re-enable it. | `src/parser.ts:1342` |
-| `O1081` | <…> is not in the element allowlist | Only allowlisted elements parse. Use a semantic element from the allowlist. | `src/parser.ts:1346` |
-| `O1082` | <…> is not a void element | Only void elements self-close. Write `<tag>…</tag>`. | `src/parser.ts:1355` |
-| `O1083` | malformed <…> tag | Finish the tag with `>` or `/>`. | `src/parser.ts:1361` |
-| `O1084` | more than … attributes on one element | Reduce the number of attributes on the element. | `src/parser.ts:1445` |
-| `O1085` | duplicate attribute … | Remove the repeated attribute. | `src/parser.ts:1447` |
-| `O1086` | attribute … is not allowed: … | The attribute is banned for the stated reason (event handlers, `srcdoc`, `ping`, namespaced names, legacy URL attributes). | `src/parser.ts:1458` |
-| `O1087` | attribute … is not in the attribute allowlist | Use an allowlisted attribute, or a `data-*` / `aria-*` attribute for custom data. | `src/parser.ts:1460` |
-| `O1088` | conditional attribute needs an expression: …?={cond} | Conditional attributes need a Bool island: `disabled?={isSoldOut}`. | `src/parser.ts:1468` |
-| `O1089` | attribute values are double-quoted | Attribute values are double-quoted. | `src/parser.ts:1480` |
-| `O1090` | attribute values must be quoted or an {expression} | Write `name="text"` or `name={expr}`. Unquoted values are not accepted. | `src/parser.ts:1482` |
-| `O1091` | component props take whole expressions, not text with islands | Component props take whole expressions: `title={product.title}`, not `title="a {x}"`. | `src/parser.ts:1493` |
-| `O1092` | expected an attribute name | Supply an attribute name. | `src/parser.ts:1525` |
-| `O1093` | attribute names are lowercase (got …) | Attribute names are lowercase. | `src/parser.ts:1534` |
-| `O1094` | unterminated attribute value for … | Close the attribute value with `"`. | `src/parser.ts:1549` |
-| `O1095` | interpolation inside style attributes is not allowed (W-09) | Interpolation in `style` is banned. Choose a class from a static set, or use a host `cssVar` helper. | `src/parser.ts:1577` |
-| `O1096` | the `@name` attribute form is reserved for a future version of Orbit and is not implemented | `slot=` is a static name: `slot="badge"`. | `src/parser.ts:1454 (+2 more)` |
-| `O1097` | verbatim is a bare marker attribute | `verbatim` is a bare marker attribute: `<pre verbatim>`. | `src/parser.ts:1589` |
-| `O1098` | duplicate template name … | Template names are the program-wide key — rename one of the two templates. | `src/parser.ts:1684` |
-| `O1100` | template exceeds … AST nodes | Split the template into components; the per-template node cap is structural. | `src/ast.ts:265` |
-| `O1101` | element nesting exceeds depth … | Flatten the markup or extract a component; element nesting is capped. | `src/ast.ts:274` |
+| `O1030` | every template starts with a frontmatter header | Start the file with a `---` frontmatter block declaring `component Name` or `page name`. | `src/parser.ts:720` |
+| `O1031` | unterminated frontmatter (missing closing ---) | Close the frontmatter with a second `---`. | `src/parser.ts:734` |
+| `O1032` | duplicate component/page declaration | A template is either a component or a page, declared exactly once. | `src/parser.ts:739` |
+| `O1033` | component names are PascalCase | Rename the component to PascalCase: `component ProductCard`. | `src/parser.ts:744` |
+| `O1034` | page names are lowercase | Rename the page to lowercase: `page collection`. | `src/parser.ts:747` |
+| `O1035` | unknown frontmatter keyword … | Frontmatter accepts only `component`, `page`, `props`, `settings` and `slots`. | `src/parser.ts:791` |
+| `O1036` | frontmatter must declare `component Name` or `page name` | Add `component Name` or `page name` inside the frontmatter block. | `src/parser.ts:798` |
+| `O1037` | duplicate orbit version declaration | Open the block with `{`: `props { … }`. | `src/parser.ts:763 (+1 more)` |
+| `O1038` | unterminated frontmatter block | Close the block with `}`. | `src/parser.ts:819` |
+| `O1039` | List needs an element type: List<T> | Write `List<T>` with an element type, e.g. `List<Product>`. | `src/parser.ts:830 (+1 more)` |
+| `O1040` | expected a number | Supply a numeric literal. | `src/parser.ts:894` |
+| `O1041` | expected a literal value, found … | Frontmatter defaults are literals only: numbers, strings, `true`/`false`, `none`, `#rrggbb`. | `src/parser.ts:913 (+1 more)` |
+| `O1042` | `settings` is a reserved binding name | `settings` is the reserved binding for merchant settings — pick another name. | `src/parser.ts:921 (+1 more)` |
+| `O1043` | prop … needs a type | Every prop is typed: `title: String`. | `src/parser.ts:923` |
+| `O1044` | setting … needs a control type | Every setting names a control: `heading: Text = "Sale"`. | `src/parser.ts:943` |
+| `O1045` | Select needs options: Select("a", "b") | Write `Select("a", "b")` with string-literal options. | `src/parser.ts:951 (+2 more)` |
+| `O1046` | Range needs bounds: Range(min, max, step) | Write `Range(0, 12)` or `Range(0, 12, step: 2)` with integer bounds. | `src/parser.ts:965 (+4 more)` |
+| `O1047` | unknown setting control … | Valid controls are `Text`, `Select(...)`, `Range(min, max, step)`, `Toggle`, `Color`. | `src/parser.ts:988` |
+| `O1048` | setting … needs a default | Give the setting a default: `name: Toggle = false`. Merchant settings are always populated. | `src/parser.ts:995` |
+| `O1049` | label must be a string literal | Labels are string literals: `label "Heading"`. | `src/parser.ts:1008` |
+| `O1050` | missing closing tag </…> | Close the element. Orbit is HTML-strict: no implied end tags, no auto-closing. | `src/parser.ts:1095 (+1 more)` |
+| `O1051` | malformed closing tag </… | Finish the closing tag with `>`. | `src/parser.ts:1104 (+1 more)` |
+| `O1052` | (message is constructed at the call site) | Tags must nest properly — close the inner element before the outer one. | `src/parser.ts:1111` |
+| `O1053` | unescaped `<` in text | Write `{"<"}` for a literal less-than sign. | `src/parser.ts:1141` |
+| `O1054` | comment exceeds the per-value string cap | Split the text run; a single text node or attribute value is capped. | `src/parser.ts:675 (+3 more)` |
+| `O1055` | <empty> is only valid inside <for> | `<empty>` is the fallback branch of `<for>` and is valid nowhere else. | `src/parser.ts:1198` |
+| `O1056` | duplicate <empty> in <for> | A `<for>` has at most one `<empty>` branch. | `src/parser.ts:1201` |
+| `O1057` | <empty> takes no attributes | `<empty>` takes no attributes: write `<empty>…</empty>`. | `src/parser.ts:1204` |
+| `O1058` | <empty> must be the last child of <for> | Move `<empty>` after every repeated child; it must be the last child of `<for>`. | `src/parser.ts:1209` |
+| `O1059` | <…> without a preceding <if> sibling | `<else-if>` and `<else>` are siblings of `<if>` — put them immediately after `</if>`. | `src/parser.ts:1215` |
+| `O1060` | <else-if> needs a condition: <else-if {cond}> | Write `<else-if {cond}>…</else-if>` with a condition island. | `src/parser.ts:1235 (+1 more)` |
+| `O1061` | malformed <else> | Write `<else>…</else>`; `<else>` takes no condition. | `src/parser.ts:1246` |
+| `O1062` | <if> needs a condition: <if {cond}> | Write `<if {cond}>…</if>` with a condition island. | `src/parser.ts:1258 (+1 more)` |
+| `O1063` | expected `of` in <for>, found … | Write `<for item of={list}>` (optionally `<for item, i of={list}>`). | `src/parser.ts:1279 (+2 more)` |
+| `O1064` | expected limit={n} | Write `limit={12}` with a literal integer. | `src/parser.ts:1287 (+1 more)` |
+| `O1065` | malformed <for> tag | Finish the `<for>` tag with `>`; the only attributes are `of=` and `limit=`. | `src/parser.ts:1292` |
+| `O1066` | <let> needs a value: <let name={expr}/> | Write `<let name={expr}/>`. | `src/parser.ts:1304 (+1 more)` |
+| `O1067` | <let> is self-closing: <let name={expr}/> | `<let>` is self-closing: `<let total={a + b}/>`. | `src/parser.ts:1308` |
+| `O1068` | slot names are static: <slot name="badge"/> | Slot names are static strings: `<slot name="badge"/>`. | `src/parser.ts:1319 (+1 more)` |
+| `O1069` | <slot> is self-closing (no fallback content in v0) | `<slot>` is self-closing and has no fallback content. | `src/parser.ts:1330` |
+| `O1070` | <json-ld> takes no attributes | `<json-ld>` takes no attributes. | `src/parser.ts:1338` |
+| `O1071` | <json-ld> contains exactly one { record expression } | `<json-ld>` wraps exactly one record expression: `<json-ld>{ … }</json-ld>`. | `src/parser.ts:1340 (+1 more)` |
+| `O1072` | components cannot carry slot=; wrap the call in an element | Wrap the component call in an element and put `slot=` on that element. | `src/parser.ts:1355` |
+| `O1073` | malformed <…> tag | Finish the component tag with `>` or `/>`. | `src/parser.ts:1364` |
+| `O1080` | <…> is not allowed: … | The element is banned for the stated reason — there is no flag to re-enable it. | `src/parser.ts:1377` |
+| `O1081` | <…> is not in the element allowlist | Only allowlisted elements parse. Use a semantic element from the allowlist. | `src/parser.ts:1381` |
+| `O1082` | <…> is not a void element | Only void elements self-close. Write `<tag>…</tag>`. | `src/parser.ts:1390` |
+| `O1083` | malformed <…> tag | Finish the tag with `>` or `/>`. | `src/parser.ts:1396` |
+| `O1084` | more than … attributes on one element | Reduce the number of attributes on the element. | `src/parser.ts:1480` |
+| `O1085` | duplicate attribute … | Remove the repeated attribute. | `src/parser.ts:1482` |
+| `O1086` | attribute … is not allowed: … | The attribute is banned for the stated reason (event handlers, `srcdoc`, `ping`, namespaced names, legacy URL attributes). | `src/parser.ts:1493` |
+| `O1087` | attribute … is not in the attribute allowlist | Use an allowlisted attribute, or a `data-*` / `aria-*` attribute for custom data. | `src/parser.ts:1495` |
+| `O1088` | conditional attribute needs an expression: …?={cond} | Conditional attributes need a Bool island: `disabled?={isSoldOut}`. | `src/parser.ts:1503` |
+| `O1089` | attribute values are double-quoted | Attribute values are double-quoted. | `src/parser.ts:1515` |
+| `O1090` | attribute values must be quoted or an {expression} | Write `name="text"` or `name={expr}`. Unquoted values are not accepted. | `src/parser.ts:1517` |
+| `O1091` | component props take whole expressions, not text with islands | Component props take whole expressions: `title={product.title}`, not `title="a {x}"`. | `src/parser.ts:1528` |
+| `O1092` | expected an attribute name | Supply an attribute name. | `src/parser.ts:1572` |
+| `O1093` | attribute names are lowercase (got …) | Attribute names are lowercase. | `src/parser.ts:1581` |
+| `O1094` | unterminated attribute value for … | Close the attribute value with `"`. | `src/parser.ts:1596` |
+| `O1095` | interpolation inside style attributes is not allowed (W-09) | Interpolation in `style` is banned. Choose a class from a static set, or use a host `cssVar` helper. | `src/parser.ts:1624` |
+| `O1096` | the `@name` attribute form is reserved for a future version of Orbit and is not implemented | `slot=` is a static name: `slot="badge"`. | `src/parser.ts:1489 (+2 more)` |
+| `O1097` | this engine does not implement Orbit language version … | `verbatim` is a bare marker attribute: `<pre verbatim>`. | `src/parser.ts:769 (+2 more)` |
+| `O1098` | duplicate template name … | Template names are the program-wide key — rename one of the two templates. | `src/parser.ts:1731` |
+| `O1100` | template exceeds … AST nodes | Split the template into components; the per-template node cap is structural. | `src/ast.ts:271` |
+| `O1101` | element nesting exceeds depth … | Flatten the markup or extract a component; element nesting is capped. | `src/ast.ts:280` |
 
 ## O2xxx — checker: signatures, types, contracts, filters
 
@@ -1788,7 +1788,7 @@ Raised by `loadCheckedAst(data, { trust: "verify" })` when a stored AST row fail
 | code | message | what to do | raised in |
 | --- | --- | --- | --- |
 | `O5000` | (message is constructed at the call site) | Structural re-validation of a stored AST failed. The row is malformed or was not produced by this engine version; re-compile from source. | `src/validate-ast.ts:61` |
-| `O5001` | stored AST has no templates record | The stored AST has no `templates` record — the row is not an Orbit program. | `src/validate-ast.ts:460` |
+| `O5001` | stored AST has no templates record | The stored AST has no `templates` record — the row is not an Orbit program. | `src/validate-ast.ts:472` |
 
 
 ==============================================================================
@@ -2215,6 +2215,38 @@ with domain separation, and `verifyAstTag` compares in constant time; you supply
 the HMAC primitive, because the engine holds no key material. Binding to
 `storeId` is what stops a valid theme from one tenant being replayed against
 another.
+
+---
+
+## JavaScript: what is actually claimed
+
+The short version of this claim would be false, so here is the long one.
+
+**Orbit does not claim a page ships no JavaScript.** Anything interactive runs
+JavaScript; there is no way around that, and a language that pretended otherwise
+would be selling something it cannot deliver.
+
+What holds is narrower:
+
+- A **template author cannot introduce JavaScript.** `<script>` is not in the
+  element allowlist, every `on*` attribute is rejected, and a `javascript:` URL
+  does not survive the sink. All three are enforced at parse or emit time, not
+  by review.
+- A template author **cannot choose what runs**, and cannot opt out of the
+  escaper at a call site.
+- Client behaviour is **platform code** — written, reviewed, versioned and
+  patchable by the embedder — configured from templates through `data-*`
+  attributes.
+
+The security value is not the absence of JavaScript. It is that the JavaScript
+on the page belongs to exactly one party, who can patch all of it centrally,
+rather than being distributed across templates authored by merchants, customers
+or models.
+
+**Current state:** nothing in this repository emits client JavaScript. A
+compiler backend that would generate it is designed but not built. When it
+lands, it becomes the part of the system with ambient authority and the first
+thing that should be audited.
 
 ---
 

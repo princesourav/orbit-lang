@@ -1,4 +1,5 @@
 ---
+orbit 2026
 component PromoBanner
 settings {
   heading: Text = "Free shipping on orders over 75" label "Heading"

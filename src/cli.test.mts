@@ -21,6 +21,15 @@ import { runCli, type CliIo } from './cli.ts';
 
 const HEAD = '---\ncomponent Card\n---\n';
 
+/**
+ * What `HEAD` looks like after formatting.
+ *
+ * The `orbit` pragma is always written, even when the source omitted it —
+ * absent means the default, so stating it changes no meaning while making every
+ * formatted template say which language version it targets.
+ */
+const CANONICAL_HEAD = '---\norbit 2026\ncomponent Card\n---\n';
+
 function makeIo(): CliIo & { stdout: string; stderr: string } {
   const sink = {
     stdout: '',
@@ -120,7 +129,7 @@ describe('orbit fmt', () => {
     const file = write('ugly.orbit', `${HEAD}<div>\n        <p>hi</p>\n</div>\n`);
     expect(runCli(['fmt', file], makeIo())).toBe(0);
     const once = readFileSync(file, 'utf8');
-    expect(once).toBe(`${HEAD}<div>\n  <p>hi</p>\n</div>\n`);
+    expect(once).toBe(`${CANONICAL_HEAD}<div>\n  <p>hi</p>\n</div>\n`);
 
     expect(runCli(['fmt', file], makeIo())).toBe(0);
     expect(readFileSync(file, 'utf8')).toBe(once);
@@ -136,7 +145,7 @@ describe('orbit fmt', () => {
   });
 
   it('--check exits 0 on already-canonical files', () => {
-    write('good.orbit', `${HEAD}<p>hello</p>\n`);
+    write('good.orbit', `${CANONICAL_HEAD}<p>hello</p>\n`);
     const io = makeIo();
     expect(runCli(['fmt', '--check', dir], io)).toBe(0);
     expect(io.stdout).toContain('already formatted');

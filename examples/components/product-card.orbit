@@ -1,4 +1,5 @@
 ---
+orbit 2026
 component ProductCard
 props {
   product: Product

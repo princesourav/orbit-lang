@@ -40,7 +40,7 @@ import {
 } from './allowlists';
 import { type Diagnostic, OrbitParseError, type Pos, type Span } from './diagnostics';
 import { isDigit, isIdentPart, isIdentStart, lexExpression, numberLiteralProblem, Scanner } from './lexer';
-import { LIMITS } from './limits';
+import { DEFAULT_LANGUAGE_VERSION, LANGUAGE_VERSIONS, LIMITS } from './limits';
 import { type Token } from './tokens';
 
 // ---------------------------------------------------------------------------
@@ -514,6 +514,7 @@ class TemplateParser {
         kind: 'template',
         name: fm.name,
         templateKind: fm.templateKind,
+        languageVersion: fm.languageVersion,
         props: fm.props,
         settings: fm.settings,
         slots: fm.slots,
@@ -709,6 +710,7 @@ class TemplateParser {
   private parseFrontmatter(): {
     name: string;
     templateKind: 'component' | 'page';
+    languageVersion: string;
     props: PropDecl[];
     settings: SettingDecl[];
     slots: SlotDecl[];
@@ -725,6 +727,7 @@ class TemplateParser {
     const props: PropDecl[] = [];
     const settings: SettingDecl[] = [];
     const slots: SlotDecl[] = [];
+    let languageVersion: string | undefined;
 
     for (;;) {
       this.s.skipWhitespace();
@@ -747,6 +750,31 @@ class TemplateParser {
         templateKind = keyword;
         continue;
       }
+      /*
+       * `orbit 2026` pins the LANGUAGE version.
+       *
+       * Rejecting an unknown version is the point: a template written against a
+       * later language must not be rendered by an engine that would silently
+       * give it different meaning. Failing with the list of supported versions
+       * is a far better outcome than rendering something subtly wrong.
+       */
+      if (keyword === 'orbit') {
+        if (languageVersion !== undefined) {
+          this.fail('O1037', 'duplicate orbit version declaration', undefined, at);
+        }
+        this.s.skipWhitespace();
+        const version = this.readLanguageVersion();
+        if (!LANGUAGE_VERSIONS.includes(version)) {
+          this.fail(
+            'O1097',
+            `this engine does not implement Orbit language version ${JSON.stringify(version)}`,
+            `supported: ${LANGUAGE_VERSIONS.join(', ')} — upgrade the engine, or change the pragma if this was a typo`,
+            at,
+          );
+        }
+        languageVersion = version;
+        continue;
+      }
       if (keyword === 'props') {
         this.parseBlock(() => props.push(this.parsePropDecl()));
         continue;
@@ -762,7 +790,7 @@ class TemplateParser {
       this.fail(
         'O1035',
         `unknown frontmatter keyword ${JSON.stringify(keyword)}`,
-        'valid keywords: component, page, props, settings, slots',
+        'valid keywords: orbit, component, page, props, settings, slots',
         at,
       );
     }
@@ -772,7 +800,14 @@ class TemplateParser {
     // consume the newline after the closing ---
     if (this.s.peek() === '\r') this.s.next();
     if (this.s.peek() === '\n') this.s.next();
-    return { name, templateKind, props, settings, slots };
+    return {
+      name,
+      templateKind,
+      languageVersion: languageVersion ?? DEFAULT_LANGUAGE_VERSION,
+      props,
+      settings,
+      slots,
+    };
   }
 
   private parseBlock(entry: () => void): void {
@@ -1495,6 +1530,18 @@ class TemplateParser {
       }
       attrs.push({ name, span: { start: at, end: this.s.posNow() }, value, isUrl });
     }
+  }
+
+  /** A language version: digits only, so it never collides with a keyword. */
+  private readLanguageVersion(): string {
+    const at = this.s.posNow();
+    const from = this.s.pos;
+    while (isDigit(this.s.peek())) this.s.next();
+    const text = this.s.src.slice(from, this.s.pos);
+    if (text === '') {
+      this.fail('O1097', 'expected a language version after `orbit`', `for example: orbit ${DEFAULT_LANGUAGE_VERSION}`, at);
+    }
+    return text;
   }
 
   private readAttrName(isComponent: boolean): string {
