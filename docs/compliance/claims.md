@@ -238,6 +238,17 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | A diagnostic whose source text is unavailable degrades to location-only rather than being dropped — "degrades a diagnostic to location-only rather than dropping it when its source is missing" | src/codeframe.test.ts | test |
 | The error-code index is generated from the source, not hand-maintained, and CI can fail on drift | scripts/gen-error-index.mjs | artifact |
 
+## Comments
+
+| claim | evidence | kind |
+|---|---|---|
+| Comments are retained in the AST as nodes, in both forms — "keeps both comment forms as nodes" | src/comments.test.ts | test |
+| A comment never reaches the output, even when it contains markup-shaped text — "renders nothing for either form", "leaks nothing even when the comment contains markup-shaped text" | src/comments.test.ts | test |
+| Formatting never loses a comment, for any arrangement — "never loses a comment, for any arrangement" | src/comments.test.ts | test |
+| A comment body is preserved verbatim rather than reflowed — "preserves the comment body verbatim, without reflowing it" | src/comments.test.ts | test |
+| Comments survive serialize and verified load, and a poisoned comment node is rejected — "round-trips through serialize and verified load", "rejects a poisoned comment node" | src/comments.test.ts | test |
+| The `on:name` and `@name` attribute forms are reserved with a dedicated diagnostic, distinct from banned handlers and namespaced names — "rejects on:name as reserved, not as a namespaced attribute", "still reports onclick as a banned event handler" | src/parser.test.ts | test |
+
 ## Parse error recovery
 
 | claim | evidence | kind |

@@ -236,6 +236,28 @@ const SPECIFIC_ATTRS: ReadonlySet<string> = new Set([
  * Returns a rejection reason for attribute names that are banned outright,
  * before the allowlist is consulted.
  */
+/**
+ * Attribute name shapes RESERVED for a future version of the language.
+ *
+ * Distinct from `attrRejection`, which lists things banned on their merits.
+ * These are not banned — they are unclaimed syntax being claimed now, while it
+ * is free. A theme that used `on:` or `@` for something else would stop
+ * compiling the day events land, and by then themes exist.
+ *
+ * Reported separately so the author is told "reserved, not implemented" rather
+ * than "namespaced attributes are not allowed", which is true of `on:click`
+ * and tells them nothing.
+ */
+export function reservedAttrSyntax(name: string): string | undefined {
+  if (name.startsWith('on:')) {
+    return 'the `on:name` attribute form is reserved for a future version of Orbit and is not implemented';
+  }
+  if (name.startsWith('@')) {
+    return 'the `@name` attribute form is reserved for a future version of Orbit and is not implemented';
+  }
+  return undefined;
+}
+
 export function attrRejection(name: string): string | undefined {
   if (name.length > 2 && name.startsWith('on')) {
     return 'event-handler attributes (on*) are not allowed';

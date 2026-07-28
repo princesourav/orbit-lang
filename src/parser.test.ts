@@ -153,10 +153,23 @@ describe('tree strictness', () => {
     expect(pre.children[0]).toMatchObject({ kind: 'text', value: '  a\n   b' });
   });
 
-  it('strips {# comments #} and <!-- comments -->', () => {
-    const template = ok('<p>{# gone #}a<!-- also gone -->b</p>');
+  it('retains {# comments #} and <!-- comments --> as nodes', () => {
+    /*
+     * Changed deliberately. Comments used to be discarded here, which meant
+     * `orbit fmt` deleted every comment in a file — silent data loss that no
+     * test caught, because a comment changes no rendered byte.
+     *
+     * They are nodes now. They still render nothing; see comments.test.ts,
+     * which pins both halves.
+     */
+    const template = ok('<p>{# kept #}a<!-- also kept -->b</p>');
     const p = template.body[0] as ElementNode;
-    expect(p.children.map((c) => (c.kind === 'text' ? c.value : c.kind))).toEqual(['a', 'b']);
+    expect(p.children.map((c) => (c.kind === 'text' ? c.value : c.kind))).toEqual([
+      'comment',
+      'a',
+      'comment',
+      'b',
+    ]);
   });
 
   it('verbatim disables interpolation in the subtree', () => {
@@ -439,5 +452,43 @@ describe('spans and suggestions', () => {
     const d = result.diagnostics[0];
     expect(d?.span?.start.line).toBe(5);
     expect(d?.suggestion).toContain('class');
+  });
+});
+
+describe('reserved syntax', () => {
+  /*
+   * `on:` and `@` are claimed now, while claiming them is free. Once themes
+   * exist, adding event bindings would break any theme that had used either
+   * form for something else — and the whole point of reserving is that the
+   * breakage happens today, to nobody.
+   */
+  it('rejects on:name as reserved, not as a namespaced attribute', () => {
+    const d = bad('<button on:click={x}>y</button>');
+    expect(d.code).toBe('O1096');
+    expect(d.message).toContain('reserved');
+  });
+
+  it('rejects @name as reserved, not as a missing attribute name', () => {
+    const d = bad('<button @click={x}>y</button>');
+    expect(d.code).toBe('O1096');
+    expect(d.message).toContain('reserved');
+  });
+
+  it('still reports onclick as a banned event handler', () => {
+    // Different reason, different code: `onclick` is banned forever,
+    // `on:click` is merely unimplemented. Collapsing them misleads on both.
+    const d = bad('<button onclick="x()">y</button>');
+    expect(d.code).toBe('O1086');
+    expect(d.message).toContain('event-handler');
+  });
+
+  it('still reports namespaced attributes under their own reason', () => {
+    const d = bad('<div xlink:href="x">y</div>');
+    expect(d.code).toBe('O1086');
+    expect(d.message).toContain('namespaced');
+  });
+
+  it('leaves ordinary attributes alone', () => {
+    expect(() => ok('<div data-x="1" class="y">z</div>')).not.toThrow();
   });
 });

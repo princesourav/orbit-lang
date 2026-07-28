@@ -1,6 +1,20 @@
 ---
 page article
 ---
+{# A rich-text page. Three things worth reading closely:
+
+   1. `<title>` is RCDATA. Interpolation is allowed there and is escaped with
+      the RCDATA rules, but an Html value can never render inside it (O2075).
+   2. `<json-ld>` takes exactly one record expression and is serialized by the
+      engine — strings are emitted with `<`, `>`, `&` and `/` escaped as \uXXXX,
+      so the payload can never close the script element it lives in.
+   3. The two Html obligations, side by side. `richtext` is declared
+      `sanitizer`: merchant markup goes in untrusted and comes out safe, so it
+      is SILENT at every use site — the sanctioned path should not generate
+      warnings, or the warnings stop being read. `platformHtml` is declared
+      `trustedHtml`: the platform authored that markup and asserts it is
+      trusted, so it is emitted raw and warns every time (O2071 at check,
+      O4902 at render). That second list is the audit surface. #}
 <title>{article.title} - {shopName}</title>
 <main class="article" id="main">
   <json-ld>{{"@context": "https://schema.org", "@type": "Article", headline: article.title, datePublished: article.publishedAt, url: article.url, author: {"@type": "Person", name: article.author.name}}}</json-ld>
@@ -38,6 +52,8 @@ page article
   <div class="article__body">{article.bodyHtml |> richtext}</div>
   <footer class="article__footer">
     <p class="article__summary">{article.excerpt ?? "Thanks for reading."}</p>
+    {# Platform-authored, not merchant-authored: emitted raw, and the only line
+       in this file that warns. #}
     <p class="article__legal">{legalNoticeHtml |> platformHtml}</p>
   </footer>
 </main>

@@ -6,6 +6,10 @@ props {
   imageWidth: Int = 640
 }
 ---
+{# A product card. Every branded value is terminal: `price` is Money, so it
+   cannot be printed, compared or arithmetic'd — it goes through the host's
+   `money` filter, which returns MoneyText. `cover` is Image and only reaches
+   the page through the host's `imgUrl` filter, which returns a Url. #}
 <article class="card" data-handle={product.handle}>
   <let cover={imgUrl(product.cover, imageWidth)}/>
   <a class="card__link" href={product.url}>

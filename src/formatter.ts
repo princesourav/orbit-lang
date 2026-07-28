@@ -347,6 +347,10 @@ function printNodeInline(n: Node, ctx: Ctx): string {
       return n.value;
     case 'interpolation':
       return `{${printExpr(n.expr)}}`;
+    case 'comment':
+      // Reproduced in the form the author wrote. The body is emitted verbatim:
+      // reflowing prose inside a comment would be a second, unasked-for edit.
+      return n.html ? `<!--${n.value}-->` : `{#${n.value}#}`;
     case 'slot':
       return n.name === 'default' ? '<slot/>' : `<slot name="${n.name}"/>`;
     case 'let':
@@ -457,6 +461,16 @@ function printNodeBlock(n: Node, indent: string, ctx: Ctx): string[] | undefined
     case 'text':
     case 'interpolation':
       return undefined;
+
+    case 'comment':
+      /*
+       * A comment gets its own line, and is never merged into a neighbouring
+       * text run. It renders nothing, so a line break around it cannot change
+       * output — which makes this the one node the layout rules can move
+       * freely, and a comment on its own line is what an author wrote in the
+       * first place.
+       */
+      return [indent + printNodeInline(n, ctx)];
 
     case 'slot':
     case 'let':

@@ -1,6 +1,11 @@
 ---
 page collection
 ---
+{# A listing page. Pages are ENTRY POINTS: they declare no props, and their
+   free identifiers (`collection`, `pageNumber`, …) are the host's page
+   globals, declared in `CheckOptions.pageGlobals` and resolved before the
+   render. `extractAccessPlan(program, "collection")` returns exactly the data
+   paths below — that is the declare-then-fetch contract. #}
 <main class="collection" id="main">
   <header class="collection__header">
     <h1>{collection.title}</h1>

@@ -93,6 +93,19 @@ export interface Attr {
 export type Node =
   | { kind: 'text'; value: string; span: Span }
   | { kind: 'interpolation'; expr: Expr; span: Span }
+  /**
+   * A source comment, retained so the formatter can put it back.
+   *
+   * Comments used to be skipped by the parser, which meant they were absent
+   * from the AST and `orbit fmt` deleted every one of them — silently, and
+   * without failing any test, because a comment changes no rendered byte. That
+   * is data loss in a tool authors are told to run on save.
+   *
+   * A comment node NEVER renders. `html: true` distinguishes `<!-- … -->` from
+   * `{# … #}` so the formatter restores the form the author wrote; both are
+   * equally invisible in output.
+   */
+  | { kind: 'comment'; value: string; html: boolean; span: Span }
   | ElementNode
   | IfNode
   | ForNode
@@ -166,6 +179,7 @@ export interface JsonLdNode {
 export const NODE_KINDS: readonly string[] = [
   'text',
   'interpolation',
+  'comment',
   'element',
   'if',
   'for',

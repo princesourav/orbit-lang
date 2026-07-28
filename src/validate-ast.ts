@@ -139,6 +139,20 @@ class AstValidator {
             this.invalid('text node value is missing or over the string cap');
           }
           break;
+        case 'comment':
+          /*
+           * A comment renders nothing, so a malformed one cannot reach a sink —
+           * but it is still a node in an executable artifact, and the rule here
+           * is that every field of every node is checked. An unchecked field is
+           * a field some later code path may start trusting.
+           */
+          if (typeof node.value !== 'string' || node.value.length > LIMITS.maxStringLength) {
+            this.invalid('comment node value is missing or over the string cap');
+          }
+          if (typeof node.html !== 'boolean') {
+            this.invalid('comment node is missing its html flag');
+          }
+          break;
         case 'interpolation':
           this.validateExpr(node.expr, 0);
           break;

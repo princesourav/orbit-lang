@@ -4,6 +4,14 @@ settings {
   storiesHeading: Text = "Latest stories" label "Stories heading"
 }
 ---
+{# Composition: a settings-driven component, a slotted component, and a loop
+   with an empty branch.
+
+   The `<if>` wrapper around the footer fill is the SLOT-TRANSPARENCY rule:
+   control-flow wrappers are transparent for slot attribution, so a wrapper
+   whose renderable children all carry `slot="footer"` fills the footer slot —
+   and renders nothing at all when the condition is false. If the branches
+   disagreed about the target slot the checker would reject it (O2085). #}
 <main class="home" id="main">
   <PromoBanner/>
   <Panel tone="calm">

@@ -124,6 +124,7 @@ const NOTES = new Map(Object.entries({
   O1090: 'Write `name="text"` or `name={expr}`. Unquoted values are not accepted.',
   O1091: 'Component props take whole expressions: `title={product.title}`, not `title="a {x}"`.',
   O1092: 'Supply an attribute name.',
+  O1096: 'The `on:name` or `@name` attribute form is RESERVED for a future version of Orbit and is not implemented. It is not banned on its merits like `onclick` — it is unclaimed syntax being claimed while that is still free. This version has no event bindings; client behaviour ships as platform runtime islands configured through data-* attributes.',
   O1093: 'Attribute names are lowercase.',
   O1094: 'Close the attribute value with `"`.',
   O1095: 'Interpolation in `style` is banned. Choose a class from a static set, or use a host `cssVar` helper.',

@@ -30,6 +30,7 @@ import {
 } from './ast';
 import {
   attrAllowed,
+  reservedAttrSyntax,
   attrRejection,
   BANNED_ELEMENTS,
   ELEMENT_ALLOWLIST,
@@ -640,24 +641,40 @@ class TemplateParser {
   }
 
   private skipComment(): void {
-    // positioned at `{#`
-    const at = this.s.posNow();
-    this.s.match('{#');
-    for (;;) {
-      if (this.s.eof()) this.fail('O1022', 'unterminated {# comment #}', undefined, at);
-      if (this.s.match('#}')) return;
-      this.s.next();
-    }
+    this.readComment(false);
   }
 
   private skipHtmlComment(): void {
+    this.readComment(true);
+  }
+
+  /**
+   * Read a comment and return it as a node.
+   *
+   * Comments used to be discarded here, so they never reached the AST and
+   * `orbit fmt` deleted every one of them — silently, and without failing a
+   * test, because a comment changes no rendered byte. Retaining them costs one
+   * node kind and a budget charge; discarding them cost authors the
+   * explanations they had written down.
+   */
+  private readComment(html: boolean): Extract<Node, { kind: 'comment' }> {
     const at = this.s.posNow();
-    this.s.match('<!--');
+    const open = html ? '<!--' : '{#';
+    const close = html ? '-->' : '#}';
+    const code = html ? 'O1023' : 'O1022';
+    const what = html ? '<!-- comment -->' : '{# comment #}';
+
+    this.s.match(open);
+    let value = '';
     for (;;) {
-      if (this.s.eof()) this.fail('O1023', 'unterminated <!-- comment -->', undefined, at);
-      if (this.s.match('-->')) return;
-      this.s.next();
+      if (this.s.eof()) this.fail(code, `unterminated ${what}`, undefined, at);
+      if (this.s.match(close)) break;
+      value += this.s.next();
+      if (value.length > LIMITS.maxStringLength) {
+        this.fail('O1054', 'comment exceeds the per-value string cap', undefined, at);
+      }
     }
+    return { kind: 'comment', value, html, span: { start: at, end: this.s.posNow() } };
   }
 
   private skipLeadingTrivia(): void {
@@ -1063,11 +1080,15 @@ class TemplateParser {
         );
       }
       if (this.s.startsWith('<!--')) {
-        this.skipHtmlComment();
+        const comment = this.readComment(true);
+        this.budget.charge(comment.span, ctx.depth);
+        nodes.push(comment);
         return false;
       }
       if (!ctx.verbatim && this.s.startsWith('{#')) {
-        this.skipComment();
+        const comment = this.readComment(false);
+        this.budget.charge(comment.span, ctx.depth);
+        nodes.push(comment);
         return false;
       }
       if (!ctx.verbatim && this.s.peek() === '{') {
@@ -1426,6 +1447,12 @@ class TemplateParser {
       if (seen.has(name)) this.fail('O1085', `duplicate attribute ${JSON.stringify(name)}`, undefined, at);
       seen.add(name);
 
+      // Reserved shapes are reported before the allowlist, so `on:click` says
+      // "reserved, not implemented" rather than "namespaced attributes are not
+      // allowed" — which is true of it and tells the author nothing.
+      const reserved = reservedAttrSyntax(name);
+      if (reserved !== undefined) this.fail('O1096', reserved, 'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes', at);
+
       if (!isComponent) {
         const reason = attrRejection(name);
         if (reason !== undefined) this.fail('O1086', `attribute ${JSON.stringify(name)} is not allowed: ${reason}`, undefined, at);
@@ -1473,6 +1500,28 @@ class TemplateParser {
   private readAttrName(isComponent: boolean): string {
     const at = this.s.posNow();
     const from = this.s.pos;
+
+    /*
+     * `@click` is RESERVED, not merely unknown.
+     *
+     * A future version of the language may bind events, and `@name` is one of
+     * the two shapes it would plausibly use. Claiming it now costs nothing;
+     * claiming it after themes exist is a breaking grammar change, because any
+     * theme that had used `@` for something else stops compiling.
+     *
+     * Caught here rather than in the allowlist because `@` is not an identifier
+     * start, so without this the author gets "expected an attribute name" —
+     * true, unhelpful, and indistinguishable from a typo.
+     */
+    if (this.s.peek() === '@') {
+      this.fail(
+        'O1096',
+        'the `@name` attribute form is reserved for a future version of Orbit and is not implemented',
+        'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes',
+        at,
+      );
+    }
+
     if (!isIdentStart(this.s.peek())) this.fail('O1092', 'expected an attribute name');
     this.s.next();
     if (isComponent) {
