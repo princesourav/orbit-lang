@@ -1,5 +1,26 @@
 # Orbit Roadmap — from v0.1 to best-in-industry
 
+> **Delivery status (2026-07-28).** The engineering through v1.0 has landed on
+> `main`. v0.2 (hardening), v0.5 (DX and tooling) and the v1.0 specification and
+> conformance work are done: 1,145 tests, a 620-case conformance corpus with
+> differential testing against a real WHATWG parser, error recovery, the
+> formatter and CLI, tree-sitter and TextMate grammars, the language server, the
+> playground, the documentation set, the LLM kit, the spec, and the governance
+> and stability policies.
+>
+> **What remains is not engineering.** These items need a person, money, or
+> other people, and are deliberately not faked:
+>
+> - a third-party security audit, and the grant applications to fund it;
+> - the npm trusted-publisher link (one-time setup in the npm UI);
+> - VS Code Marketplace and Linguist submissions;
+> - design-partner conversations and the funded bug bounty;
+> - Discord, and the Show HN launch itself.
+>
+> Post-1.0 work — the bytecode VM, streaming and fragment caching, the Rust/WASM
+> second implementation, allowlist profiles — is out of scope by decision and is
+> listed below for planning only.
+
 ## Positioning
 
 **Orbit's wedge is the empty quadrant: typed *and* safe for untrusted authors.** Every incumbent is one or the other — safe-but-untyped (Liquid, Latte, sandboxed Twig) or typed-but-trusted (templ, Askama, Maud) — and no incumbent can cross over without breaking its installed base ([competitor landscape](https://colorlib.com/wp/top-templating-engines-for-javascript/), [templ](https://github.com/a-h/templ)). "Best in industry" for Orbit therefore does **not** mean fastest engine or biggest ecosystem. It means:

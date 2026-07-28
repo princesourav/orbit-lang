@@ -74,7 +74,9 @@
     "conformance": "vite-node conformance/runner.mjs",
     "conformance:gen": "vite-node conformance/generate.mjs",
     "conformance:check": "vite-node conformance/generate.mjs --check",
-    "bench": "vite-node bench/run.mjs --"
+    "bench": "vite-node bench/run.mjs --",
+    "errors:check": "node scripts/gen-error-index.mjs --check",
+    "errors": "node scripts/gen-error-index.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

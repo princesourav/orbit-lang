@@ -14,7 +14,77 @@ at v1.0.
 
 ## [Unreleased]
 
-Nothing yet.
+Two milestones landed on `main` since 0.2.0. They are documented here rather
+than tagged, because tagging a release implies a published artifact and nothing
+has been published to npm yet.
+
+### v0.5 — developer experience
+
+#### Added
+
+- **Parser error recovery.** One pass now reports every error in a file
+  instead of stopping at the first. Recovery is *not* a salvage path: a
+  template that needed it is discarded whole and never reaches the checker,
+  serializer or interpreter, because an AST carrying error nodes leaves a
+  standing risk that some later code path treats a damaged template as
+  executable. Bounded by `LIMITS.maxParseErrorsPerTemplate`; forward progress
+  guaranteed by a fuzz property; cascading diagnostics suppressed, including
+  the closing tag of an element already rejected.
+- **Code-frame diagnostics** in the rustc/Elm tradition — source excerpt, a
+  caret run spanning the whole diagnostic, the fix-it inline. Handles tab
+  expansion, East-Asian wide glyphs, CRLF, long lines and tall spans. Colour is
+  opt-in.
+- **Canonical formatter.** One form, no options. Idempotent, AST-preserving,
+  and **rendering-preserving** — a break is only legal where the parser's
+  whitespace-collapsing rule makes it invisible in the output.
+- **`orbit` CLI**: `check` (with `--format json`) and `fmt` (with `--check` and
+  `--stdout`). `fmt` refuses to rewrite a file that does not parse.
+- **Tree-sitter grammar** with 63 highlight patterns, verified against every
+  shipped example, plus a **TextMate grammar** and language configuration.
+- **Language server** — diagnostics, position-aware completion, hover,
+  formatting. Compile-only: it never renders and never invokes a host filter.
+- **VS Code extension**, deliberately thin so every editor gets the same
+  features from the same server.
+- **Browser playground**: a single self-contained HTML file with escaping-context
+  visualization, budget meters and a sandboxed preview.
+- **Documentation set** — tutorial, safety rules, templates, components, types,
+  grammar, filters, limits, embedding guide, security model. Every code block is
+  compiled by CI, and blocks documented as errors must actually fail.
+- **LLM kit** — a system prompt and a generate → compile → repair eval harness
+  with 14 tasks, each targeting a habit carried over from another template
+  language. Offline provider included.
+- **`llms.txt` / `llms-full.txt`**, generated from the docs with a staleness gate.
+
+#### Fixed
+
+- Record keys are quoted when they are not valid identifiers, so JSON-LD
+  payloads like `{"@type": "Article"}` round-trip through the formatter.
+
+### v1.0 groundwork — specification and credibility
+
+#### Added
+
+- **Normative specification** (`spec/SPEC.md`), RFC 2119, with stated non-goals.
+- **Conformance corpus** — 620 language-agnostic JSON cases across 25
+  categories, a reference runner, and a documented host contract so a second
+  implementation can be verified rather than trusted.
+- **Differential testing against parse5**, a real WHATWG HTML parser. The corpus
+  captured its expectations from this implementation; this is the oracle it did
+  not write.
+- **`STABILITY.md`** — what semver covers, three API tiers, and the deliberate
+  exception that a security fix may reject a previously compiling program.
+- **`GOVERNANCE.md`** and a draft **`TRADEMARK.md`**.
+- **Trusted Types recipe** and a **non-JavaScript embedding guide**.
+- **Benchmark harness** — one scenario, one engine, no comparison table.
+- **Locale injection tests and documentation** for `formatDate`, including its
+  documented non-goals.
+
+#### Known divergence
+
+- Orbit emits U+0000 as bound; a WHATWG parser drops it in body text and
+  replaces it with U+FFFD in attributes and RCDATA. Pinned per context by
+  tests and documented in the spec rather than normalized away. Not a security
+  issue — a NUL cannot terminate an attribute, close an element or open a tag.
 
 ## [0.2.0] - 2026-07-28
 

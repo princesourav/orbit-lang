@@ -264,34 +264,62 @@ custody belong to the platform. That is the same split Liquid has lived under
 for fifteen years, and it is why the engine can be fully open without giving the
 platform away.
 
+## Tooling
+
+```sh
+npx orbit check src/themes/        # parse and check, with code frames
+npx orbit fmt   src/themes/        # canonical formatting
+npx orbit fmt --check src/themes/  # CI gate: fail if anything would change
+```
+
+| | |
+|---|---|
+| **CLI** | `orbit check` / `orbit fmt`. Multi-error output, `--format json` for editors and CI. |
+| **Formatter** | One canonical form, no options. Idempotent and rendering-preserving — formatting never changes output bytes. |
+| **Language server** | [`editors/lsp`](./editors/lsp/). Diagnostics, completion, hover, formatting. Compile-only: it never renders and never invokes a host filter. |
+| **VS Code** | [`editors/vscode`](./editors/vscode/). TextMate grammar plus the LSP client. |
+| **Neovim / Zed / Helix** | [`tree-sitter-orbit`](./tree-sitter-orbit/), verified to parse every shipped example. |
+| **Playground** | [`playground/`](./playground/). One self-contained HTML file — open it from `file://`, nothing uploaded. |
+| **LLM kit** | [`llm/`](./llm/). System prompt plus a generate → compile → repair eval harness. |
+| **Benchmarks** | [`bench/`](./bench/). One scenario, one engine, no comparison table. |
+
 ## Known gaps (honest list)
 
-Fixed in v0.2: the SECURITY.md fuzz-corpus overclaim (replaced by a real
-property-based suite), `extractAccessPlan` soundness holes, several runtime seam
-gaps, and the packaging/identity mismatch this README used to carry.
+Shipped since v0.1: parser error recovery with code frames, the canonical
+formatter and CLI, tree-sitter and TextMate grammars, the language server, the
+playground, the full documentation set, the LLM kit, host-injected locale data,
+the normative spec, and a 620-case conformance corpus with differential testing
+against a real WHATWG parser.
 
-Still open:
+Still open, and stated plainly:
 
-- **No parser error recovery.** The parser stops at the first error per file;
-  multi-diagnostic output is a checker-only feature today. Code frames and
-  multi-error recovery land in v0.5 — they are the prerequisite for an LSP.
-- **No editor tooling yet**: no LSP, no formatter, no tree-sitter grammar, no
-  playground, no docs site. All are v0.5.
+- **No third-party security audit.** The strongest correctness evidence today
+  is the differential suite against parse5 plus the property-based tests. An
+  audit is a funded, human activity that has not happened.
+- **No second implementation.** Two independent implementations passing one
+  corpus is the real credibility bar. The [corpus](./conformance/) exists to
+  make one verifiable; nobody has built one.
+- **Tree-walking interpreter.** Not optimized. ~0.5 ms for a 48-product
+  collection page, which is fine for edge rendering and is not a speed claim.
+  A bytecode VM is future work.
+- **npm publishing is not wired end to end.** The release workflow uses OIDC
+  trusted publishing, but the publisher link must be configured once by a human
+  in the npm UI. Nothing has been published.
+- **The VS Code extension is not on the Marketplace**, and the tree-sitter
+  grammar has not been submitted to Linguist. Both are deliberate human steps.
 - **No named filter arguments** (`img(x, widths: [...])`) — positional only.
-- **`formatDate` is English-only by default** and its timezone behavior is
-  caller-supplied; host-injected locale data lands in v1.0. Anything beyond that
-  belongs in a host filter today.
+- **`formatDate` applies no timezone conversion.** Month names are injectable;
+  everything beyond that belongs in a host filter, because a timezone database
+  in the engine would break determinism.
 - **Frontmatter defaults are literals only.** No `layout` frontmatter, no
-  `<match>/<case>`, no `t()` locales, no whitespace control — deliberate
-  deferrals, tracked as staged proposals.
+  `<match>/<case>`, no whitespace control — deliberate deferrals.
 - `first`/`last` take no count argument (they return `T?`).
 - Whitespace collapsing keeps single boundary spaces inside mixed text runs;
-  templates that need byte-exact spacing use `{" "}`.
-- **No normative spec and no conformance corpus yet.** Both are v1.0, along with
-  differential testing against real browser parsers. Until then the tests in
-  this repository are the specification, and they validate the implementation
-  against itself — which is exactly why the external oracle is on the roadmap.
-- **No third-party security audit yet.** Planned for v1.0.
+  templates needing byte-exact spacing use `{" "}`.
+- **The corpus captured its expectations from this implementation.** That
+  proves self-consistency, not correctness — which is exactly why the
+  [differential suite](./conformance/differential.test.mjs) checks escaping
+  against a parser this project did not write.
 
 ## Diagnostics
 
@@ -316,12 +344,26 @@ npm run typecheck                # tsc --noEmit
 node scripts/audit-claims.mjs    # every doc claim still has its evidence
 ```
 
-The suite covers the parser rejection matrix, the checker law and contract
-suite, per-context escaping matrices, interpreter budget trips plus determinism
-and statelessness, stdlib cap behavior, stored-AST poisoning defenses, and a
-byte-exact end-to-end render of a product-card plus collection page against a
-fake host. Property-based tests (fast-check) cover round-tripping, escaping
-oracles and budget monotonicity.
+1,145 tests. What they cover, and why each layer exists:
+
+| Layer | Covers |
+|---|---|
+| **Unit** | Parser rejection matrix, checker laws and contracts, per-context escaping matrices, budget trips, determinism and statelessness, stdlib caps, stored-AST poisoning defences. |
+| **Property** (fast-check) | Stored-AST round-trip integrity, escaping oracles, URL sink safety, fuel termination, budget monotonicity, cap enforcement, access-plan soundness. Example tests cover cases someone thought of; these cover the space between them. |
+| **Conformance** (620 cases) | Language-agnostic JSON. Pins observable behaviour so the language cannot drift silently, and lets a second implementation be verified rather than trusted. |
+| **Differential** (parse5) | Every escaping case rendered and fed to a real WHATWG parser. The corpus captured its expectations from this engine, so this is the oracle it did not write. |
+| **Docs** | Every ```orbit block in the documentation is compiled; blocks documented as errors must actually fail. |
+| **Examples** | Six real templates compiled, rendered, and asserted to be canonically formatted. |
+
+Additional gates:
+
+```sh
+npm run conformance:check   # the corpus is not stale
+npm run playground:check    # the built playground is not stale
+npm run llms:check          # llms.txt is not stale
+npm run bench               # one reproducible number
+npx vite-node llm/eval/run.mjs -- --provider mock   # LLM repair-loop evals
+```
 
 ## Contributing
 
@@ -332,13 +374,47 @@ the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Documents
 
+**Learning the language**
+
 | | |
 |---|---|
-| [CHANGELOG.md](./CHANGELOG.md) | What changed, per release |
-| [SECURITY.md](./SECURITY.md) | Threat model, reporting channel, 90-day disclosure policy, CVE path |
+| [docs/](./docs/) | Documentation index and reading order |
+| [Tutorial](./docs/language/tutorial.md) | Your first component, end to end |
+| [The two rules that will surprise you](./docs/language/safety.md) | No truthiness, and the optional law — read this one |
+| [Templates](./docs/language/templates.md) · [Components](./docs/language/components.md) · [Types](./docs/language/types.md) | The rest of the language |
+
+**Reference**
+
+| | |
+|---|---|
+| [Grammar](./docs/reference/grammar.md) | Full syntax and operator precedence |
+| [Filters](./docs/reference/filters.md) | All 19 stdlib filters, with their limitations |
+| [Limits](./docs/reference/limits.md) | Every cap and the code it trips |
+| [Error codes](./docs/reference/errors.md) | Every diagnostic, generated from source |
+
+**Embedding**
+
+| | |
+|---|---|
+| [Embedding guide](./docs/guides/embedding.md) | Types, filters, stored ASTs, access plans, budgets |
+| [Security model](./docs/guides/security-model.md) | Each guarantee, its mechanism, and what Orbit does *not* protect against |
+| [Trusted Types](./docs/guides/trusted-types.md) | Orbit as the server half of a browser-enforced pipeline |
+| [Non-JS hosts](./docs/guides/non-js-embedding.md) | Sidecar, precompiled AST, compile-only — with their real costs |
+
+**Specification and process**
+
+| | |
+|---|---|
+| [spec/SPEC.md](./spec/SPEC.md) | The normative specification |
+| [conformance/](./conformance/) | 620 language-agnostic cases; how to verify another implementation |
+| [STABILITY.md](./STABILITY.md) | What semver covers, API tiers, the security exception |
+| [GOVERNANCE.md](./GOVERNANCE.md) | Decisions, non-goals, how to propose a change |
+| [ROADMAP.md](./ROADMAP.md) | Where this is going and why |
+| [SECURITY.md](./SECURITY.md) | Threat model, reporting channel, 90-day disclosure, CVE path |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Dev setup, invariants, diagnostic codes, out-of-scope list |
-| [docs/compliance/claims.md](./docs/compliance/claims.md) | Every claim in these docs, mapped to its evidence |
-| [docs/compliance/cra-readiness.md](./docs/compliance/cra-readiness.md) | EU Cyber Resilience Act readiness (steward status, 24/72/14 reporting, SBOM, support window) |
+| [TRADEMARK.md](./TRADEMARK.md) | Draft policy — Apache-2.0 grants no trademark rights |
+| [docs/compliance/claims.md](./docs/compliance/claims.md) | Every claim in these docs, mapped to its evidence, gated in CI |
+| [docs/compliance/cra-readiness.md](./docs/compliance/cra-readiness.md) | EU CRA readiness: steward status, 24/72/14 reporting, SBOM |
 
 ## License
 
