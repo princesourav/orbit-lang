@@ -447,6 +447,27 @@ prove.
 | Access-plan containment holds PER UNIT under deferral: an island reads nothing its manifest did not name — "the manifest names every path the second pass will read" | src/access-plan.property.test.ts | test |
 | The first pass reads nothing it deferred, so the page plan stays sound — "the page never reads what it deferred, so its own plan stays sound too" | src/access-plan.property.test.ts | test |
 
+## CSS custom properties (the seventh escaping context)
+
+The one carve-out of the interpolated-`style` ban. Its safety argument is a
+claim about lexical form, so it is checked by something that parses CSS.
+
+| claim | evidence | kind |
+|---|---|---|
+| A `Color` reaches a CSS custom property and renders as `--accent:#1a73e8` — "emits a Color setting as a CSS custom property" | src/custom-properties.test.ts | test |
+| Several properties emit as declarations of ONE style attribute, in written order — "emits several properties as one style attribute, in written order" | src/custom-properties.test.ts | test |
+| The admitted type set is closed, driven from the exhaustive list of type kinds rather than a sample — "admits exactly the allowed kinds and rejects every other one" | src/custom-properties.test.ts | test |
+| A union is rejected, so a sink testing "assignable to String" would fail — "rejects a union, which is a String-shaped type the sink must not admit" | src/custom-properties.test.ts | test |
+| A non-literal property name is rejected at parse time — "rejects an interpolated property name at parse time" | src/custom-properties.test.ts | test |
+| Interpolated `style` is still rejected; `O1095` is unchanged — "does NOT loosen O1095: interpolated style is still a parse error" | src/custom-properties.test.ts | test |
+| The value is revalidated AT THE SINK, on the host-object path nothing else guards — "fails on a Color reaching the sink through the path nothing else guards" | src/custom-properties.test.ts | test |
+| No value through this sink can terminate the declaration, the attribute or the element — "emits nothing that closes the declaration, the attribute or the element" | src/custom-properties.test.ts | test |
+| The value validator admits exactly `#rrggbb`, property-tested — "the validator itself admits exactly #rrggbb" | src/custom-properties.test.ts | test |
+| Differential-tested against css-tree, a real CSS parser this project did not write: the emitted style attribute parses to exactly the declarations intended and no more | conformance/css-differential.test.mjs | test |
+| A hostile value never produces a second declaration — "never emits a second declaration, whatever the host supplies" | conformance/css-differential.test.mjs | test |
+| The closed-lexical-form rule is specified in prose for a second implementation | conformance/README.md | artifact |
+| The design, including why the rule does not generalise to Length or FontFamily | docs/design/custom-properties.md | artifact |
+
 ## The island swap script (runtime/)
 
 The project's first shipped client artifact, and the only component with ambient

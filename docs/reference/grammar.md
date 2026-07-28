@@ -152,6 +152,43 @@ prop      ::= name | name "=" '"' staticText '"' | name "=" "{" expr "}"
 A bare prop means `true`. Conditional props (`?=`) are rejected on component
 calls. Slot fills use a static `slot="name"` attribute on a child element.
 
+### CSS custom properties
+
+```
+customProperty ::= "--" name "=" "{" expr "}"
+```
+
+```orbit
+---
+component Promo
+settings {
+  accent: Color = #1a73e8
+}
+---
+<div class="promo" --accent={settings.accent}>promo</div>
+```
+
+renders `<div class="promo" style="--accent:#1a73e8">promo</div>`.
+
+This is the one carve-out of `O1095`, and it is narrow on purpose. Interpolated
+`style` stays banned: `style="color: {x}"` puts an arbitrary string in a CSS
+*declaration* position, where it can close the declaration and open another,
+while `--accent={x}` puts a validated seven-character token in a *value*
+position already proven to contain nothing but hex digits.
+
+| Rule | Diagnostic |
+|---|---|
+| The property name is static — never interpolated | `O1113` |
+| The value is an expression; a static property belongs in the stylesheet | `O1113` |
+| Only a type with a closed lexical form may enter — in this version, `Color` | `O2115` |
+| The value is revalidated at emission, not trusted from its type | `O4044` |
+
+No HTML attribute begins with a hyphen and the allowlist is closed, so `--name`
+cannot collide with an attribute that exists or could be added.
+
+Full design and the argument for why the rule does not generalise:
+[custom properties](../design/custom-properties.md).
+
 ### Server islands: `defer`
 
 `defer` marks a component to be rendered in a **second pass**, by the host,

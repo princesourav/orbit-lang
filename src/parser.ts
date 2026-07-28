@@ -1644,7 +1644,12 @@ class TemplateParser {
       const reserved = reservedAttrSyntax(name);
       if (reserved !== undefined) this.fail('O1103', reserved, 'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes', at);
 
-      if (!isComponent) {
+      // A custom property is not an attribute, so the attribute allowlist does
+      // not apply to it. It has its own closed rule instead: a static name, and
+      // a value whose type has a closed lexical form (checker, O2115).
+      const isCustomProperty = !isComponent && name.startsWith('--');
+
+      if (!isComponent && !isCustomProperty) {
         const reason = attrRejection(name);
         if (reason !== undefined) this.fail('O1086', `attribute ${JSON.stringify(name)} is not allowed: ${reason}`, undefined, at);
         if (!attrAllowed(name)) {
@@ -1676,7 +1681,24 @@ class TemplateParser {
         value = { form: 'bare' };
       }
 
-      if (!isComponent) {
+      if (isCustomProperty) {
+        /*
+         * Expression form only. A quoted value would be a static string, and a
+         * static custom property belongs in the stylesheet — where it costs
+         * nothing and needs no sink. The bare and conditional forms have no
+         * meaning here: there is no "present with no value" for a CSS
+         * declaration, and a conditionally-absent declaration is expressible by
+         * putting the element inside an <if>.
+         */
+        if (value.form !== 'expr') {
+          this.fail(
+            'O1113',
+            `${name} takes an expression: ${name}={expr}`,
+            'a static custom property belongs in the stylesheet',
+            at,
+          );
+        }
+      } else if (!isComponent) {
         this.validateElementAttr(tag, name, value, at);
       } else if (value.form === 'parts') {
         const hasExpr = value.parts.some((p) => p.kind === 'expr');
@@ -1684,7 +1706,9 @@ class TemplateParser {
           this.fail('O1091', 'component props take whole expressions, not text with islands', `write ${name}={expr}`, at);
         }
       }
-      attrs.push({ name, span: { start: at, end: this.s.posNow() }, value, isUrl });
+      const attr: Attr = { name, span: { start: at, end: this.s.posNow() }, value, isUrl };
+      if (isCustomProperty) attr.isCustomProperty = true;
+      attrs.push(attr);
     }
   }
 
@@ -1723,6 +1747,37 @@ class TemplateParser {
         'this version has no event bindings; behaviour ships as platform runtime islands configured through data-* attributes',
         at,
       );
+    }
+
+    /*
+     * `--accent` is a CSS CUSTOM PROPERTY, not an attribute.
+     *
+     * Unmistakable by construction: no HTML attribute begins with a hyphen, the
+     * allowlist is closed, and the only open families are `data-*` and
+     * `aria-*`. So this form cannot collide with an attribute that exists, one
+     * that could be added, or one the allowlist would ever admit.
+     *
+     * The name is read here and NEVER interpolated — a dynamic property name is
+     * a new injection surface for the same reason a dynamic attribute name
+     * would be. See docs/design/custom-properties.md.
+     */
+    if (!isComponent && this.s.peek() === '-') {
+      this.s.next();
+      if (this.s.peek() !== '-') {
+        this.fail(
+          'O1113',
+          'an attribute name cannot begin with `-`',
+          'a CSS custom property is written `--name={expr}`',
+          at,
+        );
+      }
+      this.s.next();
+      const nameFrom = this.s.pos;
+      while (isIdentPart(this.s.peek()) || this.s.peek() === '-') this.s.next();
+      if (this.s.pos === nameFrom) {
+        this.fail('O1113', 'a CSS custom property needs a name after `--`', 'write --accent={expr}', at);
+      }
+      return this.s.src.slice(from, this.s.pos);
     }
 
     if (!isIdentStart(this.s.peek())) this.fail('O1092', 'expected an attribute name');

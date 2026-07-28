@@ -1,0 +1,247 @@
+{
+  "category": "custom-properties-rejected",
+  "cases": [
+    {
+      "id": "custom-properties-rejected/string-value",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent={settings.label}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2115"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/union-value",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent={settings.tone}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2115"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/int-value",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent={1}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2115"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/bare-form",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/quoted-form",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent=\"#fff\">x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/conditional-form",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent?={true}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/interpolated-name",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --{settings.label}={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/empty-name",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/single-hyphen",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div -accent={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1113"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/interpolated-style-is-still-banned",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div style=\"color: {settings.tint}\">x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1095"
+      }
+    },
+    {
+      "id": "custom-properties-rejected/whole-style-expression-is-still-banned",
+      "category": "custom-properties-rejected",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div style={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1095"
+      }
+    }
+  ]
+}

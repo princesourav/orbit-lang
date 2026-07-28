@@ -259,6 +259,47 @@ script loads: `orbit:islands-filled` with `{ filled: string[] }`, and
 
 Caching policy remains the host's.
 
+## CSS custom properties: the closed-lexical-form rule
+
+`--accent={settings.tint}` emits `style="--accent:#1a73e8"`. The `custom-properties`
+cases assert exact bytes; this is the rule behind them, because an implementation
+that reproduced the bytes and not the rule would pass the accepted cases and be
+unsafe.
+
+**A value may enter this sink only if its type has a CLOSED LEXICAL FORM the
+implementation can enumerate completely.** In this version that is `Color`, and
+only `Color`. The permitted set is total:
+
+```
+#        exactly one, position 0
+0-9 a-f A-F   exactly six, positions 1-6
+anything else  cannot be emitted
+```
+
+There is no escape function for this context. An escaper transforms hostile
+input into safe output; this **refuses** it. That difference is the entire safety
+argument, and it is why the rule does not generalise: `Length` admits units and
+`calc()`, `FontFamily` admits quoted strings with escapes, and a URL admits
+everything the URL sink already handles. None of those can be written as a table
+this short, so none is admitted.
+
+An implementation **MUST**:
+
+- accept only a **static** property name, matching `--` followed by
+  `[a-zA-Z0-9_-]+`. An interpolated name is a parse error — a dynamic property
+  name is an injection surface for the same reason a dynamic attribute name is.
+- accept only the expression form. Bare, quoted and conditional forms are parse
+  errors; a *static* custom property belongs in the stylesheet.
+- **revalidate the value at emission** and fail the render when it is malformed,
+  rather than trusting the declared type. A `Color` arriving as a field of a
+  host object is validated nowhere upstream, so a sink that trusted the type
+  would inherit that gap.
+- emit all custom properties on one element as declarations of a **single**
+  `style` attribute, in written order, after any static `style` text. Two
+  `style` attributes is a document browsers resolve by keeping the first.
+- continue to reject interpolated `style` (`O1095`). This form is a carve-out of
+  exactly one shape and nothing wider.
+
 ## Two things the corpus does not prove
 
 Stated plainly, because a conformance suite that oversells itself is worse than

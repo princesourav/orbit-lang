@@ -33,7 +33,7 @@ import {
   VOID_ELEMENTS,
 } from './allowlists';
 import { OrbitAstError, type Diagnostic } from './diagnostics';
-import { isForbiddenKey, isHexColorLiteral } from './escape';
+import { isCustomPropertyName, isForbiddenKey, isHexColorLiteral } from './escape';
 import { LANGUAGE_VERSIONS, LIMITS } from './limits';
 
 export interface SerializedProgram {

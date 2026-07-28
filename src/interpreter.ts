@@ -28,6 +28,7 @@ import {
 } from './ast';
 import { OrbitRenderError, type RenderWarning, type Span } from './diagnostics';
 import {
+  customPropertyValueOk,
   escapeAttr,
   escapeRcdata,
   escapeText,
@@ -158,6 +159,32 @@ function rootOf(path: string): string {
   const bracket = path.indexOf('[');
   const end = Math.min(dot === -1 ? path.length : dot, bracket === -1 ? path.length : bracket);
   return path.slice(0, end);
+}
+
+/**
+ * The static text of a `style` attribute.
+ *
+ * Parse time already guarantees it is interpolation-free (O1095), so the parts
+ * are text and nothing else — but the walk is written to skip anything that is
+ * not, rather than to assume it, because this value is concatenated into an
+ * attribute the browser parses as CSS.
+ */
+function staticStyleTextOf(attr: Attr): string {
+  if (attr.value.form !== 'parts') return '';
+  let out = '';
+  for (const part of attr.value.parts) if (part.kind === 'text') out += part.value;
+  // Trim trailing whitespace and one separator by hand: the engine uses no
+  // regular expressions, so that a filter chain's cost stays predictable and
+  // there is no backtracking to budget for.
+  let end = out.length;
+  while (end > 0) {
+    const c = out.charCodeAt(end - 1);
+    const space = c === 0x20 || c === 0x09 || c === 0x0a || c === 0x0d;
+    const semi = c === 0x3b;
+    if (!space && !semi) break;
+    end -= 1;
+  }
+  return out.slice(0, end);
 }
 
 function isRangeValue(v: unknown): v is RangeValue {
@@ -562,10 +589,40 @@ class Interpreter {
   ): void {
     this.chargeElement(node.span);
     this.emit(`<${node.tag}`, node.span);
+
+    /*
+     * Custom properties are collected, not emitted in place: `--a` and `--b` on
+     * one element are two declarations of ONE `style` attribute, and emitting
+     * each as its own attribute would produce a duplicate-attribute document
+     * that browsers resolve by keeping the first.
+     *
+     * They merge with a static `style` if the element has one. That half is
+     * already parse-time-validated as interpolation-free (O1095), so merging
+     * weakens nothing about it.
+     */
+    const customProperties: string[] = [];
     for (const attr of node.attrs) {
       if (attr.name === 'slot' || attr.name === 'verbatim') continue;
+      if (attr.isCustomProperty === true) {
+        customProperties.push(this.customPropertyDeclaration(attr, scope));
+        continue;
+      }
+      if (attr.name === 'style' && customProperties.length >= 0) {
+        // Deferred below so the static half is emitted inside the same
+        // attribute as the properties rather than beside it.
+        continue;
+      }
       this.renderAttr(attr, scope, node.span);
     }
+
+    const staticStyle = node.attrs.find((a) => a.name === 'style' && a.isCustomProperty !== true);
+    if (staticStyle !== undefined || customProperties.length > 0) {
+      const head =
+        staticStyle === undefined ? '' : staticStyleTextOf(staticStyle);
+      const parts = head === '' ? customProperties : [head, ...customProperties];
+      if (parts.length > 0) this.emit(` style="${escapeAttr(parts.join(';'))}"`, node.span);
+    }
+
     this.emit('>', node.span);
     if (node.content === 'void') return;
     const childCtx: EmitCtx = { rcdata: node.content === 'rcdata' };
@@ -600,6 +657,36 @@ class Interpreter {
         return;
       }
     }
+  }
+
+  /**
+   * One `--name:value` declaration, validated at the sink.
+   *
+   * The declared type is NOT taken as evidence. `isHexColorLiteral` guards
+   * merchant settings and component-entry props, but a `Color` arriving as a
+   * page binding or as a field of a host object reaches a sink unvalidated
+   * today, so a sink that trusted the type would inherit that hole. This is the
+   * rule URLs already follow (SPEC §3.3): checked at the sink, never trusted
+   * from the type.
+   *
+   * A malformed value FAILS the render rather than being replaced. Unlike a
+   * blocked URL — where a placeholder still yields a usable page — a colour the
+   * host declared and did not supply is data contradicting its own declaration,
+   * and rendering something plausible instead would hide it.
+   */
+  private customPropertyDeclaration(attr: Attr, scope: Scope): string {
+    if (attr.value.form !== 'expr') {
+      this.fail('O4044', `${attr.name} needs an expression`, attr.span);
+    }
+    const value = this.evalExpr(attr.value.expr, scope);
+    if (!customPropertyValueOk(value)) {
+      this.fail(
+        'O4044',
+        `${attr.name} received ${JSON.stringify(String(value))}, which is not a #rrggbb Color`,
+        attr.span,
+      );
+    }
+    return `${attr.name}:${value}`;
   }
 
   private assertNotHtml(v: unknown, span: Span): unknown {

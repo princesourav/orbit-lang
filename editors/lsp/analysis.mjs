@@ -146,6 +146,20 @@ const MARKER_DOCS = {
 };
 
 /**
+ * A CSS custom property is not an attribute, and the hover has to say why it is
+ * allowed where an interpolated `style` is not.
+ */
+const CUSTOM_PROPERTY_DOC =
+  '**`--name={expr}`** — a CSS custom property.\n\n' +
+  "Emitted into the element's `style` attribute as `--name:value`. This is the " +
+  'one carve-out of the interpolated-`style` ban (`O1095`), and it is narrow: ' +
+  'the property name is static, and only a type whose lexical form the engine ' +
+  'can enumerate may reach the sink. In this version that is `Color` — exactly ' +
+  'six hex digits — so the sink refuses anything else rather than escaping it.\n\n' +
+  'The value is revalidated at emission rather than trusted from its declared ' +
+  'type, because a `Color` on a host object is checked nowhere else.';
+
+/**
  * Types a `props` block may declare, with the note a reader needs at the moment
  * they are choosing one.
  *
@@ -349,6 +363,8 @@ export function hover(source, word, linePrefix = '') {
   if (setting !== undefined) {
     return `\`${word}\` — setting (\`${setting.setting.control}\`)`;
   }
+
+  if (word.startsWith('--')) return CUSTOM_PROPERTY_DOC;
 
   if (MARKER_DOCS[word] !== undefined) return MARKER_DOCS[word];
 

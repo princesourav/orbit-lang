@@ -64,6 +64,7 @@
 ; component renders — not an attribute the component receives.
 ((attribute_name) @keyword
  (#eq? @keyword "defer"))
+(custom_property_name) @property
 (attribute_name) @attribute
 (quoted_attribute_value) @string
 (attribute_text) @string

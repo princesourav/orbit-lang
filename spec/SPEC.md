@@ -53,7 +53,7 @@ The full grammar is normative and given in
 
 ### 3.1 Contexts
 
-An implementation **MUST** recognize exactly six contexts:
+An implementation **MUST** recognize exactly seven contexts:
 
 | Context | Assigned when the interpolation is | Escapes |
 |---|---|---|
@@ -63,6 +63,7 @@ An implementation **MUST** recognize exactly six contexts:
 | URL-ATTR | the value of a URL-bearing attribute | §3.3, then ATTR |
 | JSON-LD | inside `<json-ld>` | §3.4 |
 | RAWTEXT | — | unreachable |
+| CSS-CUSTOM-PROPERTY | the value of a `--name={…}` binding | §3.6 |
 
 ### 3.2 RAWTEXT is unreachable
 
@@ -110,6 +111,33 @@ serialize it as JSON in which `<`, `>`, `&`, `/`, U+2028 and U+2029 are emitted
 as `\uXXXX` escapes, so the payload cannot terminate the element containing it.
 Only primitives, records, lists and `Url` **MAY** appear; `Html` **MUST** be
 rejected. Nesting depth **MUST** be bounded.
+
+### 3.6 CSS custom properties
+
+An element **MAY** bind a value to a CSS custom property: `--name={expr}`.
+An implementation **MUST** emit these as declarations of a single `style`
+attribute, in written order, following any static `style` text.
+
+The property name **MUST** be static, matching `--` followed by one or more of
+`[a-zA-Z0-9_-]`. An interpolated property name **MUST** be rejected.
+
+A value **MAY** enter this context only if its type has a **closed lexical
+form** the implementation can enumerate completely. An implementation **MUST**
+enumerate the admitted types explicitly; in this version the set is exactly
+`{ Color }`. `String` **MUST NOT** be admitted, nor any type whose lexical
+form cannot be enumerated.
+
+The permitted value set for `Color` is total: `#` followed by exactly six
+hexadecimal digits. Nothing else **MAY** be emitted. There is consequently no
+escape function for this context — the implementation **MUST** refuse a value
+outside the set rather than transform it.
+
+An implementation **MUST** revalidate the value at emission and **MUST NOT**
+treat the declared type as evidence that it is well-formed, for the same reason
+§3.3 gives for URLs. A malformed value **MUST** fail the render.
+
+§4's prohibition on an interpolated `style` attribute is unchanged. This form
+is a carve-out of exactly one shape.
 
 ### 3.5 Attribute quoting
 

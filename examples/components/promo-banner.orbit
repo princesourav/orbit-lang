@@ -15,11 +15,18 @@ settings {
    comparison is a compile error, not a silently-false branch.
 
    Note what is NOT here: `style="..."` with an interpolation. Style attributes
-   are static-only (O1095). Themeable values travel as data-* attributes and a
-   class from a closed set; the stylesheet does the rest. #}
+   are static-only (O1095), because a string in a CSS declaration position can
+   close the declaration and open another.
+
+   `--promo-accent={settings.accent}` is the one carve-out, and it is narrow:
+   a static property name, and a value whose type has a lexical form the engine
+   can enumerate completely. A Color is exactly six hex digits, so the sink can
+   refuse everything else rather than try to escape it — and it revalidates at
+   emission rather than trusting the type. `padding` stays a data-* attribute
+   because a Range is a finite set the stylesheet can enumerate. #}
 <aside
   class="promo promo--{settings.layout}"
-  data-accent={settings.accent}
+  --promo-accent={settings.accent}
   data-padding={settings.padding}
 >
   <if {settings.showBadge}><span class="promo__badge">Offer</span></if>

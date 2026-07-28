@@ -269,6 +269,61 @@ export function isHexColorLiteral(s: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// CSS-CUSTOM-PROPERTY — the seventh context
+// ---------------------------------------------------------------------------
+
+/**
+ * The value half of `--accent={settings.accent}`.
+ *
+ * A seventh context rather than a reuse of ATTR, because a custom property is
+ * substituted by the browser into arbitrary later CSS positions — a `color`, a
+ * `background`, inside `calc()`, inside a `url()` if some stylesheet says so.
+ * What is inert in an attribute is not automatically inert there.
+ *
+ * The analysis is short because the context is defined by what may ENTER it:
+ *
+ *     #  exactly one, position 0
+ *     0-9 a-f A-F  exactly six, positions 1-6
+ *     everything else  cannot be emitted at all
+ *
+ * So there is no escape function here. An escaper transforms hostile input into
+ * safe output; this REFUSES it. That difference is the whole safety argument,
+ * and it is why the design does not generalise to `Length` or `FontFamily`,
+ * whose lexical forms cannot be written as a table this short.
+ *
+ * The declared type is deliberately not taken as evidence. `isHexColorLiteral`
+ * is applied to merchant settings and component-entry props, but a `Color`
+ * arriving as a page binding or as a field of a host object reaches a sink
+ * unvalidated — so a sink that trusted the type would inherit that hole. This
+ * is the same rule URLs already follow: checked at the sink, never trusted from
+ * the type.
+ */
+export function customPropertyValueOk(value: unknown): value is string {
+  return typeof value === 'string' && isHexColorLiteral(value);
+}
+
+/**
+ * A CSS custom property NAME, as written in the template.
+ *
+ * Static by construction — the parser never lets one be interpolated — so this
+ * is a structural re-check for stored trees rather than a runtime guard against
+ * template input.
+ */
+export function isCustomPropertyName(name: string): boolean {
+  if (!name.startsWith('--') || name.length < 3) return false;
+  for (let i = 2; i < name.length; i += 1) {
+    const c = name.charCodeAt(i);
+    const digit = c >= 0x30 && c <= 0x39;
+    const lower = c >= 0x61 && c <= 0x7a;
+    const upper = c >= 0x41 && c <= 0x5a;
+    const dash = c === 0x2d;
+    const underscore = c === 0x5f;
+    if (!digit && !lower && !upper && !dash && !underscore) return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Registry hardening
 // ---------------------------------------------------------------------------
 

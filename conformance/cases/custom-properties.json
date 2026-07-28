@@ -1,0 +1,166 @@
+{
+  "category": "custom-properties",
+  "cases": [
+    {
+      "id": "custom-properties/one-property",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --accent={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"--accent:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/two-properties-one-style-attribute",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --a={settings.tint} --b={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"--a:#1a73e8;--b:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/merges-with-a-static-style",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div style=\"display:grid\" --accent={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"display:grid;--accent:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/static-half-trailing-separator",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div style=\"display:grid;\" --accent={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"display:grid;--accent:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/alongside-ordinary-attributes",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div class=\"a\" --accent={settings.tint} id=\"b\">x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a\" id=\"b\" style=\"--accent:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/on-a-void-element",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<img src=\"/a.png\" alt=\"\" --accent={settings.tint}/>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img src=\"/a.png\" alt=\"\" style=\"--accent:#1a73e8\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "custom-properties/hyphenated-and-underscored-names",
+      "category": "custom-properties",
+      "template": "---\npage page\nsettings {\n  tint: Color = #1a73e8 label \"Tint\"\n  label: Text = \"hi\" label \"Label\"\n  tone: Select(\"a\", \"b\") = \"a\" label \"Tone\"\n}\n---\n<div --brand-accent_2={settings.tint}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"--brand-accent_2:#1a73e8\">x</div>",
+        "warnings": []
+      }
+    }
+  ]
+}

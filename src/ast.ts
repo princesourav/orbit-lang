@@ -106,6 +106,19 @@ export interface Attr {
     | { form: 'conditional'; expr: Expr };
   /** Statically known: this attribute is in the closed URL-attribute table. */
   isUrl: boolean;
+  /**
+   * A CSS CUSTOM PROPERTY, not an attribute: `--accent={settings.accent}`.
+   *
+   * `name` holds the property including its leading `--`. Custom properties do
+   * not reach the output as attributes — they are collected into one `style`
+   * attribute at emission — so nothing that walks attributes may treat one as
+   * an ordinary name.
+   *
+   * The flag exists rather than a `name.startsWith('--')` test at each site
+   * because "is this an attribute or a CSS sink" decides which escaping context
+   * applies, and that question must have one answer computed once.
+   */
+  isCustomProperty?: true;
 }
 
 export type Node =

@@ -329,6 +329,13 @@ module.exports = grammar({
           '=',
           field('value', alias($.interpolation, $.expression_value)),
         ),
+        // --name={expr} — a CSS custom property, not an attribute. No HTML
+        // attribute begins with a hyphen, so this cannot collide with one.
+        seq(
+          field('name', alias(/--[a-zA-Z0-9_-]+/, $.custom_property_name)),
+          '=',
+          field('value', $.interpolation),
+        ),
         // name="text {expr} text" — quoted value with islands
         seq(field('name', $.attribute_name), '=', field('value', $.quoted_attribute_value)),
         // name — bare flag / bare component prop (true)

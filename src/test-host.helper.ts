@@ -33,6 +33,11 @@ export function makeRegistry(): TypeRegistry {
   registry.defineObject('Banner', {
     style: t.union('info', 'warn'),
     text: t.string(),
+    // A `Color` on a host OBJECT — the one route to a sink that nothing
+    // validates upstream. Settings and component-entry props are both checked;
+    // this is not, which is why the custom-property sink revalidates rather
+    // than trusting the declared type.
+    tint: t.color(),
   });
   return registry;
 }

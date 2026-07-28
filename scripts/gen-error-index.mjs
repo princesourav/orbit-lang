@@ -144,6 +144,7 @@ const NOTES = new Map(Object.entries({
   O1110: 'A case takes a string literal or the bare marker `default`: `<case "new">`, `<case default>`.',
   O1111: 'A `<match>` with no arms matches nothing. Add a `<case>`.',
   O1112: '`defer` is a bare marker: `<Component defer/>`. Wrap the call in `<if>` to make the placeholder conditional.',
+  O1113: 'A CSS custom property is `--name={expr}`: a static name, an expression value. A static property belongs in the stylesheet.',
 
   // -- O2xxx: signatures ------------------------------------------------------
   O2010: 'Remove the duplicate prop declaration.',
@@ -221,6 +222,7 @@ const NOTES = new Map(Object.entries({
   O2112: 'An Html value cannot be serialized into an island manifest without losing its trust obligation. Pass the source String and sanitize inside the component.',
   O2113: 'Islands do not nest: a chain of round trips has no bound. Drop `defer` from one of them.',
   O2114: 'On a deferred call the children are the placeholder fallback, so a `slot=` fill has nothing to fill. Render it inside the component.',
+  O2115: 'A CSS custom property admits only types whose lexical form the engine can enumerate. In this version that is `Color`.',
 
   // -- O3xxx: truthiness ------------------------------------------------------
   O3007: 'There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`.',
@@ -262,6 +264,7 @@ const NOTES = new Map(Object.entries({
   O4040: 'No `<case>` matched and there is no default. The checker proved the arms cover the union, so the host supplied a value outside the type it declared.',
   O4041: 'The `<match>` subject was not a string at runtime — the host data contradicts its declared type.',
   O4042: 'Too many deferred components in one render. Each island is a second request the host must make.',
+  O4044: 'A CSS custom property received something that is not a `#rrggbb` Color. The sink revalidates rather than trusting the declared type, because a Color on a host object is checked nowhere else.',
 
   // -- O49xx: render warnings (non-fatal) -------------------------------------
   O4900: 'Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead.',
@@ -293,12 +296,12 @@ const NOTES = new Map(Object.entries({
  */
 const MULTI_MESSAGE = new Set([
   'O1041', 'O1045', 'O1046', 'O1050', 'O1051', 'O1054', 'O1060', 'O1062',
-  'O1063', 'O1068', 'O1107', 'O1110',
+  'O1063', 'O1068', 'O1107', 'O1110', 'O1113',
   'O2011', 'O2015', 'O2031', 'O2037', 'O2060', 'O2061', 'O2074',
   'O2100', 'O2101', 'O2102', 'O2103', 'O2105', 'O2109',
   'O3007',
   'O4001', 'O4011', 'O4013', 'O4016', 'O4020', 'O4024', 'O4025', 'O4026',
-  'O4038', 'O4039',
+  'O4038', 'O4039', 'O4044',
 ]);
 
 // ---------------------------------------------------------------------------

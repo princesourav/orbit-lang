@@ -544,6 +544,32 @@ class Checker {
       this.reportOptionalLaw(expr, type, expr.span);
       return;
     }
+    /*
+     * A CSS custom property admits ONE type, and the list is closed by
+     * construction rather than by omission.
+     *
+     * `Color` is admissible because its values are exactly six hex digits after
+     * a `#` — a lexical form the engine can enumerate completely, which is what
+     * makes the sink's validator total rather than best-effort. That argument
+     * does not transfer: `Length` admits units and `calc()`, `FontFamily`
+     * admits quoted strings with escapes, and a URL admits everything the URL
+     * sink already spends sixty lines on. Each would need its own analysis.
+     *
+     * Checked before every other rule below so the message names the sink the
+     * author actually wrote, rather than reporting through the ordinary
+     * attribute path and saying something true about attributes.
+     */
+    if (attr.isCustomProperty === true) {
+      if (type.kind !== 'color') {
+        this.report(
+          'O2115',
+          `${attr.name} takes a Color, found ${typeToString(type)}`,
+          expr.span,
+          'a CSS custom property admits only types whose lexical form the engine can enumerate; in this version that is Color',
+        );
+      }
+      return;
+    }
     if (type.kind === 'html') {
       this.report('O2076', 'Html cannot appear in attributes (element-content only)', expr.span);
       return;

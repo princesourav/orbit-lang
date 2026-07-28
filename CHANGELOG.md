@@ -14,6 +14,48 @@ at v1.0.
 
 ## [Unreleased]
 
+### CSS custom properties — the seventh escaping context (Phase J3)
+
+Closes the 12.1% of a real block registry that Phase D found carrying a merchant
+`Color` setting with nowhere to go.
+
+#### Added
+
+- **`--accent={settings.accent}`** emits `style="--accent:#1a73e8"`. Several
+  properties on one element become declarations of a single `style` attribute,
+  merged after any static `style` text.
+- **A seventh escaping context**, defined by what may ENTER it rather than by
+  what is escaped leaving it: `#` plus exactly six hex digits, and nothing else
+  can be emitted. There is no escape function — an escaper transforms hostile
+  input, this refuses it, and that difference is the whole safety argument.
+- **`Color` only, and the closure is tested exhaustively.** The type-kind test
+  is driven from the full list of `Type` members rather than a sample, so a new
+  type added to the language fails it until someone decides in writing which
+  side of the line it is on.
+- **Differential-tested against css-tree**, a real CSS parser this project did
+  not write. A soft validator does not usually produce a parse error; it
+  produces a second declaration nobody asked for, so the property asserted is
+  that the emitted attribute parses to exactly the declarations intended.
+- Diagnostics: `O1113` (malformed or interpolated property name; non-expression
+  value), `O2115` (a type the sink does not admit), `O4044` (the value was not a
+  `#rrggbb` `Color` at render time).
+- Conformance category `custom-properties`, with the closed-lexical-form rule in
+  prose in `conformance/README.md`.
+
+#### Fixed
+
+- **The sink revalidates rather than trusting the declared type.**
+  `isHexColorLiteral` guards merchant settings and component-entry props, but a
+  `Color` arriving as a page binding or as a field of a host object was
+  validated nowhere — harmless while the escapers handled those bytes, and
+  fatal to a CSS sink that assumed six hex digits. Validation happens at
+  emission, as URL safety already does (SPEC §3.3).
+
+**`O1095` is unchanged.** Interpolated `style` is still a parse error. This is a
+carve-out of exactly one shape and nothing wider, and
+`docs/design/custom-properties.md` states why the argument does not transfer to
+`Length`, `FontFamily` or a background URL.
+
 ### Server islands (Phase E0)
 
 #### Added
