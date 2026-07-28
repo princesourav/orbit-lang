@@ -258,6 +258,20 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## Documentation
+
+| claim | evidence | kind |
+|---|---|---|
+| Every Orbit code block in the documentation compiles — "contains orbit code blocks to check" plus one generated case per block | docs/docs.test.mjs | test |
+| Blocks documented as compile errors are asserted to fail, not merely excluded | docs/docs.test.mjs | test |
+| The language is documented: tutorial, safety rules, markup, components, types | docs/language/tutorial.md | artifact |
+| The two safety laws are documented with their real diagnostic output | docs/language/safety.md | artifact |
+| Every stdlib filter is documented with signature, semantics and limitations | docs/reference/filters.md | artifact |
+| Every cap is documented with its value and diagnostic code | docs/reference/limits.md | artifact |
+| The grammar and full operator precedence table are documented | docs/reference/grammar.md | artifact |
+| The host seam is documented end to end, including stored-AST signing and access plans | docs/guides/embedding.md | artifact |
+| The threat model states explicitly what Orbit does NOT protect against | docs/guides/security-model.md | artifact |
+
 ## Playground
 
 | claim | evidence | kind |
