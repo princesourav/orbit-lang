@@ -239,6 +239,25 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | Recovery always terminates and makes forward progress, including on adversarial input — "makes forward progress on adversarial input" | src/recovery.test.ts | test |
 | Every recovered diagnostic carries a span the code frame can render — "never emits a diagnostic without a span" | src/recovery.test.ts | test |
 
+## Formatter and CLI
+
+| claim | evidence | kind |
+|---|---|---|
+| The formatter is idempotent: formatting twice equals formatting once — "is idempotent" | src/formatter.test.ts | test |
+| Formatted output always parses — "produces output that still parses" | src/formatter.test.ts | test |
+| Formatting preserves the AST structurally — "preserves the AST: the formatted source serializes identically" | src/formatter.test.ts | test |
+| Formatting never changes rendered bytes — "renders identically before and after formatting" | src/formatter.test.ts | test |
+| Formatting never changes what a shipped example renders — "formatting never changes what an example renders" | examples/examples.test.mjs | test |
+| Every shipped example is already in canonical format — "every example is already in canonical format" | examples/examples.test.mjs | test |
+| The formatter never breaks a line where that would alter rendering — "does not break a line where doing so would add a space" | src/formatter.test.ts | test |
+| `<pre>` and RCDATA content are reproduced without reflowing — "reproduces a pre subtree exactly", "does not reflow RCDATA content" | src/formatter.test.ts | test |
+| Expressions round-trip with minimal parentheses and correct pipe precedence — "keeps parentheses that are load-bearing", "prints the pipe as the loosest operator without inventing parentheses" | src/formatter.test.ts | test |
+| `orbit check` reports every error in a file with a code frame and exits 1 — "exits 1 and reports every error in a file, with a code frame" | src/cli.test.mts | test |
+| `orbit check --format json` emits a stable machine-readable shape — "emits machine-readable JSON on --format json" | src/cli.test.mts | test |
+| `orbit fmt --check` reports without writing and exits 1 — "--check reports without writing and exits 1" | src/cli.test.mts | test |
+| `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
+| No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
+
 ## Editor tooling
 
 | claim | evidence | kind |

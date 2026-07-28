@@ -25,6 +25,8 @@ import { parseProgram } from '../src/parser.ts';
 import { check } from '../src/checker.ts';
 import { extractAccessPlan } from '../src/host.ts';
 import { render } from '../src/interpreter.ts';
+import { formatProgram } from '../src/formatter.ts';
+import { serializeProgram } from '../src/validate-ast.ts';
 import { t, TypeRegistry } from '../src/types.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -272,5 +274,44 @@ describe('examples/', () => {
     const out = render(program, 'article', { hostFilters: HOST_FILTERS, bindings: BINDINGS, now: () => 0 });
     expect(out.ok).toBe(true);
     expect(out.warnings.map((w) => w.code)).toContain('O4902');
+  });
+
+  it('every example is already in canonical format', () => {
+    // The examples are the formatter's most honest test: they were written by
+    // hand, not generated to please it. If `orbit fmt` would rewrite them,
+    // either the examples drifted or the canon changed — both need a human.
+    const { program } = compileAll();
+    const formatted = formatProgram(program);
+    for (const file of FILES) {
+      const parsed = parseProgram([file]);
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) continue;
+      const name = [...parsed.program.templates.keys()][0];
+      // Compare with line endings normalized: git may check these out as CRLF
+      // on Windows, and that is not a formatting defect.
+      const onDisk = file.source.split('\r\n').join('\n');
+      expect(formatted.get(name), `${file.name} is not canonically formatted`).toBe(onDisk);
+    }
+  });
+
+  it('formatting never changes what an example renders', () => {
+    const { program } = compileAll();
+    const formatted = formatProgram(program);
+    const refiles = [...formatted].map(([name, source]) => ({ name: `${name}.orbit`, source }));
+    const reparsed = parseProgram(refiles);
+    expect(reparsed.ok).toBe(true);
+    if (!reparsed.ok) return;
+
+    // Spans move when text moves; structure must not.
+    const strip = (v) =>
+      JSON.parse(JSON.stringify(v, (k, x) => (k === 'span' || k === 'nodeCount' ? undefined : x)));
+    expect(strip(serializeProgram(reparsed.program))).toEqual(strip(serializeProgram(program)));
+
+    for (const entry of ['collection', 'article']) {
+      const before = render(program, entry, { hostFilters: HOST_FILTERS, bindings: BINDINGS, now: () => 0 });
+      const after = render(reparsed.program, entry, { hostFilters: HOST_FILTERS, bindings: BINDINGS, now: () => 0 });
+      expect(before.ok && after.ok).toBe(true);
+      if (before.ok && after.ok) expect(after.html).toBe(before.html);
+    }
   });
 });

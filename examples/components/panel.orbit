@@ -8,18 +8,13 @@ slots {
   footer?
 }
 ---
-{# A layout component with three slots: a REQUIRED `header`, an OPTIONAL
-   `footer`, and the default slot (declared implicitly by `<slot/>`).
-   Slot fills are written by the caller and render in the CALLER's scope. #}
 <section class="panel panel--{tone}">
   <header class="panel__header">
     <slot name="header"/>
   </header>
-
   <div class="panel__body">
     <slot/>
   </div>
-
   <footer class="panel__footer">
     <slot name="footer"/>
   </footer>

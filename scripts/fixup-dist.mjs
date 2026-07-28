@@ -22,7 +22,7 @@
  */
 
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -257,9 +257,39 @@ async function main() {
     }
   }
 
+  const shebanged = await addCliShebang(path.join(ROOT, 'dist', 'cli', 'cli.js'));
+
   process.stdout.write(
-    `fixup-dist: wrote type markers; rewrote specifiers in ${rewritten}/${files.length} dist/esm files\n`
+    `fixup-dist: wrote type markers; rewrote specifiers in ${rewritten}/${files.length} dist/esm files` +
+      `${shebanged ? '; added CLI shebang' : ''}\n`
   );
+}
+
+/**
+ * Prepend `#!/usr/bin/env node` to the built CLI.
+ *
+ * npm creates a shim on Windows regardless, but on Linux and macOS it symlinks
+ * the file into .bin and the kernel needs the interpreter line to execute it —
+ * without this, `orbit` installs cleanly and then fails with an exec format
+ * error. tsc has no banner option, so it is added here.
+ *
+ * Also marks the file executable where the platform has a mode bit.
+ */
+async function addCliShebang(cliPath) {
+  let source;
+  try {
+    source = await readFile(cliPath, 'utf8');
+  } catch {
+    return false; // build:cli did not run; the caller's checks report that
+  }
+  if (source.startsWith('#!')) return false;
+  await writeFile(cliPath, `#!/usr/bin/env node\n${source}`, 'utf8');
+  try {
+    await chmod(cliPath, 0o755);
+  } catch {
+    // Windows has no executable bit; npm's shim handles it there.
+  }
+  return true;
 }
 
 const invokedDirectly =

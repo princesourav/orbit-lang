@@ -1,35 +1,11 @@
 ---
 page article
 ---
-{# A rich-text page. Three things worth reading closely:
-
-   1. `<title>` is RCDATA. Interpolation is allowed there and is escaped with
-      the RCDATA rules, but an Html value can never render inside it (O2075).
-   2. `<json-ld>` takes exactly one record expression and is serialized by the
-      engine — strings are emitted with `<`, `>`, `&` and `/` escaped as \uXXXX,
-      so the payload can never close the script element it lives in.
-   3. `richtext` is a HOST filter declared `unsafeHtml: true`. Its return type
-      is Html, the engine's terminal type: it renders unescaped, only in
-      element content, and every call site raises the O2071 warning. The host
-      owns the sanitizer; the engine only owns the fact that you were told. #}
 <title>{article.title} - {shopName}</title>
-
 <main class="article" id="main">
-  <json-ld>{{
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: article.title,
-    datePublished: article.publishedAt,
-    url: article.url,
-    author: {
-      "@type": "Person",
-      name: article.author.name
-    }
-  }}</json-ld>
-
+  <json-ld>{{"@context": "https://schema.org", "@type": "Article", headline: article.title, datePublished: article.publishedAt, url: article.url, author: {"@type": "Person", name: article.author.name}}}</json-ld>
   <header class="article__header">
     <h1 class="article__title">{article.title}</h1>
-
     <p class="article__byline">
       <if {article.author.avatar != none}>
         <img
@@ -41,32 +17,25 @@ page article
           loading="lazy"
         />
       </if>
-
       <if {article.author.url != none}>
         <a class="article__author" href={article.author.url} rel="author">{article.author.name}</a>
       </if>
-      <else>
-        <span class="article__author">{article.author.name}</span>
-      </else>
-
+      <else><span class="article__author">{article.author.name}</span></else>
       <time class="article__date" datetime={article.publishedAt}>
         {article.publishedAt |> formatDate("MMMM D, YYYY")}
       </time>
     </p>
-
     <if {size(article.tags) > 0}>
       <ul class="article__tags">
         <for tag of={article.tags} limit={8}>
-          <li class="article__tag"><a href="/blog/tagged/{tag |> slugify}">{tag}</a></li>
+          <li class="article__tag">
+            <a href="/blog/tagged/{tag |> slugify}">{tag}</a>
+          </li>
         </for>
       </ul>
     </if>
   </header>
-
-  <div class="article__body">
-    {article.bodyHtml |> richtext}
-  </div>
-
+  <div class="article__body">{article.bodyHtml |> richtext}</div>
   <footer class="article__footer">
     <p class="article__summary">{article.excerpt ?? "Thanks for reading."}</p>
   </footer>

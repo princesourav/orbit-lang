@@ -72,6 +72,9 @@ export {
   unwrapOptional,
 } from './types';
 export { check, type CheckOptions, type CheckResult } from './checker';
+// The canonical formatter. Note there are deliberately no options: one
+// canonical form, decided here, is the whole point.
+export { formatProgram, formatTemplate } from './formatter';
 export {
   escapeAttr,
   escapeRcdata,

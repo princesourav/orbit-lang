@@ -27,5 +27,8 @@
     // `process`/`Buffer`/`console` reference a compile error. lib excludes DOM too.
     "types": []
   },
-  "include": ["src"]
+  "include": ["src"],
+  // src/cli.ts is the one file allowed to import node builtins; it is
+  // typechecked separately by tsconfig.cli.json, which admits @types/node.
+  "exclude": ["src/cli.ts", "src/cli.test.mts"]
 }

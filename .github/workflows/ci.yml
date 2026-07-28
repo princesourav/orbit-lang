@@ -43,14 +43,26 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
+      # Two configs on purpose: the library must typecheck WITHOUT @types/node
+      # (that is what keeps the engine zero-I/O), while the CLI is the one file
+      # allowed to use it.
+      - name: Typecheck (library, node-free)
         run: npx tsc --noEmit
+
+      - name: Typecheck (CLI)
+        run: npx tsc -p tsconfig.cli.json --noEmit
 
       - name: Test
         run: npx vitest run
 
-      - name: Build (dual ESM/CJS)
+      - name: Build (dual ESM/CJS + CLI)
         run: npm run build
+
+      - name: Smoke test the CLI
+        run: |
+          node dist/cli/cli.js --version
+          node dist/cli/cli.js check examples/
+          node dist/cli/cli.js fmt --check examples/
 
       - name: Smoke test the built ESM entrypoint
         run: |

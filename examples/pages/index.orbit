@@ -4,34 +4,17 @@ settings {
   storiesHeading: Text = "Latest stories" label "Stories heading"
 }
 ---
-{# Composition: a settings-driven component, a slotted component, and a loop
-   with an empty branch.
-
-   The `<if>` wrapper around the footer fill is the SLOT-TRANSPARENCY rule:
-   control-flow wrappers are transparent for slot attribution, so a wrapper
-   whose renderable children all carry `slot="footer"` fills the footer slot —
-   and renders nothing at all when the condition is false. If the branches
-   disagreed about the target slot the checker would reject it (O2085). #}
 <main class="home" id="main">
   <PromoBanner/>
-
   <Panel tone="calm">
     <h2 slot="header">{shopName}</h2>
-
     <p class="home__intro">
-      Everything below is rendered by the same engine that checked it:
-      no truthiness, no dynamic member access, no unescaped sink except the
-      one the host asked for.
+      Everything below is rendered by the same engine that checked it: no truthiness, no dynamic member access, no unescaped sink except the one the host asked for.
     </p>
-
-    <if {totalPages > 1}>
-      <p slot="footer">Showing page {pageNumber} of {totalPages}.</p>
-    </if>
+    <if {totalPages > 1}><p slot="footer">Showing page {pageNumber} of {totalPages}.</p></if>
   </Panel>
-
   <section class="home__stories">
     <h2>{settings.storiesHeading}</h2>
-
     <for story of={articles} limit={3}>
       <article class="teaser">
         <h3 class="teaser__title">
@@ -40,9 +23,9 @@ settings {
         <p class="teaser__excerpt">{story.excerpt ?? "Read the full story."}</p>
         <time datetime={story.publishedAt}>{story.publishedAt |> formatDate("D MMM YYYY")}</time>
       </article>
-      <empty>
-        <p class="teaser teaser--empty">No stories published yet.</p>
-      </empty>
+    <empty>
+      <p class="teaser teaser--empty">No stories published yet.</p>
+    </empty>
     </for>
   </section>
 </main>

@@ -39,6 +39,7 @@
   "files": [
     "dist/cjs",
     "dist/esm",
+    "dist/cli",
     "README.md",
     "LICENSE",
     "SECURITY.md",
@@ -54,20 +55,26 @@
     "provenance": true
   },
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm && node scripts/fixup-dist.mjs",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run build:cli && node scripts/fixup-dist.mjs",
     "build:cjs": "tsc -p tsconfig.build.json",
     "build:esm": "tsc -p tsconfig.esm.json",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.cli.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:claims": "node scripts/audit-claims.mjs",
     "sbom": "node scripts/sbom.mjs",
-    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "build:cli": "tsc -p tsconfig.cli.json",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
     "fast-check": "^4.9.0",
     "typescript": "^5.6.0",
     "vitest": "^4.1.9"
+  },
+  "bin": {
+    "orbit": "./dist/cli/cli.js"
   }
 }

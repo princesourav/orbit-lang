@@ -1,0 +1,27 @@
+{
+  // The CLI, and only the CLI.
+  //
+  // `tsconfig.json` sets `"types": []` so that an accidental `process`, `fs` or
+  // `Buffer` reference anywhere in the engine is a compile error — that is how
+  // the zero-I/O guarantee is enforced rather than merely documented. A command
+  // line obviously needs the filesystem, so it gets its own config that admits
+  // @types/node, and the main config excludes it.
+  //
+  // The split is the point: node types are reachable from src/cli.ts and from
+  // nothing else. src/cli.test.ts asserts that the library entrypoint and its
+  // transitive imports contain no `node:` specifier, so this cannot silently
+  // widen.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "noEmit": false,
+    "outDir": "dist/cli",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  // `exclude` is inherited from the base config, which excludes exactly this
+  // file — reset it, or there are no inputs at all.
+  "exclude": [],
+  "include": ["src/cli.ts"]
+}
