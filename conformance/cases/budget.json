@@ -1,0 +1,913 @@
+{
+  "category": "budget",
+  "cases": [
+    {
+      "id": "budget/loop-limit-at-max",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for i of={data.items} limit={250}><p>x</p><empty><p>e</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>e</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "budget/loop-limit-over-max",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for i of={data.items} limit={251}><p>x</p><empty><p>e</p></empty></for>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "check-error",
+        "code": "O2078"
+      }
+    },
+    {
+      "id": "budget/loop-limit-zero",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for i of={data.items} limit={0}><p>x</p><empty><p>e</p></empty></for>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "check-error",
+        "code": "O2078"
+      }
+    },
+    {
+      "id": "budget/loop-limit-not-literal",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for i of={data.items} limit={data.count}><p>x</p><empty><p>e</p></empty></for>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "check-error",
+        "code": "O2078"
+      }
+    },
+    {
+      "id": "budget/empty-loop-body-still-charges",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for i of={data.items}><empty><p>e</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "0",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "1",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "2",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "3",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "4",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "5",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "6",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "7",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "8",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "9",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "10",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "11",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "12",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "13",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "14",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "15",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "16",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "17",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "18",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "19",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "20",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "21",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "22",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "23",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "24",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "25",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "26",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "27",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "28",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "29",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "30",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "31",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "32",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "33",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "34",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "35",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "36",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "37",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "38",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "39",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "40",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "41",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "42",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "43",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "44",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "45",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "46",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "47",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "48",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "49",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "budget/nested-loops-share-one-counter",
+      "category": "budget",
+      "template": "---\npage page\n---\n<for a of={data.items}><for b of={data.items}><p>x</p><empty><p>e</p></empty></for><empty><p>e</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p><p>x</p>",
+        "warnings": []
+      }
+    }
+  ]
+}

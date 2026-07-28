@@ -1,0 +1,951 @@
+{
+  "category": "escaping-text",
+  "cases": [
+    {
+      "id": "escaping-text/plain",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>hello</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/ampersand",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "Tom & Jerry",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>Tom &amp; Jerry</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/lt",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a < b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a &lt; b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/gt",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a > b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a &gt; b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/quote",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "say \"hi\"",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>say \"hi\"</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/apostrophe",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "it's",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>it's</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/tagOpen",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/closeTag",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "</div>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;/div&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/comment",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "<!-- x -->",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;!-- x --&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/entity",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "&amp;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&amp;amp;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/entityRaw",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "&lt;script&gt;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&amp;lt;script&amp;gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/attrBreak",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "\" onerror=\"alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>\" onerror=\"alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/attrBreakSingle",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "' onerror='alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>' onerror='alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/jsUrl",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>javascript:alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/jsUrlCase",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "JaVaScRiPt:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>JaVaScRiPt:alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/jsUrlTab",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "java\tscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>java\tscript:alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/jsUrlNewline",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "java\nscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>java\nscript:alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/jsUrlNull",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "java\u0000script:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>java\u0000script:alert(1)</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/dataUrl",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "data:text/html,<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/dataImage",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "data:image/png;base64,iVBORw0KGgo=",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>data:image/png;base64,iVBORw0KGgo=</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/protocolRelative",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "//evil.example/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>//evil.example/x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/relative",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "/products/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>/products/x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/dotRelative",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "./x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>./x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/parentRelative",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "../x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>../x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/query",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "?q=1",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>?q=1</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/fragment",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "#top",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>#top</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/mailto",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "mailto:a@example.com",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>mailto:a@example.com</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/tel",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "tel:+15551234",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>tel:+15551234</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/https",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "https://example.com/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>https://example.com/x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/unicode",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "日本語のテキスト",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>日本語のテキスト</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/emoji",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "🛒 cart",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>🛒 cart</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/nul",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a\u0000b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a\u0000b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/lineSep",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/paraSep",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/backslash",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a\\b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a\\b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/slash",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a/b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a/b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/cdata",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "]]><script>x</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>]]&gt;&lt;script&gt;x&lt;/script&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/scriptClose",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;/script&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/styleClose",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "</style>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;/style&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/titleClose",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "</title>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;/title&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/textareaClose",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "</textarea>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>&lt;/textarea&gt;</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/bidi",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a‮b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a‮b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-text/longish",
+      "category": "escaping-text",
+      "template": "---\npage page\n---\n<p>{data.text}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</p>",
+        "warnings": []
+      }
+    }
+  ]
+}

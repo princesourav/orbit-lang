@@ -1,0 +1,27 @@
+{
+  "category": "allowed",
+  "cases": [
+    {
+      "id": "allowed/style-static",
+      "category": "allowed",
+      "template": "---\npage page\n---\n<div style=\"display: flex\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div style=\"display: flex\">y</div>",
+        "warnings": []
+      }
+    }
+  ]
+}

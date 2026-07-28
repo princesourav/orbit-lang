@@ -1,0 +1,105 @@
+{
+  "category": "banned-attribute",
+  "cases": [
+    {
+      "id": "banned-attribute/onclick",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div onclick=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/onload",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div onload=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/onerror",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div onerror=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/onmouseover",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div onmouseover=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/srcdoc",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div srcdoc=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/ping",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div ping=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/background",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div background=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/longdesc",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div longdesc=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/xlink-namespaced",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div xlink:href=\"x\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1086"
+      }
+    },
+    {
+      "id": "banned-attribute/style-interpolated",
+      "category": "banned-attribute",
+      "template": "---\npage page\n---\n<div style=\"color: {data.text}\">y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1095"
+      }
+    }
+  ]
+}

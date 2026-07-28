@@ -1,0 +1,153 @@
+{
+  "category": "type-law-rejection",
+  "cases": [
+    {
+      "id": "type-law-rejection/truthiness-string",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<if {data.text}><p>x</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O3007"
+      }
+    },
+    {
+      "id": "type-law-rejection/truthiness-int",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<if {data.count}><p>x</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O3007"
+      }
+    },
+    {
+      "id": "type-law-rejection/truthiness-list",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<if {data.tags}><p>x</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O3007"
+      }
+    },
+    {
+      "id": "type-law-rejection/optional-render",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<p>{data.note}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2104"
+      }
+    },
+    {
+      "id": "type-law-rejection/optional-filter",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<p>{data.note |> upper}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2104"
+      }
+    },
+    {
+      "id": "type-law-rejection/optional-operand",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<p>{data.note == \"x\" ? \"a\" : \"b\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-rejection/or-does-not-narrow",
+      "category": "type-law-rejection",
+      "template": "---\npage page\n---\n<if {data.note == none || data.note != \"\"}><p>{data.note}</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2104"
+      }
+    }
+  ]
+}

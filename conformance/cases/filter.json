@@ -1,0 +1,789 @@
+{
+  "category": "filter",
+  "cases": [
+    {
+      "id": "filter/upper",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> upper}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "aBc",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>ABC</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/lower",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> lower}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "AbC",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>abc</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/capitalize",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> capitalize}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "hello world",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>Hello world</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/capitalize-already",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> capitalize}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "iPhone case",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>IPhone case</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/trim",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>[{data.text |> trim}]</p>\n",
+      "bindings": {
+        "data": {
+          "text": "  padded  ",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>[padded]</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/truncate-shorter",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(50)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "short",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>short</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/truncate-exact",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(5)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "exact",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>exact</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/truncate-longer",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(8)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "abcdefghijkl",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>abcdefg…</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/truncate-custom",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(8, \"...\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "abcdefghijkl",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>abcde...</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/truncate-zero",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> truncate(0)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "abc",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>…</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/replace",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> replace(\"a\", \"b\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "banana",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>bbnbnb</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/replace-empty",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> replace(\"x\", \"y\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "abc",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>abc</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/split-join",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> split(\",\") |> join(\" | \")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a,b,c",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a | b | c</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/slugify",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> slugify}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "Hello, World! 123",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>hello-world-123</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/slugify-unicode",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> slugify}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "Café Ünïcode",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>caf-n-code</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/urlEncode",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> urlEncode}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "a b&c=d",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a%20b%26c%3Dd</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/size-string",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> size}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>5</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/size-list",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> size}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [
+            "a",
+            "b",
+            "c"
+          ],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>3</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/size-empty",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> size}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>0</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/first",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> first ?? \"none\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [
+            "a",
+            "b"
+          ],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/first-empty",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> first ?? \"none\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>none</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/last",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> last ?? \"none\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [
+            "a",
+            "b"
+          ],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/last-empty",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> last ?? \"none\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>none</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/reverse",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.tags |> reverse |> join(\",\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [
+            "a",
+            "b",
+            "c"
+          ],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>c,b,a</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/round-default",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.ratio |> round}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 2.5,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>3</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/round-places",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.ratio |> round(2)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 3.14159,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>3.14</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/round-negative",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.ratio |> round}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": -2.5,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>-2</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/clamp-below",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.count |> clamp(10, 20)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 5,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>10</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/clamp-inside",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.count |> clamp(10, 20)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 15,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>15</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/clamp-above",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.count |> clamp(10, 20)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 25,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>20</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/formatDate",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> formatDate(\"YYYY-MM-DD\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "2026-07-28T10:30:00Z",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>2026-07-28</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/formatDate-month",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> formatDate(\"MMMM\")}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "2026-07-28T10:30:00Z",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>July</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/host-filter",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> shout}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "quiet",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>QUIET</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/chained",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.text |> trim |> upper |> truncate(6)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "  hello world  ",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>HELLO…</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "filter/pipe-loosest",
+      "category": "filter",
+      "template": "---\npage page\n---\n<p>{data.count + data.count |> round}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 2,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>4</p>",
+        "warnings": []
+      }
+    }
+  ]
+}

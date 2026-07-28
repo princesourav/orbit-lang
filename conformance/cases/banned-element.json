@@ -1,0 +1,165 @@
+{
+  "category": "banned-element",
+  "cases": [
+    {
+      "id": "banned-element/script",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<script>x</script>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/style",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<style>x</style>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/iframe",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<iframe>x</iframe>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/object",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<object>x</object>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/embed",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<embed>x</embed>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/applet",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<applet>x</applet>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/base",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<base>x</base>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/meta",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<meta>x</meta>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/link",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<link>x</link>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/template",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<template>x</template>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/noscript",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<noscript>x</noscript>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/svg",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<svg>x</svg>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/math",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<math>x</math>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/frame",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<frame>x</frame>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/frameset",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<frameset>x</frameset>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    },
+    {
+      "id": "banned-element/portal",
+      "category": "banned-element",
+      "template": "---\npage page\n---\n<portal>x</portal>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1080"
+      }
+    }
+  ]
+}

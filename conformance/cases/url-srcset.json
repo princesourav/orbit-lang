@@ -1,0 +1,187 @@
+{
+  "category": "url-srcset",
+  "cases": [
+    {
+      "id": "url-srcset/single",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "/a.png",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"/a.png\" alt=\"x\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-srcset/two-x",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "/a.png 1x, /b.png 2x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"/a.png 1x, /b.png 2x\" alt=\"x\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-srcset/two-w",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "/a.png 400w, /b.png 800w",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"/a.png 400w, /b.png 800w\" alt=\"x\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-srcset/hostile-second",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "/a.png 1x, javascript:alert(1) 2x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"\" alt=\"x\">",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-srcset/hostile-first",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1) 1x, /b.png 2x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"\" alt=\"x\">",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-srcset/bad-descriptor",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "/a.png 1z",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"\" alt=\"x\">",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-srcset/empty",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"\" alt=\"x\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-srcset/spaces",
+      "category": "url-srcset",
+      "template": "---\npage page\n---\n<img srcset={data.text} alt=\"x\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "  /a.png   1x  ,  /b.png   2x  ",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<img srcset=\"/a.png 1x, /b.png 2x\" alt=\"x\">",
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,951 @@
+{
+  "category": "escaping-jsonld",
+  "cases": [
+    {
+      "id": "escaping-jsonld/plain",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"hello\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/ampersand",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "Tom & Jerry",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"Tom \\u0026 Jerry\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/lt",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a < b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a \\u003c b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/gt",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a > b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a \\u003e b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/quote",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "say \"hi\"",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"say \\\"hi\\\"\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/apostrophe",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "it's",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"it's\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/tagOpen",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003cscript\\u003ealert(1)\\u003c\\/script\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/closeTag",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "</div>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c\\/div\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/comment",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "<!-- x -->",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c!-- x --\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/entity",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "&amp;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u0026amp;\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/entityRaw",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "&lt;script&gt;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u0026lt;script\\u0026gt;\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/attrBreak",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "\" onerror=\"alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\\" onerror=\\\"alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/attrBreakSingle",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "' onerror='alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"' onerror='alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/jsUrl",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"javascript:alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/jsUrlCase",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "JaVaScRiPt:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"JaVaScRiPt:alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/jsUrlTab",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "java\tscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"java\\tscript:alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/jsUrlNewline",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "java\nscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"java\\nscript:alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/jsUrlNull",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "java\u0000script:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"java\\u0000script:alert(1)\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/dataUrl",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "data:text/html,<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"data:text\\/html,\\u003cscript\\u003ealert(1)\\u003c\\/script\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/dataImage",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "data:image/png;base64,iVBORw0KGgo=",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"data:image\\/png;base64,iVBORw0KGgo=\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/protocolRelative",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "//evil.example/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\/\\/evil.example\\/x\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/relative",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "/products/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\/products\\/x\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/dotRelative",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "./x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\".\\/x\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/parentRelative",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "../x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"..\\/x\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/query",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "?q=1",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"?q=1\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/fragment",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "#top",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"#top\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/mailto",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "mailto:a@example.com",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"mailto:a@example.com\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/tel",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "tel:+15551234",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"tel:+15551234\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/https",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "https://example.com/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"https:\\/\\/example.com\\/x\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/unicode",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "日本語のテキスト",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"日本語のテキスト\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/emoji",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "🛒 cart",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"🛒 cart\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/nul",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a\u0000b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a\\u0000b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/lineSep",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a\\u2028b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/paraSep",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a\\u2029b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/backslash",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a\\b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a\\\\b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/slash",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a/b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a\\/b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/cdata",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "]]><script>x</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"]]\\u003e\\u003cscript\\u003ex\\u003c\\/script\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/scriptClose",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c\\/script\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/styleClose",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "</style>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c\\/style\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/titleClose",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "</title>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c\\/title\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/textareaClose",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "</textarea>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"\\u003c\\/textarea\\u003e\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/bidi",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "a‮b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"a‮b\"}</script>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-jsonld/longish",
+      "category": "escaping-jsonld",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<script type=\"application/ld+json\">{\"@type\":\"Thing\",\"name\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}</script>",
+        "warnings": []
+      }
+    }
+  ]
+}

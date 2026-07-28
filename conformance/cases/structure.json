@@ -1,0 +1,414 @@
+{
+  "category": "structure",
+  "cases": [
+    {
+      "id": "structure/if-true",
+      "category": "structure",
+      "template": "---\npage page\n---\n<if {data.flag}><p>yes</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": true,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>yes</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/if-false",
+      "category": "structure",
+      "template": "---\npage page\n---\n<if {data.flag}><p>yes</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/if-else-true",
+      "category": "structure",
+      "template": "---\npage page\n---\n<if {data.flag}><p>yes</p></if><else><p>no</p></else>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": true,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>yes</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/if-else-false",
+      "category": "structure",
+      "template": "---\npage page\n---\n<if {data.flag}><p>yes</p></if><else><p>no</p></else>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>no</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/else-if-chain",
+      "category": "structure",
+      "template": "---\npage page\n---\n<if {data.count > 10}><p>big</p></if><else-if {data.count > 5}><p>mid</p></else-if><else><p>small</p></else>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 7,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>mid</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/for-empty",
+      "category": "structure",
+      "template": "---\npage page\n---\n<for i of={data.items}><p>{i.text}</p><empty><p>none</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>none</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/for-one",
+      "category": "structure",
+      "template": "---\npage page\n---\n<for i of={data.items}><p>{i.text}</p><empty><p>none</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "a",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/for-index",
+      "category": "structure",
+      "template": "---\npage page\n---\n<for i, n of={data.items}><p>{n}:{i.text}</p><empty><p>none</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "a",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "b",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>0:a</p><p>1:b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/for-limit",
+      "category": "structure",
+      "template": "---\npage page\n---\n<for i of={data.items} limit={2}><p>{i.text}</p><empty><p>none</p></empty></for>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "a",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "b",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "c",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a</p><p>b</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/let-binding",
+      "category": "structure",
+      "template": "---\npage page\n---\n<let x={data.text |> upper}/><p>{x}</p><p>{x}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "v",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>V</p><p>V</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/nested-elements",
+      "category": "structure",
+      "template": "---\npage page\n---\n<section><div><span>deep</span></div></section>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<section><div><span>deep</span></div></section>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/void-elements",
+      "category": "structure",
+      "template": "---\npage page\n---\n<p>a<br/>b</p><hr/><img src=\"/x.png\" alt=\"i\"/>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>a<br>b</p><hr><img src=\"/x.png\" alt=\"i\">",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/conditional-attr-true",
+      "category": "structure",
+      "template": "---\npage page\n---\n<button disabled?={data.flag}>x</button>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": true,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<button disabled>x</button>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/conditional-attr-false",
+      "category": "structure",
+      "template": "---\npage page\n---\n<button disabled?={data.flag}>x</button>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<button>x</button>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/comment-stripped",
+      "category": "structure",
+      "template": "---\npage page\n---\n{# gone #}<p>x</p><!-- also gone -->\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>x</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "structure/verbatim",
+      "category": "structure",
+      "template": "---\npage page\n---\n<code verbatim>{not an expression}</code>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<code>{not an expression}</code>",
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "category": "type-law-acceptance-absent",
+  "cases": [
+    {
+      "id": "type-law-acceptance-absent/optional-coalesce",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<p>{data.note ?? \"fallback\"}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<p>fallback</p>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-acceptance-absent/optional-narrowed",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<if {data.note != none}><p>{data.note}</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-acceptance-absent/optional-narrowed-and",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<if {data.note != none && data.note != \"\"}><p>{data.note}</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-acceptance-absent/explicit-comparison",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<if {data.text != \"\"}><p>yes</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-acceptance-absent/int-comparison",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<if {data.count > 0}><p>yes</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "type-law-acceptance-absent/bool-direct",
+      "category": "type-law-acceptance-absent",
+      "template": "---\npage page\n---\n<if {data.flag}><p>yes</p></if>\n",
+      "bindings": {
+        "data": {
+          "text": "",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    }
+  ]
+}

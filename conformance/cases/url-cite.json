@@ -1,0 +1,967 @@
+{
+  "category": "url-cite",
+  "cases": [
+    {
+      "id": "url-cite/plain",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"hello\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/ampersand",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "Tom & Jerry",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"Tom &amp; Jerry\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/lt",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a < b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a &lt; b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/gt",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a > b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a &gt; b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/quote",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "say \"hi\"",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"say &quot;hi&quot;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/apostrophe",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "it's",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"it&#39;s\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/tagOpen",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;script&gt;alert(1)&lt;/script&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/closeTag",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "</div>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;/div&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/comment",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "<!-- x -->",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;!-- x --&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/entity",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "&amp;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&amp;amp;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/entityRaw",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "&lt;script&gt;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&amp;lt;script&amp;gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/attrBreak",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "\" onerror=\"alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&quot; onerror=&quot;alert(1)\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/attrBreakSingle",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "' onerror='alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&#39; onerror=&#39;alert(1)\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/jsUrl",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/jsUrlCase",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "JaVaScRiPt:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/jsUrlTab",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "java\tscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/jsUrlNewline",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "java\nscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/jsUrlNull",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "java\u0000script:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/dataUrl",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "data:text/html,<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/dataImage",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "data:image/png;base64,iVBORw0KGgo=",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/protocolRelative",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "//evil.example/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#\">x</blockquote>",
+        "warnings": [
+          "O4900"
+        ]
+      }
+    },
+    {
+      "id": "url-cite/relative",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "/products/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"/products/x\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/dotRelative",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "./x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"./x\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/parentRelative",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "../x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"../x\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/query",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "?q=1",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"?q=1\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/fragment",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "#top",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"#top\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/mailto",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "mailto:a@example.com",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"mailto:a@example.com\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/tel",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "tel:+15551234",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"tel:+15551234\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/https",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "https://example.com/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"https://example.com/x\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/unicode",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "日本語のテキスト",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"日本語のテキスト\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/emoji",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "🛒 cart",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"🛒 cart\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/nul",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a\u0000b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"ab\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/lineSep",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/paraSep",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/backslash",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a\\b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a\\b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/slash",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a/b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a/b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/cdata",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "]]><script>x</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"]]&gt;&lt;script&gt;x&lt;/script&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/scriptClose",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;/script&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/styleClose",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "</style>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;/style&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/titleClose",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "</title>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;/title&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/textareaClose",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "</textarea>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"&lt;/textarea&gt;\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/bidi",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "a‮b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"a‮b\">x</blockquote>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "url-cite/longish",
+      "category": "url-cite",
+      "template": "---\npage page\n---\n<blockquote cite={data.text}>x</blockquote>\n",
+      "bindings": {
+        "data": {
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<blockquote cite=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\">x</blockquote>",
+        "warnings": []
+      }
+    }
+  ]
+}

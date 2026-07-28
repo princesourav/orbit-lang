@@ -1,0 +1,951 @@
+{
+  "category": "escaping-attr-parts",
+  "cases": [
+    {
+      "id": "escaping-attr-parts/plain",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a hello b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/ampersand",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "Tom & Jerry",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a Tom &amp; Jerry b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/lt",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a < b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a &lt; b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/gt",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a > b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a &gt; b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/quote",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "say \"hi\"",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a say &quot;hi&quot; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/apostrophe",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "it's",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a it&#39;s b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/tagOpen",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;script&gt;alert(1)&lt;/script&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/closeTag",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "</div>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;/div&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/comment",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "<!-- x -->",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;!-- x --&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/entity",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "&amp;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &amp;amp; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/entityRaw",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "&lt;script&gt;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &amp;lt;script&amp;gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/attrBreak",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "\" onerror=\"alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &quot; onerror=&quot;alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/attrBreakSingle",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "' onerror='alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &#39; onerror=&#39;alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/jsUrl",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a javascript:alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/jsUrlCase",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "JaVaScRiPt:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a JaVaScRiPt:alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/jsUrlTab",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "java\tscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a java\tscript:alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/jsUrlNewline",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "java\nscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a java\nscript:alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/jsUrlNull",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "java\u0000script:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a java\u0000script:alert(1) b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/dataUrl",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "data:text/html,<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a data:text/html,&lt;script&gt;alert(1)&lt;/script&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/dataImage",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "data:image/png;base64,iVBORw0KGgo=",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a data:image/png;base64,iVBORw0KGgo= b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/protocolRelative",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "//evil.example/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a //evil.example/x b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/relative",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "/products/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a /products/x b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/dotRelative",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "./x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a ./x b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/parentRelative",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "../x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a ../x b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/query",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "?q=1",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a ?q=1 b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/fragment",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "#top",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a #top b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/mailto",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "mailto:a@example.com",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a mailto:a@example.com b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/tel",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "tel:+15551234",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a tel:+15551234 b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/https",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "https://example.com/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a https://example.com/x b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/unicode",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "日本語のテキスト",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a 日本語のテキスト b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/emoji",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "🛒 cart",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a 🛒 cart b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/nul",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a\u0000b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a\u0000b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/lineSep",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/paraSep",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/backslash",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a\\b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a\\b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/slash",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a/b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a/b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/cdata",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "]]><script>x</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a ]]&gt;&lt;script&gt;x&lt;/script&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/scriptClose",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;/script&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/styleClose",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "</style>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;/style&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/titleClose",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "</title>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;/title&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/textareaClose",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "</textarea>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a &lt;/textarea&gt; b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/bidi",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a‮b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a a‮b b\">y</div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-attr-parts/longish",
+      "category": "escaping-attr-parts",
+      "template": "---\npage page\n---\n<div class=\"a {data.text} b\">y</div>\n",
+      "bindings": {
+        "data": {
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"a xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx b\">y</div>",
+        "warnings": []
+      }
+    }
+  ]
+}

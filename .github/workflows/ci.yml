@@ -58,6 +58,9 @@ jobs:
       - name: Build (dual ESM/CJS + CLI)
         run: npm run build
 
+      - name: Conformance corpus is not stale
+        run: npx vite-node conformance/generate.mjs --check
+
       - name: llms.txt is not stale
         run: npm run llms:check
 

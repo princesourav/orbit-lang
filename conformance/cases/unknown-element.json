@@ -1,0 +1,75 @@
+{
+  "category": "unknown-element",
+  "cases": [
+    {
+      "id": "unknown-element/blink",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<blink>x</blink>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/marquee",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<marquee>x</marquee>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/my-widget",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<my-widget>x</my-widget>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/foo",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<foo>x</foo>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/html",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<html>x</html>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/head",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<head>x</head>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    },
+    {
+      "id": "unknown-element/body",
+      "category": "unknown-element",
+      "template": "---\npage page\n---\n<body>x</body>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1081"
+      }
+    }
+  ]
+}

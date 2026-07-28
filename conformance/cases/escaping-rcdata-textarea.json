@@ -1,0 +1,951 @@
+{
+  "category": "escaping-rcdata-textarea",
+  "cases": [
+    {
+      "id": "escaping-rcdata-textarea/plain",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "hello",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>hello</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/ampersand",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "Tom & Jerry",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>Tom &amp; Jerry</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/lt",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a < b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a &lt; b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/gt",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a > b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a > b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/quote",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "say \"hi\"",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>say \"hi\"</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/apostrophe",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "it's",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>it's</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/tagOpen",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;script>alert(1)&lt;/script></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/closeTag",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "</div>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;/div></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/comment",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "<!-- x -->",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;!-- x --></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/entity",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "&amp;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&amp;amp;</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/entityRaw",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "&lt;script&gt;",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&amp;lt;script&amp;gt;</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/attrBreak",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "\" onerror=\"alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>\" onerror=\"alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/attrBreakSingle",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "' onerror='alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>' onerror='alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/jsUrl",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "javascript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>javascript:alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/jsUrlCase",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "JaVaScRiPt:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>JaVaScRiPt:alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/jsUrlTab",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "java\tscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>java\tscript:alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/jsUrlNewline",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "java\nscript:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>java\nscript:alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/jsUrlNull",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "java\u0000script:alert(1)",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>java\u0000script:alert(1)</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/dataUrl",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "data:text/html,<script>alert(1)</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>data:text/html,&lt;script>alert(1)&lt;/script></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/dataImage",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "data:image/png;base64,iVBORw0KGgo=",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>data:image/png;base64,iVBORw0KGgo=</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/protocolRelative",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "//evil.example/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>//evil.example/x</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/relative",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "/products/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>/products/x</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/dotRelative",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "./x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>./x</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/parentRelative",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "../x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>../x</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/query",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "?q=1",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>?q=1</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/fragment",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "#top",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>#top</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/mailto",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "mailto:a@example.com",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>mailto:a@example.com</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/tel",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "tel:+15551234",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>tel:+15551234</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/https",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "https://example.com/x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>https://example.com/x</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/unicode",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "日本語のテキスト",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>日本語のテキスト</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/emoji",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "🛒 cart",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>🛒 cart</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/nul",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a\u0000b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a\u0000b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/lineSep",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/paraSep",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/backslash",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a\\b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a\\b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/slash",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a/b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a/b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/cdata",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "]]><script>x</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>]]>&lt;script>x&lt;/script></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/scriptClose",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "</script>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;/script></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/styleClose",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "</style>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;/style></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/titleClose",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "</title>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;/title></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/textareaClose",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "</textarea>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>&lt;/textarea></textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/bidi",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "a‮b",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>a‮b</textarea>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "escaping-rcdata-textarea/longish",
+      "category": "escaping-rcdata-textarea",
+      "template": "---\npage page\n---\n<textarea>{data.text}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<textarea>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</textarea>",
+        "warnings": []
+      }
+    }
+  ]
+}

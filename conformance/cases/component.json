@@ -1,0 +1,149 @@
+{
+  "category": "component",
+  "cases": [
+    {
+      "id": "component/call-basic",
+      "category": "component",
+      "template": "---\npage page\n---\n<Box label=\"hi\"/>\n",
+      "extraTemplates": {
+        "box.orbit": "---\ncomponent Box\nprops {\n  label: String\n  emphasis: Bool = false\n}\nslots {\n  extra?\n}\n---\n<div class=\"box\"><if {emphasis}><strong>{label}</strong></if><else><span>{label}</span></else><slot name=\"extra\"/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"box\"><span>hi</span></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "component/call-emphasis",
+      "category": "component",
+      "template": "---\npage page\n---\n<Box label=\"hi\" emphasis/>\n",
+      "extraTemplates": {
+        "box.orbit": "---\ncomponent Box\nprops {\n  label: String\n  emphasis: Bool = false\n}\nslots {\n  extra?\n}\n---\n<div class=\"box\"><if {emphasis}><strong>{label}</strong></if><else><span>{label}</span></else><slot name=\"extra\"/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"box\"><strong>hi</strong></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "component/call-expr-prop",
+      "category": "component",
+      "template": "---\npage page\n---\n<Box label={data.text}/>\n",
+      "extraTemplates": {
+        "box.orbit": "---\ncomponent Box\nprops {\n  label: String\n  emphasis: Bool = false\n}\nslots {\n  extra?\n}\n---\n<div class=\"box\"><if {emphasis}><strong>{label}</strong></if><else><span>{label}</span></else><slot name=\"extra\"/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "from data",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"box\"><span>from data</span></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "component/call-with-slot",
+      "category": "component",
+      "template": "---\npage page\n---\n<Box label=\"hi\"><em slot=\"extra\">more</em></Box>\n",
+      "extraTemplates": {
+        "box.orbit": "---\ncomponent Box\nprops {\n  label: String\n  emphasis: Bool = false\n}\nslots {\n  extra?\n}\n---\n<div class=\"box\"><if {emphasis}><strong>{label}</strong></if><else><span>{label}</span></else><slot name=\"extra\"/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"box\"><span>hi</span><em>more</em></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "component/call-in-loop",
+      "category": "component",
+      "template": "---\npage page\n---\n<for i of={data.items}><Box label={i.text}/><empty><p>none</p></empty></for>\n",
+      "extraTemplates": {
+        "box.orbit": "---\ncomponent Box\nprops {\n  label: String\n  emphasis: Bool = false\n}\nslots {\n  extra?\n}\n---\n<div class=\"box\"><if {emphasis}><strong>{label}</strong></if><else><span>{label}</span></else><slot name=\"extra\"/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": [
+            {
+              "text": "a",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            },
+            {
+              "text": "b",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": []
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"box\"><span>a</span></div><div class=\"box\"><span>b</span></div>",
+        "warnings": []
+      }
+    }
+  ]
+}

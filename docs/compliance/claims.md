@@ -258,6 +258,25 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## Specification and conformance
+
+| claim | evidence | kind |
+|---|---|---|
+| A normative specification exists, with RFC 2119 language and stated non-goals | spec/SPEC.md | artifact |
+| The conformance corpus is language-agnostic JSON a second implementation can run | conformance/README.md | artifact |
+| The corpus holds at least 500 cases — "is large enough to be meaningful" | conformance/differential.test.mjs | test |
+| Every case carries a concrete expectation — "gives every case a concrete expectation" | conformance/differential.test.mjs | test |
+| The reference implementation passes the whole corpus — "passes every case" | conformance/runner.test.mjs | test |
+| The runner genuinely discriminates: mutated expectations fail — "fails a case whose expected HTML is wrong" and siblings | conformance/runner.test.mjs | test |
+| Escaping is validated against a real WHATWG parser, not only against itself — parse5 differential over every escaping case | conformance/differential.test.mjs | test |
+| A text payload stays text in a real parser — "TEXT context: a payload stays text" | conformance/differential.test.mjs | test |
+| An attribute payload reads back unchanged in a real parser — "ATTR context: a payload reads back byte-identical" | conformance/differential.test.mjs | test |
+| No payload in any category produces a script element or event handler — "no rendered case anywhere produces a script or an event handler" | conformance/differential.test.mjs | test |
+| No URL sink yields javascript:, non-image data:, or protocol-relative URLs — "URL sinks: no dangerous scheme survives" | conformance/differential.test.mjs | test |
+| JSON-LD payloads cannot close the script element and remain valid JSON — "JSON-LD: the payload cannot close the script element" | conformance/differential.test.mjs | test |
+| An empty loop body still charges the iteration counter (the LiquidJS CVE-2026-44645 shape) — "covers budget behaviour including the empty-loop-body case" | conformance/runner.test.mjs | test |
+| The one known engine/browser divergence (U+0000) is pinned per context, not normalized away — "the one known divergence: U+0000" | conformance/differential.test.mjs | test |
+
 ## LLM code generation
 
 | claim | evidence | kind |

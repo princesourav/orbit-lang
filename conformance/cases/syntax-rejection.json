@@ -1,0 +1,125 @@
+{
+  "category": "syntax-rejection",
+  "cases": [
+    {
+      "id": "syntax-rejection/bare-lt",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>a < b</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1053"
+      }
+    },
+    {
+      "id": "syntax-rejection/method-call",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>{data.text.upper()}</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1016"
+      }
+    },
+    {
+      "id": "syntax-rejection/dynamic-member",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>{data[\"text\"]}</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1015"
+      }
+    },
+    {
+      "id": "syntax-rejection/comparison-after-pipe",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<if {data.tags |> size > 0}><p>x</p></if>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1019"
+      }
+    },
+    {
+      "id": "syntax-rejection/single-quoted-attr",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<div class='x'>y</div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1089"
+      }
+    },
+    {
+      "id": "syntax-rejection/unclosed-element",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<div><p>x</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1050"
+      }
+    },
+    {
+      "id": "syntax-rejection/stray-close",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>x</p></div>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1052"
+      }
+    },
+    {
+      "id": "syntax-rejection/mismatched-close",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<div>x</span>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1052"
+      }
+    },
+    {
+      "id": "syntax-rejection/for-without-empty",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<for i of={data.items}><p>x</p></for>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "render-error",
+        "code": "O4010"
+      }
+    },
+    {
+      "id": "syntax-rejection/string-concat",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>{data.text + data.text}</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "check-error",
+        "code": "O2037"
+      }
+    },
+    {
+      "id": "syntax-rejection/no-frontmatter-fence",
+      "category": "syntax-rejection",
+      "template": "page page\n<p>x</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1030"
+      }
+    },
+    {
+      "id": "syntax-rejection/double-braces",
+      "category": "syntax-rejection",
+      "template": "---\npage page\n---\n<p>{{data.text}}</p>\n",
+      "bindings": {},
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1012"
+      }
+    }
+  ]
+}
