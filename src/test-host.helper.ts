@@ -27,6 +27,13 @@ export function makeRegistry(): TypeRegistry {
     title: t.string(),
     products: t.list(t.object('Product')),
   });
+  // A host-declared string-literal union: the closed set `<match>` checks
+  // exhaustiveness against. Kept off Product so existing fixtures need no new
+  // field.
+  registry.defineObject('Banner', {
+    style: t.union('info', 'warn'),
+    text: t.string(),
+  });
   return registry;
 }
 
@@ -126,6 +133,7 @@ export const HOST_FILTERS: HostFilterDecl[] = [
 
 export const PAGE_GLOBALS: Record<string, Type> = {
   collection: t.object('Collection'),
+  banner: t.object('Banner'),
 };
 
 export interface CompiledProgram {

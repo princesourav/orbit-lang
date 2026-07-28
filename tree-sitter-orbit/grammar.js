@@ -237,6 +237,7 @@ module.exports = grammar({
         $.interpolation,
         $.if_statement,
         $.for_statement,
+        $.match_statement,
         $.let_element,
         $.slot_element,
         $.json_ld_element,
@@ -385,6 +386,37 @@ module.exports = grammar({
         repeat($._node),
         '</',
         alias(token.immediate(prec(3, 'else')), $.tag_name),
+        '>',
+      ),
+
+    /*
+     * `<match {expr}>` with `<case>` arms and nothing else between them.
+     *
+     * Comments are in `extras`, so they need no mention here; anything else
+     * between the arms is an ERROR node, which matches src/parser.ts (O1108)
+     * and keeps a stray `<p>` from silently reparenting the arms around it.
+     */
+    match_statement: ($) =>
+      seq(
+        '<',
+        alias(token.immediate(prec(3, 'match')), $.tag_name),
+        field('subject', alias($.interpolation, $.expression_value)),
+        '>',
+        repeat($.case_block),
+        '</',
+        alias(token.immediate(prec(3, 'match')), $.tag_name),
+        '>',
+      ),
+
+    case_block: ($) =>
+      seq(
+        '<',
+        alias(token.immediate(prec(3, 'case')), $.tag_name),
+        field('value', choice($.string_literal, alias('default', $.default_case))),
+        '>',
+        repeat($._node),
+        '</',
+        alias(token.immediate(prec(3, 'case')), $.tag_name),
         '>',
       ),
 

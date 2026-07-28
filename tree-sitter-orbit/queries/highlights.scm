@@ -49,6 +49,7 @@
 ; -----------------------------------------------------------------------------
 
 (tag_name) @tag
+(default_case) @keyword
 (void_tag_name) @tag
 (rcdata_tag_name) @tag
 (unknown_tag_name) @warning

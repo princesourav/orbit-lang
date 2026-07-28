@@ -103,7 +103,7 @@
 
     "control-tag": {
       "comment": "Control flow is expressed as tags in Orbit, but reads as control flow.",
-      "begin": "(</?)(if|else-if|else|for|empty|let|slot|json-ld)\\b",
+      "begin": "(</?)(if|else-if|else|for|empty|match|case|let|slot|json-ld)\\b",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.orbit" },
         "2": { "name": "keyword.control.orbit" }
@@ -114,6 +114,12 @@
       },
       "name": "meta.tag.control.orbit",
       "patterns": [
+        {
+          "comment": "`default` is a bare marker on <case>, not an attribute.",
+          "match": "\\bdefault\\b",
+          "name": "keyword.control.default.orbit"
+        },
+        { "include": "#string" },
         { "include": "#interpolation" },
         { "include": "#attribute" }
       ]

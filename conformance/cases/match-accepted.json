@@ -1,0 +1,212 @@
+{
+  "category": "match-accepted",
+  "cases": [
+    {
+      "id": "match-accepted/first-arm",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>i</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/middle-arm",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "warn",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>w</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/last-arm",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "error",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>e</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/arm-order-does-not-matter",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"error\"><b>e</b></case><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "warn",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>w</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/string-subject-falls-to-default",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.text}><case \"a\"><b>a</b></case><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>?</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/string-subject-matches-a-literal",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.text}><case \"text\"><b>hit</b></case><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>hit</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/empty-arm-renders-nothing",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/arms-nest",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><match {data.text}><case default><b>{data.text}</b></case></match></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>text</b>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "match-accepted/escaping-still-applies-inside-an-arm",
+      "category": "match-accepted",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>{data.text}</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "a<b>&c",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>a&lt;b&gt;&amp;c</b>",
+        "warnings": []
+      }
+    }
+  ]
+}

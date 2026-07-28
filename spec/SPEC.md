@@ -198,7 +198,35 @@ that it is still known at a sink the value reached through a component prop.
 `/` **MUST** yield `Float` for all operands, including two `Int`s. `%` **MUST**
 be `Int`-only. `+` **MUST NOT** concatenate strings.
 
-### 5.5 Filter arguments
+### 5.5 Exhaustiveness
+
+`<match>` selects one arm by exact string equality against its subject. An
+implementation **MUST** reject a subject that is neither a `String` nor a
+string-literal union, and **MUST** apply §5.1 to the subject.
+
+When the subject is a **union**, an implementation **MUST** reject:
+
+- a `<match>` that omits an arm for any variant, naming the omitted variants;
+- a default arm, whether or not the other arms are complete. A default arm
+  would absorb variants added later, which is the property this construct
+  exists to provide.
+
+When the subject is a plain `String`, an implementation **MUST** require a
+default arm: a `String` is not a closed set, so the arms cannot be proven to
+cover it.
+
+An implementation **MUST** reject an arm that can never be selected: one whose
+value repeats an earlier arm, one whose value is not a variant of the union, and
+any arm following the default arm.
+
+Arm order **MUST NOT** affect which arm is selected. There is no fallthrough.
+
+If no arm matches at render time and there is no default arm, an implementation
+**MUST** fail the render. The arms were proven to cover the type, so this state
+means the host supplied a value outside the type it declared, and rendering
+nothing would hide it.
+
+### 5.6 Filter arguments
 
 A host filter declares an ordered list of **required** parameters and an ordered
 list of **optional** parameters, each optional parameter carrying a name.

@@ -1,0 +1,357 @@
+{
+  "category": "match-rejected",
+  "cases": [
+    {
+      "id": "match-rejected/missing-a-variant",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2108"
+      }
+    },
+    {
+      "id": "match-rejected/default-on-a-union",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2110"
+      }
+    },
+    {
+      "id": "match-rejected/default-instead-of-the-variants",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2110"
+      }
+    },
+    {
+      "id": "match-rejected/duplicate-arm",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case><case \"info\"><b>again</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2109"
+      }
+    },
+    {
+      "id": "match-rejected/value-not-in-the-union",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.style}><case \"info\"><b>i</b></case><case \"warn\"><b>w</b></case><case \"error\"><b>e</b></case><case \"nope\"><b>n</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2109"
+      }
+    },
+    {
+      "id": "match-rejected/string-subject-without-a-default",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}><case \"a\"><b>a</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2111"
+      }
+    },
+    {
+      "id": "match-rejected/arm-after-the-default",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}><case default><b>?</b></case><case \"a\"><b>a</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2109"
+      }
+    },
+    {
+      "id": "match-rejected/two-defaults",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}><case default><b>a</b></case><case default><b>b</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2109"
+      }
+    },
+    {
+      "id": "match-rejected/bool-subject",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.flag}><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2107"
+      }
+    },
+    {
+      "id": "match-rejected/int-subject",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.count}><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2107"
+      }
+    },
+    {
+      "id": "match-rejected/optional-subject",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.note}><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2104"
+      }
+    },
+    {
+      "id": "match-rejected/no-subject",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1107"
+      }
+    },
+    {
+      "id": "match-rejected/no-arms",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1111"
+      }
+    },
+    {
+      "id": "match-rejected/markup-between-arms",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}><p>stray</p><case default><b>?</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1108"
+      }
+    },
+    {
+      "id": "match-rejected/case-outside-a-match",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<case \"a\"><b>a</b></case>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1109"
+      }
+    },
+    {
+      "id": "match-rejected/case-value-is-not-a-literal",
+      "category": "match-rejected",
+      "template": "---\npage page\n---\n<match {data.text}><case a><b>a</b></case></match>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1110"
+      }
+    }
+  ]
+}

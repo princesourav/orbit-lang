@@ -19,6 +19,8 @@ import {
   type Expr,
   type ForNode,
   type IfNode,
+  type MatchCase,
+  type MatchNode,
   type Node,
   NodeBudget,
   type PropDecl,
@@ -499,6 +501,8 @@ const CONTROL_TAGS: ReadonlySet<string> = new Set([
   'else',
   'for',
   'empty',
+  'match',
+  'case',
   'let',
   'slot',
   'json-ld',
@@ -1219,6 +1223,16 @@ class TemplateParser {
           return this.parseIf(at, ctx);
         case 'for':
           return this.parseFor(at, ctx);
+        case 'match':
+          return this.parseMatch(at, ctx);
+        case 'case':
+          this.fail(
+            'O1109',
+            '<case> is only valid as a direct child of <match>',
+            'wrap the arms: <match {expr}><case "a">…</case></match>',
+            at,
+          );
+          break;
         case 'let':
           return this.parseLet(at, ctx);
         case 'slot':
@@ -1327,6 +1341,99 @@ class TemplateParser {
     const span = { start: at, end: this.s.posNow() };
     this.budget.charge(span, ctx.depth);
     return { kind: 'for', item, index, subject, limit, children, emptyChildren: collector.empty, span };
+  }
+
+  /**
+   * `<match {expr}>` with `<case "literal">` / `<case default>` arms.
+   *
+   * Arms are parsed here rather than through `parseNodes` because a `<match>`
+   * body is not a node list: the ONLY things legal between `<match>` and
+   * `</match>` are arms and trivia. Letting arbitrary nodes through and
+   * rejecting them later would mean a stray `<p>` inside a match reported
+   * itself as a type error somewhere down the tree.
+   */
+  private parseMatch(at: Pos, ctx: BodyCtx): MatchNode {
+    this.s.skipWhitespace();
+    if (!this.s.match('{')) this.fail('O1107', '<match> needs a subject: <match {expr}>', undefined, at);
+    const subject = this.island();
+    this.s.skipWhitespace();
+    if (!this.s.match('>')) this.fail('O1107', 'malformed <match {expr}>', undefined, at);
+
+    const cases: MatchCase[] = [];
+    const inner: BodyCtx = { ...ctx, depth: ctx.depth + 1 };
+    for (;;) {
+      this.skipTrivia();
+      if (this.s.eof()) this.fail('O1050', 'missing closing tag </match>', undefined, at);
+      if (this.s.startsWith('</match')) {
+        this.s.match('</match');
+        this.s.skipWhitespace();
+        if (!this.s.match('>')) this.fail('O1051', 'malformed closing tag </match', undefined, at);
+        break;
+      }
+      if (!this.s.startsWith('<case')) {
+        this.fail(
+          'O1108',
+          'only <case> may appear inside <match>',
+          'move the markup inside a <case>, or close the <match> first',
+        );
+      }
+      cases.push(this.parseCase(inner));
+    }
+
+    if (cases.length === 0) {
+      this.fail('O1111', '<match> needs at least one <case>', undefined, at);
+    }
+    const span = { start: at, end: this.s.posNow() };
+    this.budget.charge(span, ctx.depth);
+    return { kind: 'match', subject, cases, span };
+  }
+
+  private parseCase(ctx: BodyCtx): MatchCase {
+    const at = this.s.posNow();
+    this.s.match('<case');
+    this.s.skipWhitespace();
+
+    let value: string | undefined;
+    if (this.s.match('"')) {
+      /*
+       * Raw characters to the closing quote, no escapes — the same shape as a
+       * slot name. A case value must equal a variant of a host-declared union,
+       * and those are plain identifiers; supporting `\n` here would only let an
+       * author write a value that can never match anything.
+       */
+      let raw = '';
+      for (;;) {
+        if (this.s.eof()) this.fail('O1110', 'unterminated case value', undefined, at);
+        const c = this.s.next();
+        if (c === '"') break;
+        raw += c;
+        if (raw.length > LIMITS.maxStringLength) {
+          this.fail('O1054', 'case value exceeds the per-value string cap', undefined, at);
+        }
+      }
+      value = raw;
+    } else {
+      const word = this.readIdent('a case value');
+      if (word !== 'default') {
+        this.fail(
+          'O1110',
+          `<case> takes a string literal or \`default\`, found ${JSON.stringify(word)}`,
+          'write <case "new"> or <case default>',
+          at,
+        );
+      }
+    }
+    this.s.skipWhitespace();
+    if (!this.s.match('>')) {
+      this.fail('O1110', 'malformed <case> tag', 'write <case "new"> or <case default>', at);
+    }
+
+    const children = this.parseNodes('case', { ...ctx, depth: ctx.depth + 1 });
+    const span = { start: at, end: this.s.posNow() };
+    this.budget.charge(span, ctx.depth);
+    return value === undefined
+      ? { match: 'default', children, span }
+      : { match: 'value', value, children, span };
   }
 
   private parseLet(at: Pos, ctx: BodyCtx): Node {

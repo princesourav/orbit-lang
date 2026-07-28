@@ -127,6 +127,7 @@ export type Node =
   | ElementNode
   | IfNode
   | ForNode
+  | MatchNode
   | LetNode
   | ComponentCallNode
   | SlotNode
@@ -167,6 +168,25 @@ export interface ForNode {
   span: Span;
 }
 
+/**
+ * One arm of a `<match>`.
+ *
+ * A literal arm and a default arm are separate shapes rather than one shape
+ * with an optional `value`, because the checker's rules differ completely
+ * between them: a literal arm participates in exhaustiveness, a default arm
+ * defeats it.
+ */
+export type MatchCase =
+  | { match: 'value'; value: string; children: Node[]; span: Span }
+  | { match: 'default'; children: Node[]; span: Span };
+
+export interface MatchNode {
+  kind: 'match';
+  subject: Expr;
+  cases: MatchCase[];
+  span: Span;
+}
+
 export interface LetNode {
   kind: 'let';
   name: string;
@@ -201,6 +221,7 @@ export const NODE_KINDS: readonly string[] = [
   'element',
   'if',
   'for',
+  'match',
   'let',
   'component',
   'slot',

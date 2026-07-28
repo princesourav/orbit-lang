@@ -443,6 +443,29 @@ class Interpreter {
         case 'for':
           this.renderFor(node, scope, frame, ctx, templateName);
           break;
+        case 'match': {
+          const value = this.evalExpr(node.subject, scope);
+          if (typeof value !== 'string') {
+            this.fail('O4041', '<match> subject is not a String at runtime', node.span);
+          }
+          let arm = node.cases.find((c) => c.match === 'value' && c.value === value);
+          arm ??= node.cases.find((c) => c.match === 'default');
+          if (arm === undefined) {
+            /*
+             * The checker proved the arms cover the union, so reaching here
+             * means the host supplied a value outside the type it declared —
+             * the same class of failure as O4012, and not something to paper
+             * over by rendering nothing.
+             */
+            this.fail(
+              'O4040',
+              `no <case> matches ${JSON.stringify(value)}, and the host declared no such variant`,
+              node.span,
+            );
+          }
+          this.renderNodes(arm.children, scope, frame, ctx, templateName);
+          break;
+        }
         case 'let': {
           const value = this.evalExpr(node.expr, scope);
           const vars = new Map<string, unknown>();

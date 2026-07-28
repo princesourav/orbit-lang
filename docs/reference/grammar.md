@@ -80,6 +80,9 @@ for    ::= "<for" name ("," name)? "of" "=" "{" expr "}"
            ("limit" "=" "{" intLiteral "}")? ">"
            node* "<empty>" node* "</empty>" "</for>"
 
+match  ::= "<match" "{" expr "}" ">" case+ "</match>"
+case   ::= "<case" (string | "default") ">" node* "</case>"
+
 let    ::= "<let" name "=" "{" expr "}" "/>"
 slot   ::= "<slot" ("name" "=" string)? "/>"
 jsonLd ::= "<json-ld>" "{" recordExpr "}" "</json-ld>"
@@ -88,6 +91,55 @@ jsonLd ::= "<json-ld>" "{" recordExpr "}" "</json-ld>"
 `<else-if>` and `<else>` are **siblings** of `</if>`, merged by the parser into
 one node. `<empty>` is required and must be the last child of `<for>`. `limit`
 must be an integer literal, at most 250.
+
+Only `<case>` may appear between `<match>` and `</match>` — a stray element
+there is `O1108` rather than something that reports itself as a type error
+further down the tree.
+
+#### Exhaustiveness
+
+`<match>` is the one construct whose value is a diagnostic that does not exist
+yet.
+
+```orbit
+---
+component Promo
+settings {
+  layout: Select("left", "center", "right") = "center"
+}
+---
+{# settings.layout is the union "left" | "center" | "right" #}
+<match {settings.layout}>
+  <case "left"><p>Left</p></case>
+  <case "center"><p>Centre</p></case>
+  <case "right"><p>Right</p></case>
+</match>
+```
+
+A **string-literal union** is a closed set the host declared, so every variant
+must have an arm. Miss one and the check fails, naming it (`O2108`). Add a
+fourth option to that `Select` next year and every `<match>` that does not
+handle it says so — which is the entire point.
+
+Which is why a union scrutinee **may not have a default arm** (`O2110`). A
+default would absorb the new variant silently, at the exact moment the check was
+about to be useful. A plain `String` is not a closed set, so there a
+`<case default>` is **required** (`O2111`).
+
+One rule, stated once: *a default is required exactly when exhaustiveness is
+impossible, and rejected exactly when it is possible.*
+
+| Situation | Code |
+|---|---|
+| A variant has no arm | `O2108` |
+| Default arm on a union | `O2110` |
+| No default arm on a `String` | `O2111` |
+| Arm that can never be selected — duplicate value, value outside the union, or an arm after the default | `O2109` |
+| Subject is not a `String` or union | `O2107` |
+
+Arms may hold any node, including another `<match>`. Case values are compared
+by exact string equality; there is no fallthrough, and arm order does not affect
+which arm is selected.
 
 ### Components
 

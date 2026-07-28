@@ -510,6 +510,13 @@ class PlanExtractor {
           if (node.emptyChildren !== undefined) this.walkNodes(node.emptyChildren, env, depth);
           break;
         }
+        case 'match': {
+          // Every arm is reachable as far as the plan is concerned: the host
+          // must be able to serve whichever one the data selects.
+          this.walkExpr(node.subject, env);
+          for (const arm of node.cases) this.walkNodes(arm.children, env, depth);
+          break;
+        }
         case 'let': {
           const sym = this.walkExpr(node.expr, env);
           env = new Map(env);

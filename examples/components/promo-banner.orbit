@@ -24,7 +24,19 @@ settings {
 >
   <if {settings.showBadge}><span class="promo__badge">Offer</span></if>
   <p class="promo__text">{settings.heading}</p>
-  <if {settings.layout == "center"}>
-    <p class="promo__hint">Centred layouts hide the secondary line on mobile.</p>
-  </if>
+  {# `<match>` is where that union pays off. There is no default arm, and that
+     is deliberate: a default would absorb a fourth alignment added next year,
+     and this component would quietly render the wrong hint for it. Without one,
+     adding an option to the Select fails the check right here, by name. #}
+  <match {settings.layout}>
+    <case "left">
+      <p class="promo__hint">Left-aligned text keeps the badge on the same line.</p>
+    </case>
+    <case "center">
+      <p class="promo__hint">Centred layouts hide the secondary line on mobile.</p>
+    </case>
+    <case "right">
+      <p class="promo__hint">Right-aligned text reverses the badge order.</p>
+    </case>
+  </match>
 </aside>

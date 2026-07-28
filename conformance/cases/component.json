@@ -17,6 +17,7 @@
           "ratio": 0,
           "flag": false,
           "tags": [],
+          "style": "info",
           "items": []
         }
       },
@@ -42,6 +43,7 @@
           "ratio": 0,
           "flag": false,
           "tags": [],
+          "style": "info",
           "items": []
         }
       },
@@ -67,6 +69,7 @@
           "ratio": 0,
           "flag": false,
           "tags": [],
+          "style": "info",
           "items": []
         }
       },
@@ -92,6 +95,7 @@
           "ratio": 0,
           "flag": false,
           "tags": [],
+          "style": "info",
           "items": []
         }
       },
@@ -117,6 +121,7 @@
           "ratio": 0,
           "flag": false,
           "tags": [],
+          "style": "info",
           "items": [
             {
               "text": "a",
@@ -125,7 +130,8 @@
               "count": 1,
               "ratio": 1.5,
               "flag": false,
-              "tags": []
+              "tags": [],
+              "style": "info"
             },
             {
               "text": "b",
@@ -134,7 +140,8 @@
               "count": 1,
               "ratio": 1.5,
               "flag": false,
-              "tags": []
+              "tags": [],
+              "style": "info"
             }
           ]
         }

@@ -138,6 +138,11 @@ const NOTES = new Map(Object.entries({
   O1104: 'Upgrade the engine, or change the `orbit` pragma if the version was a typo.',
   O1105: 'Write the version: `orbit 2026`.',
   O1106: 'Remove the second `orbit` line; a template declares one language version.',
+  O1107: 'Give the match a subject: `<match {expr}>`.',
+  O1108: 'Only `<case>` may sit between `<match>` and `</match>`. Move the markup inside a case.',
+  O1109: '`<case>` is only valid as a direct child of `<match>`.',
+  O1110: 'A case takes a string literal or the bare marker `default`: `<case "new">`, `<case default>`.',
+  O1111: 'A `<match>` with no arms matches nothing. Add a `<case>`.',
 
   // -- O2xxx: signatures ------------------------------------------------------
   O2010: 'Remove the duplicate prop declaration.',
@@ -204,6 +209,13 @@ const NOTES = new Map(Object.entries({
   O2105: 'No such named argument. Names bind to a host filter\'s optional parameters; stdlib filters take positional arguments only.',
   O2106: 'One parameter, two arguments. Drop the positional one, or drop the name.',
 
+  // -- O21xx: <match> ---------------------------------------------------------
+  O2107: '`<match>` needs a String or a string-literal union. Use `<if>` for a Bool.',
+  O2108: 'Add an arm for each named variant. This is the diagnostic the construct exists to produce.',
+  O2109: 'The arm can never be selected: the value is already handled, is not one of the variants, or sits after the default.',
+  O2110: 'Remove the default arm and list every variant. A default absorbs variants added later, which is exactly what exhaustiveness is for.',
+  O2111: 'A String is not a closed set, so add `<case default>`.',
+
   // -- O3xxx: truthiness ------------------------------------------------------
   O3007: 'There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`.',
 
@@ -241,6 +253,8 @@ const NOTES = new Map(Object.entries({
   O4037: 'A URL was blocked by the sink under `urlPolicy: "error"`. Fix the data; the scheme is not allowlisted.',
   O4038: 'A prop supplied at a component entry is missing or has the wrong shape for its declared type.',
   O4039: 'A reserved property name (`__proto__`, `constructor`, `prototype`) can never be read from or written to data.',
+  O4040: 'No `<case>` matched and there is no default. The checker proved the arms cover the union, so the host supplied a value outside the type it declared.',
+  O4041: 'The `<match>` subject was not a string at runtime — the host data contradicts its declared type.',
 
   // -- O49xx: render warnings (non-fatal) -------------------------------------
   O4900: 'Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead.',
@@ -271,9 +285,10 @@ const NOTES = new Map(Object.entries({
  * answer — or adds it here on purpose.
  */
 const MULTI_MESSAGE = new Set([
-  'O1041', 'O1045', 'O1046', 'O1054', 'O1060', 'O1062', 'O1063', 'O1068',
+  'O1041', 'O1045', 'O1046', 'O1050', 'O1051', 'O1054', 'O1060', 'O1062',
+  'O1063', 'O1068', 'O1107', 'O1110',
   'O2011', 'O2015', 'O2031', 'O2037', 'O2060', 'O2061', 'O2074',
-  'O2100', 'O2101', 'O2102', 'O2103', 'O2105',
+  'O2100', 'O2101', 'O2102', 'O2103', 'O2105', 'O2109',
   'O3007',
   'O4001', 'O4011', 'O4013', 'O4016', 'O4020', 'O4024', 'O4025', 'O4026',
   'O4038', 'O4039',

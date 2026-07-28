@@ -65,6 +65,18 @@ describe('diagnostics', () => {
     expect(withHost.length).toBeGreaterThanOrEqual(withoutHost.length);
   });
 
+  it('catches a non-exhaustive match with no project host at all', () => {
+    // A `Select` union is declared in the frontmatter the editor is already
+    // looking at, so this is the one type rule the server can enforce alone —
+    // and it is the rule most worth having in the editor rather than in CI.
+    const source =
+      '---\ncomponent Card\nsettings {\n  badge: Select("new", "sale") = "new"\n}\n---\n' +
+      '<match {settings.badge}><case "new"><b>n</b></case></match>\n';
+    const diags = diagnose(source, { hasProjectHost: false });
+    expect(diags.map((d) => d.code)).toContain('O2108');
+    expect(diags[0]?.message).toContain('"sale"');
+  });
+
   it('stays silent on a host filter call it has no signature for', () => {
     // The whole point of a named argument is a call site like this one, and
     // without a project host the server knows neither the filter nor its

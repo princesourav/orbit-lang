@@ -248,6 +248,41 @@ class AstValidator {
           }
           break;
         }
+        case 'match': {
+          this.validateExpr(node.subject, 0);
+          if (!Array.isArray(node.cases) || node.cases.length === 0) {
+            this.invalid('match node needs at least one case');
+            break;
+          }
+          /*
+           * The arm shapes are re-checked structurally because a stored tree did
+           * not come through the parser. A `value` arm with no value, or a
+           * `default` arm carrying one, would make the interpreter's lookup
+           * silently select a different arm than the checker reasoned about.
+           */
+          for (const arm of node.cases) {
+            if (arm === null || typeof arm !== 'object') {
+              this.invalid('malformed match case');
+              return;
+            }
+            const { match, value } = arm as { match?: unknown; value?: unknown };
+            if (match === 'value') {
+              if (typeof value !== 'string' || value.length > LIMITS.maxStringLength) {
+                this.invalid('malformed match case value');
+                return;
+              }
+            } else if (match !== 'default' || value !== undefined) {
+              this.invalid('match case must be a value arm or a default arm');
+              return;
+            }
+            if (!Array.isArray((arm as { children?: unknown }).children)) {
+              this.invalid('match case children must be an array');
+              return;
+            }
+            this.validateNodes((arm as { children: unknown[] }).children, depth + 1);
+          }
+          break;
+        }
         case 'let':
           if (typeof node.name !== 'string' || node.name === 'settings' || isForbiddenKey(node.name)) {
             this.invalid('malformed let binding');

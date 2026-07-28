@@ -45,6 +45,7 @@ import type {
   AttrPart,
   CallArg,
   Expr,
+  MatchCase,
   Node,
   PropDecl,
   SettingDecl,
@@ -401,7 +402,21 @@ function printNodeInline(n: Node, ctx: Ctx): string {
       }
       return out + '</for>';
     }
+    case 'match': {
+      let out = `<match {${printExpr(n.subject)}}>`;
+      for (const arm of n.cases) {
+        out += printCaseTag(arm);
+        out += arm.children.map((c) => printNodeInline(c, ctx)).join('');
+        out += '</case>';
+      }
+      return out + '</match>';
+    }
   }
+}
+
+/** `<case "new">` or `<case default>`. */
+function printCaseTag(arm: MatchCase): string {
+  return arm.match === 'default' ? '<case default>' : `<case ${quote(arm.value)}>`;
 }
 
 /**
@@ -539,6 +554,20 @@ function printNodeBlock(n: Node, indent: string, ctx: Ctx): string[] | undefined
         out.push(`${indent}</empty>`);
       }
       out.push(`${indent}</for>`);
+      return out;
+    }
+
+    case 'match': {
+      // Arms always break onto their own lines. A `<match>` exists to enumerate
+      // a closed set, and that reads as a column even when it would fit on one
+      // line — the shape is the documentation.
+      const out: string[] = [`${indent}<match {${printExpr(n.subject)}}>`];
+      for (const arm of n.cases) {
+        out.push(`${indent}${INDENT}${printCaseTag(arm)}`);
+        out.push(...printChildren(arm.children, indent + INDENT + INDENT, ctx));
+        out.push(`${indent}${INDENT}</case>`);
+      }
+      out.push(`${indent}</match>`);
       return out;
     }
   }

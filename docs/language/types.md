@@ -96,6 +96,31 @@ settings {
 exactly which values can appear. A union widens to `String` where a `String` is
 required.
 
+A host can declare one too, on any field of its object model — the same closed
+set, sourced from the platform rather than from a merchant setting.
+
+Knowing the values is what makes `<match>` worth having:
+
+```orbit
+---
+component Banner
+settings {
+  tone: Select("info", "warning", "danger") = "info" label "Tone"
+  text: Text = "Heads up" label "Message"
+}
+---
+<match {settings.tone}>
+  <case "info"><p class="banner banner--info">{settings.text}</p></case>
+  <case "warning"><p class="banner banner--warning">{settings.text}</p></case>
+  <case "danger"><p class="banner banner--danger">{settings.text}</p></case>
+</match>
+```
+
+There is no default arm, and one is not allowed here. Every variant must be
+listed, so the day a fourth tone is added, this template fails the check and
+names it rather than rendering an unstyled paragraph. See
+[exhaustiveness](../reference/grammar.md#exhaustiveness).
+
 ## Terminal types
 
 Four branded types exist to make whole categories of mistake unrepresentable.

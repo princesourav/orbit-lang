@@ -98,7 +98,37 @@ export const FILTER_DOCS = {
     'formatDate(iso=String, pattern=String) -> String — applies NO timezone conversion',
 };
 
-const CONTROL_TAGS = ['if', 'else-if', 'else', 'for', 'empty', 'let', 'slot', 'json-ld'];
+const CONTROL_TAGS = [
+  'if',
+  'else-if',
+  'else',
+  'for',
+  'empty',
+  'match',
+  'case',
+  'let',
+  'slot',
+  'json-ld',
+];
+
+/**
+ * Control tags whose rules are not guessable from the name.
+ *
+ * `<match>` earns an entry because its most surprising rule — no default arm on
+ * a union — reads as a missing feature until you know why.
+ */
+const CONTROL_TAG_DOCS = {
+  match:
+    '`<match {expr}>` — one arm per value.\n\n' +
+    'On a **string-literal union** every variant must have a `<case>`, and a ' +
+    '`<case default>` is REJECTED: a default would absorb a variant added ' +
+    'later, which is the failure exhaustiveness exists to catch.\n\n' +
+    'On a plain `String` a `<case default>` is REQUIRED, since a String is not ' +
+    'a closed set.',
+  case:
+    '`<case "value">` or `<case default>` — an arm of a `<match>`. ' +
+    'Only `<case>` may appear between `<match>` and `</match>`.',
+};
 
 /**
  * Types a `props` block may declare, with the note a reader needs at the moment
@@ -286,6 +316,7 @@ export function hover(source, word, linePrefix = '') {
         'Enforced at parse time; there is no opt-out.'
       );
     }
+    if (CONTROL_TAG_DOCS[word] !== undefined) return CONTROL_TAG_DOCS[word];
     if (ELEMENT_ALLOWLIST.has(word)) return `\`<${word}>\` — allowlisted element`;
   }
 

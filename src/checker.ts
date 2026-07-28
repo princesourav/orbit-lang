@@ -28,6 +28,7 @@ import {
   groupSlotChildren,
   type Attr,
   type Expr,
+  type MatchCase,
   type Node,
   type Program,
   type SettingControl,
@@ -456,6 +457,10 @@ class Checker {
           if (node.emptyChildren !== undefined) {
             this.checkNodes(node.emptyChildren, scope, narrowed, ctx, template);
           }
+          break;
+        }
+        case 'match': {
+          this.checkMatch(node, scope, narrowed, ctx, template);
           break;
         }
         case 'let': {
@@ -1168,6 +1173,105 @@ class Checker {
       this.suggestName(expr.callee, [...STDLIB_FILTER_NAMES, ...this.hostFilters.keys()]),
     );
     return t.invalid();
+  }
+
+  /**
+   * `<match>` — the one construct in Orbit whose value is a diagnostic that
+   * does NOT exist yet.
+   *
+   * Matching on a string-literal union is checked for exhaustiveness, and a
+   * union is a closed set the host declared. When the host adds a variant, every
+   * `<match>` that does not handle it fails the check by name. That is the
+   * whole point: a theme that silently renders nothing for a new badge type is
+   * the failure this replaces.
+   *
+   * Which is why a union scrutinee may NOT have a default arm. A default would
+   * absorb every future variant and turn the check back off — quietly, at the
+   * exact moment it was about to be useful. Conversely a plain `String` has no
+   * closed set to check against, so there a default is REQUIRED. The rule is
+   * one rule: a default is required exactly when exhaustiveness is impossible,
+   * and rejected exactly when it is possible.
+   */
+  private checkMatch(
+    node: Extract<Node, { kind: 'match' }>,
+    scope: Scope,
+    narrowed: ReadonlySet<string>,
+    ctx: ContentCtx,
+    template: Template,
+  ): void {
+    const subject = this.typeOf(node.subject, scope, narrowed);
+    if (subject.kind === 'optional') {
+      this.reportOptionalLaw(node.subject, subject, node.span);
+    } else if (subject.kind !== 'union' && subject.kind !== 'string' && subject.kind !== 'invalid') {
+      this.report(
+        'O2107',
+        `<match> needs a String or a string-literal union, found ${typeToString(subject)}`,
+        node.subject.span ?? node.span,
+        subject.kind === 'bool' ? 'use <if> for a Bool' : undefined,
+      );
+    }
+
+    const variants = subject.kind === 'union' ? subject.values : undefined;
+    const seen = new Map<string, MatchCase>();
+    let defaultCase: MatchCase | undefined;
+
+    for (const arm of node.cases) {
+      if (arm.match === 'default') {
+        if (defaultCase !== undefined) {
+          this.report('O2109', '<match> already has a default arm', arm.span);
+        }
+        defaultCase = arm;
+      } else {
+        if (defaultCase !== undefined) {
+          this.report(
+            'O2109',
+            `unreachable: <case ${JSON.stringify(arm.value)}> comes after the default arm`,
+            arm.span,
+            'move the default arm last',
+          );
+        }
+        if (seen.has(arm.value)) {
+          this.report('O2109', `unreachable: <case ${JSON.stringify(arm.value)}> is already handled`, arm.span);
+        } else if (variants !== undefined && !variants.includes(arm.value)) {
+          this.report(
+            'O2109',
+            `unreachable: ${JSON.stringify(arm.value)} is not one of ${variants.map((v) => JSON.stringify(v)).join(', ')}`,
+            arm.span,
+            this.suggestName(arm.value, variants),
+          );
+        }
+        seen.set(arm.value, arm);
+      }
+      this.checkNodes(arm.children, scope, narrowed, ctx, template);
+    }
+
+    if (variants !== undefined) {
+      if (defaultCase !== undefined) {
+        this.report(
+          'O2110',
+          'a default arm defeats exhaustiveness on a union — list every variant instead',
+          defaultCase.span,
+          `the checker can tell you when a variant is added; a default arm silently absorbs it`,
+        );
+        return;
+      }
+      const missing = variants.filter((v) => !seen.has(v));
+      if (missing.length > 0) {
+        this.report(
+          'O2108',
+          `<match> does not handle ${missing.map((v) => JSON.stringify(v)).join(', ')}`,
+          node.span,
+          `add ${missing.map((v) => `<case ${JSON.stringify(v)}>`).join(' ')}`,
+        );
+      }
+    } else if (subject.kind === 'string' && defaultCase === undefined) {
+      this.report(
+        'O2111',
+        '<match> on a String needs a <case default> arm',
+        node.span,
+        'a String is not a closed set, so the arms cannot be proven to cover it',
+      );
+    }
   }
 
   /**

@@ -20,6 +20,9 @@ const ITEM_FIELDS = {
   ratio: t.float(),
   flag: t.bool(),
   tags: t.list(t.string()),
+  // A string-literal union: the closed set `<match>` checks exhaustiveness
+  // against, and the only type in the language with a finite value space.
+  style: t.union('info', 'warn', 'error'),
 };
 
 export function makeRegistry() {
