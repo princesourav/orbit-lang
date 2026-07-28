@@ -38,6 +38,7 @@ that most often surprise:
 - [closed-world](https://github.com/princesourav/orbit-lang/blob/main/docs/evaluation/closed-world.md):
 - [non-js-embedding](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/non-js-embedding.md):
 - [trusted-types](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/trusted-types.md):
+- [scope](https://github.com/princesourav/orbit-lang/blob/main/docs/scope.md):
 
 ## Optional
 

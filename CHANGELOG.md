@@ -58,9 +58,10 @@ gained `islands` with `paths` narrowed to the first pass.
 - The premise holds for content and breaks for commerce interaction. 93% of the
   registry needs no client JavaScript. What fails is the header, the product
   grid and the buy box — every page of every theme.
-- Two follow-ups, neither of which is an escape hatch: platform islands (started
-  above), and a typed custom-property sink for per-instance `Color` settings,
-  which has no plan behind it yet.
+- Two follow-ups, neither of which is an escape hatch: platform widgets, and a
+  typed custom-property sink for per-instance `Color` settings. Neither is a
+  server island — that is the mechanism started above, and the two are kept
+  lexically apart on purpose.
 
 ### Language: match, named arguments, versions (Phase B)
 

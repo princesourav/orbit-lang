@@ -156,11 +156,17 @@ a storefront expects in 2026.
 Each is the same missing thing, seven times: a way for a theme to say *put the
 platform's cart drawer here*. That is one mechanism, and the settled position is
 already that Orbit ships JavaScript — what it forbids is **author-written** JS in
-themes. A platform-owned island, placed by the theme and configured through
-typed attributes, closes all seven without weakening a single language rule.
+themes. A platform **widget** — a client component the platform provides and
+the theme places, configured through typed attributes — closes all seven
+without weakening a single language rule.
 
-This finding does not argue for an escape hatch. It argues that the island
-mechanism is not a Phase E nice-to-have; it is the thing standing between the
+(Distinct from a server *island*, which is this document's other mechanism and a
+different thing: an island is deferred server HTML with a second pass; a widget
+is a client component. They compose — a widget can be deferred — which is
+exactly why they cannot share a word.)
+
+This finding does not argue for an escape hatch. It argues that widget
+placement is not a Phase E nice-to-have; it is the thing standing between the
 language and a shippable storefront, and it should be sequenced first.
 
 ### 2. Per-instance colour — 14 blocks (12.1%)
@@ -294,8 +300,8 @@ well and refuses to execute covers it.
 
 The 17.2% that fails divides cleanly:
 
-- **6.0% is interactivity**, and the answer is already designed. Platform-owned
-  islands, placed by the theme, configured through typed attributes, with no
+- **6.0% is interactivity**, and the answer is already designed. Platform
+  **widgets**, placed by the theme, configured through typed attributes, with no
   author-written JS anywhere. This does not loosen a language rule. It should be
   built first, not third.
 - **12.1% is per-instance colour**, and the answer does not exist yet. It needs a
@@ -306,7 +312,7 @@ Neither conclusion is "add an escape hatch". An escape hatch would trade the
 project's one defensible property — that nobody can inject script through a
 theme — for two problems that each have a typed, closed-world answer.
 
-**Recommendation: proceed, with the sequence changed.** The island mechanism and
+**Recommendation: proceed, with the sequence changed.** Widget placement and
 the custom-property sink move ahead of further hardening. Hardening a language
 that cannot express a cart drawer is the wrong use of the next two quarters; the
 brief's own reasoning applies to the ordering as much as to the decision.

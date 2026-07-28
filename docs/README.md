@@ -34,6 +34,10 @@ types and host filters, and the engine guarantees the rest.
 - [Filters](reference/filters.md) — all 19 stdlib filters.
 - [Limits](reference/limits.md) — every cap and the code it trips.
 - [Error codes](reference/errors.md) — every diagnostic, generated from source.
+- [Scope](scope.md) — what is included, what is excluded and which invariant
+  each exclusion protects, and what is deferred with the evidence for waiting.
+  Read this before proposing a language feature: the question it answers is
+  "which invariant are we prepared to weaken?", not "why not?".
 
 ## Try it without installing anything
 

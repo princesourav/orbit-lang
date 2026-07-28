@@ -38,9 +38,11 @@ three blocks on every page of every theme.
 
 Two conclusions, neither of which is "add an escape hatch":
 
-1. **Platform islands move to the front of the queue.** 6.0% of blocks need
+1. **Platform widgets move to the front of the queue.** 6.0% of blocks need
    client interactivity, and it is the same missing mechanism seven times: a way
-   for a theme to place a platform-owned interactive component. No language rule
+   for a theme to place a platform-provided interactive component. A *widget* is
+   not an *island*: an island is deferred server HTML filled in a second pass
+   (shipped); a widget is a client component the theme places. They compose. No language rule
    loosens — Orbit already ships JavaScript; what it forbids is *author-written*
    JS in themes. Hardening a language that cannot express a cart drawer is the
    wrong use of the next two quarters.
@@ -192,7 +194,7 @@ Goal: falsifiable claims, enterprise-grade stability promises, public launch.
 | 2 | **A security researcher (or AI auditor) finds an escaping/budget hole before the spec exists**, undermining the positioning | v0.2 property-testing + seam hardening *before* the early-2027 soft launch; browser-differential oracle at v1.0; funded, scoped bounty live at launch; private-report channel + 90-day disclosure policy + CVE path in SECURITY.md from v0.2; assume machine audit per Glasswing |
 | 3 | **Overclaim hangover**: fuzz-suite and HMAC claims already in-repo are false today | Fix in v0.2 before any external attention; claims-audit CI gate (every doc claim linked to a test or artifact) makes recurrence machine-detectable rather than self-certified |
 | 4 | **Strictness rejection**: real users hit missing power (dynamic style, i18n, email HTML) and go elsewhere | **Measured, not assumed** — Phase D puts it at 17.2% of a real block library, with per-instance colour the single largest cause. Sanctioned escape valves (host filters now; locale-data injection at v1.0; profiles and micro-contexts via staged proposals); a typed custom-property sink to close the colour gap; honest limitation docs from v0.2 so nothing fails as a surprise; never answer with Turing-completeness |
-| 7 | **Interactivity gap ships as a surprise**: themes render correctly and feel a decade old, because the cart drawer, live search and variant picker all became page loads | Phase D quantified it at 6.0% of blocks but 100% of themes, all on the highest-traffic path; platform-owned islands resequenced ahead of further hardening; no author-written JS at any point, so the security property is unchanged |
+| 7 | **Interactivity gap ships as a surprise**: themes render correctly and feel a decade old, because the cart drawer, live search and variant picker all became page loads | Phase D quantified it at 6.0% of blocks but 100% of themes, all on the highest-traffic path; platform widgets resequenced ahead of further hardening; no author-written JS at any point, so the security property is unchanged |
 | 5 | **Beachhead mismatch**: the largest segment (polyglot multi-tenant SaaS) can't embed an npm library, and the edge pitch rests on an unbuilt VM | JS-native segments (AI builders, edge) ranked first; non-JS embedding guide at v1.0 and Rust/WASM post-1.0 for the SaaS segment; edge claims gated on the single v1.0 Workers benchmark, which is exempt from performance-cut rules |
 | 6 | **Unfunded commitments and no revenue until mid-2027**: audit hand-waved to competitive grants, bounty unbudgeted, monetization deferred | Funding workstream from v0.5: grant applications submitted Q4 2026 with a self-funded fallback scope; bounty budget defined in v0.5, funded at v1.0; paid design-partner conversations open pre-1.0 with ≥1 paid LOI targeted before launch |
 
