@@ -21,6 +21,7 @@
  * Zero dependencies; Node builtins only.
  */
 
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -230,6 +231,39 @@ export function vitestWouldRun(relPath) {
   return parts.slice(0, -2).join('.').length > 0;
 }
 
+/**
+ * Is this path tracked by git?
+ *
+ * Shelled out rather than reimplemented: `.gitignore` semantics are more
+ * subtle than they look, and a partial reimplementation would answer wrongly
+ * for exactly the nested cases that caused the problem. Where git is not
+ * available the check degrades to "assume tracked" — this is a sharpening of
+ * the audit, and it must not become a reason the audit cannot run at all.
+ */
+let trackedCache;
+
+function defaultIsTracked(evidence, root) {
+  // ONE `git ls-files` for the whole manifest, not one per row. Three hundred
+  // subprocesses took nine seconds and blew the test timeout — the check was
+  // right and the way it asked was not.
+  if (trackedCache === undefined) {
+    try {
+      const listing = execFileSync('git', ['ls-files', '-z'], {
+        cwd: root,
+        encoding: 'utf8',
+        maxBuffer: 1 << 26,
+      });
+      trackedCache = new Set(listing.split('\0').filter(Boolean));
+    } catch {
+      // git missing, or not a repository. This check is a sharpening of the
+      // audit and must never become a reason it cannot run at all.
+      trackedCache = null;
+    }
+  }
+  if (trackedCache === null) return true;
+  return trackedCache.has(evidence);
+}
+
 /** Check one row. Returns `null` when the row is fine, else a failure string. */
 export function checkRow(row, opts) {
   const root = opts.root;
@@ -251,6 +285,24 @@ export function checkRow(row, opts) {
   const abs = path.join(root, evidence);
   if (!exists(abs)) return `evidence file does not exist: ${evidence}`;
   if (!isFile(abs)) return `evidence path is not a file: ${evidence}`;
+
+  /*
+   * Evidence must be IN THE REPOSITORY, not a build output.
+   *
+   * A generated file passes the existence check on a machine that has just
+   * built, and fails in CI where the checkout is clean — so a claim backed by
+   * one is a claim that appears substantiated locally and is unbacked
+   * everywhere else. That is precisely the drift this audit exists to prevent,
+   * and it went undetected because the audit only asked whether the file was
+   * on disk.
+   */
+  const tracked = opts.isTracked ?? defaultIsTracked;
+  if (!tracked(evidence, root)) {
+    return (
+      `evidence is not tracked by git: ${evidence} — a build output passes ` +
+      'locally and fails on a clean checkout; cite the generator or a test instead'
+    );
+  }
 
   if (row.kind === 'test' && !vitestWouldRun(evidence)) {
     return (

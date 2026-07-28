@@ -487,7 +487,8 @@ that gap is stated in SECURITY.md and is not claimed here.
 | The shipped artifact behaves identically to its source after minification — "behaves identically after minification" | runtime/islands.test.mjs | test |
 | The shipped artifact uses no eval, Function constructor, document.write, timer or XHR — "reaches for no dynamic-code or document-rewriting primitive" | runtime/islands.test.mjs | test |
 | The shipped artifact writes markup in exactly one place — "writes markup in exactly one place" | runtime/islands.test.mjs | test |
-| An SRI hash and the script tag that carries it are emitted as build artifacts | runtime/dist/orbit-islands.json | artifact |
+| An SRI hash, the tag that carries it, and the size budget are emitted together as build metadata — "emits an SRI hash, the tag that carries it, and the budget" | runtime/islands.test.mjs | test |
+| The published SRI hash matches the script it ships beside, recomputed rather than restated — "the hash matches the script it ships beside" | runtime/islands.test.mjs | test |
 | The placeholder contract and the swap protocol are specified in prose for a second implementation | conformance/README.md | artifact |
 
 ## The documentation site (site/)

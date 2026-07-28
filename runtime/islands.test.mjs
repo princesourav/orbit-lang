@@ -298,3 +298,36 @@ describe('the shipped artifact', () => {
     expect(writes).toBe(1);
   });
 });
+
+describe('the published metadata', () => {
+  /**
+   * The SRI hash and the tag that carries it are emitted together so they
+   * cannot drift apart — a host that computes its own hash is a host that can
+   * get it wrong silently, and a mismatched `integrity` simply blocks the
+   * script, which looks exactly like the island endpoint being down.
+   *
+   * Asserted here rather than by pointing the claims manifest at
+   * `dist/orbit-islands.json`: that file is a build output, so citing it made a
+   * claim that passed locally and was unbacked on a clean checkout.
+   */
+  it('emits an SRI hash, the tag that carries it, and the budget', () => {
+    const meta = JSON.parse(readFileSync(path.join(HERE, 'dist', 'orbit-islands.json'), 'utf8'));
+
+    expect(meta.integrity).toMatch(/^sha384-[A-Za-z0-9+/]+=*$/);
+    expect(meta.tag).toContain(`integrity="${meta.integrity}"`);
+    expect(meta.tag).toContain('crossorigin="anonymous"');
+    expect(meta.tag).toContain('data-endpoint=');
+    expect(meta.budget).toBe(SIZE_BUDGET);
+    expect(meta.bytes).toBeLessThanOrEqual(meta.budget);
+    expect(meta.version).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  it('the hash matches the script it ships beside', async () => {
+    // Not a restatement of the build: recomputed here, so a metadata file that
+    // fell out of step with the artifact fails rather than being believed.
+    const { createHash } = await import('node:crypto');
+    const meta = JSON.parse(readFileSync(path.join(HERE, 'dist', 'orbit-islands.json'), 'utf8'));
+    const recomputed = 'sha384-' + createHash('sha384').update(MINIFIED, 'utf8').digest('base64');
+    expect(meta.integrity).toBe(recomputed);
+  });
+});
