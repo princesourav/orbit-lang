@@ -6,9 +6,9 @@
 language bar reports TypeScript, JavaScript and HTML — the languages Orbit is
 *written in*, not the language it *is*.
 
-Shopify's Liquid repository shows `Liquid 10.6%` because Liquid is defined in
-[github-linguist/linguist][linguist], the library GitHub uses to classify files.
-Orbit is not, so its templates count toward nothing and get no highlighting.
+GitHub classifies files with [github-linguist/linguist][linguist], and Linguist
+has no entry for `.orbit`. Templates therefore count toward nothing and get no
+highlighting.
 
 ## Why this cannot be fixed in this repository
 
@@ -16,9 +16,11 @@ Orbit is not, so its templates count toward nothing and get no highlighting.
 language Linguist **already defines**. There is no mechanism to declare a new
 one locally. The options are to be listed upstream, or to be nothing.
 
-Mapping `.orbit` to a neighbouring language to borrow its highlighting was
-considered and rejected: it would report Orbit as Liquid — a language it is
-deliberately not compatible with — in exchange for approximate colours.
+Borrowing another language's entry for its highlighting was considered and
+rejected. It would report `.orbit` files as a language they are not, in
+exchange for colours that would be wrong wherever the two grammars differ —
+which is most places, given Orbit rejects constructs those grammars are built
+to highlight.
 
 ## The actual requirement
 
@@ -77,14 +79,13 @@ mechanical:
 
 ## Notes on the entry
 
-**`type: markup`.** Orbit is a template language that produces HTML, and it is
-not Turing-complete — `programming` would overstate it, and Liquid, Twig and
-Handlebars are all classified `markup`.
+**`type: markup`.** Orbit produces HTML and is not Turing-complete, so
+`programming` would overstate what it is. `markup` is the category Linguist
+uses for template languages generally.
 
-**`color: '#2f5bd7'`.** Chosen to be distinguishable from the colours already
-used by neighbouring template languages (Liquid `#67b8de`, Twig `#c1d026`,
-Handlebars `#f7931e`, HTML `#e34c26`), since the language bar is the main place
-anyone sees it.
+**`color: '#2f5bd7'`.** Orbit's own accent colour, and checked against the
+palette Linguist already assigns so the language bar stays legible next to
+whatever else a repository contains.
 
 **`tm_scope: source.orbit`** matches the TextMate grammar in this repository.
 

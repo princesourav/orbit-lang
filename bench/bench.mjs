@@ -8,7 +8,7 @@
  *
  * What it is not:
  *
- *   * **Not a comparison.** No Liquid, no Nunjucks, no Handlebars. A
+ *   * **Not a comparison.** One engine only. A
  *     cross-engine table is easy to produce and almost always misleading:
  *     different feature sets, different escaping work, and a scenario chosen
  *     (however unconsciously) by whoever wrote it. If Orbit ever publishes

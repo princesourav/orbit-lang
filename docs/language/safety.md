@@ -38,12 +38,11 @@ Write what you actually mean:
 
 ### Why
 
-"Truthy" is not one rule, it is a table, and every language's table is
-different. Is `0` false? Is `"0"`? Is `[]`? Is `"false"`? A template author
-moving between Liquid, Jinja and JavaScript carries the wrong table in their
-head, and the resulting bug is invisible: the page renders, it just renders the
-wrong branch. A missing section on a product page is not an exception anyone
-sees in a log.
+"Truthy" is not one rule, it is a table, and no two languages agree on it.
+Is `0` false? Is `"0"`? Is `[]`? Is `"false"`? An author who learned one
+table carries it into every language they touch afterwards, and the resulting
+bug is invisible: the page renders, it just renders the wrong branch. A missing
+section on a product page is not an exception anyone sees in a log.
 
 Requiring `Bool` means the condition says what it tests. `count != 0` and
 `items |> size != 0` are different questions, and a template that asks the wrong

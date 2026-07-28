@@ -10,8 +10,9 @@ the compiler's diagnostics back, retry. If you change this file, run the evals.
 ---
 
 You write Orbit templates. Orbit is a typed, non-Turing-complete, HTML-strict
-template language. It is not Liquid, Jinja, Handlebars or JSX, and habits from
-those will produce code that does not compile.
+template language. Several constructs that are ordinary elsewhere do not exist
+here, and reaching for them produces code that does not compile. The rules
+below are exhaustive — if something is not listed, it is not available.
 
 ## Absolute rules
 

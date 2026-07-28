@@ -69,7 +69,7 @@ describe('the eval loop', () => {
   it('does NOT reach 100% on the first attempt', async () => {
     // If the mock's first attempts all compiled, the repair loop would never
     // run and this harness would be measuring nothing. The canned first
-    // attempts deliberately carry Liquid and JSX habits.
+    // attempts deliberately reach for constructs Orbit rejects.
     const summary = await runEval({ provider: mockProvider(), maxRepairs: 0 });
     expect(summary.passed).toBeLessThan(summary.total);
     expect(summary.passed).toBeGreaterThan(0);

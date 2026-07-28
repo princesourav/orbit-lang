@@ -89,9 +89,9 @@ describe('corpus coverage', () => {
   it('covers budget behaviour including the empty-loop-body case', () => {
     const budget = loadCases({ category: 'budget' });
     expect(budget.length).toBeGreaterThan(0);
-    // LiquidJS CVE-2026-44645 was an iteration budget escaped by an empty loop
-    // body. Orbit's counter is charged per iteration regardless, and the corpus
-    // pins that rather than assuming it.
+    // An empty loop body must still charge the iteration counter — skipping
+    // the charge when nothing is emitted would turn an empty loop into free
+    // work. The corpus pins it rather than assuming it.
     expect(budget.some((c) => c.id.includes('empty-loop-body'))).toBe(true);
   });
 

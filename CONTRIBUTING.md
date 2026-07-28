@@ -206,7 +206,7 @@ are permanent non-goals, not a backlog:
 - **Regex**: in the stdlib, in the scanners, in a `matches` filter, anywhere.
 - **`<script>`, `<style>`, `<svg>`, `<iframe>` or inline event handlers**, in
   any form, including "just for trusted templates".
-- **Migration tooling from Liquid or any other engine.** Adoption is
+- **Migration tooling from other template engines.** Adoption is
   greenfield-first by design; converters import untyped idioms and set false
   drop-in-compatibility expectations. This has been decided and is not
   reopened by new proposals.

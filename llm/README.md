@@ -13,7 +13,7 @@ harness that measures whether it worked.
 | Path | What it is |
 |---|---|
 | [`system-prompt.md`](system-prompt.md) | Paste into a model's system prompt. Dense and rule-shaped, because that is what a model reads well. |
-| [`eval/tasks.json`](eval/tasks.json) | 14 generation tasks, each targeting a habit carried over from Liquid, Jinja or JSX that Orbit rejects. |
+| [`eval/tasks.json`](eval/tasks.json) | 14 generation tasks, each targeting a construct Orbit rejects that models reach for by default. |
 | [`eval/harness.mjs`](eval/harness.mjs) | The generate → compile → repair loop. Pluggable provider. |
 | [`eval/run.mjs`](eval/run.mjs) | CLI. |
 
@@ -51,21 +51,21 @@ nothing; `harness.test.mjs` asserts they do not.
 
 ## Why the traps are the tasks
 
-Each task targets one specific transfer error:
+Each task targets one construct a model reaches for that Orbit rejects:
 
-| Task | Habit it catches |
+| Task | What it catches |
 |---|---|
-| `no-truthiness` | `<if {someString}>` from Liquid/JS |
+| `no-truthiness` | `<if {someString}>` — no truthiness conversion exists |
 | `optional-fallback` | Rendering a possibly-absent value directly |
 | `narrowing` | Reaching for `??` when a guard is wanted |
 | `loop-with-empty` | Omitting the required `<empty>` block |
 | `no-script` | Adding a `<script>` tag or an `on*` handler |
-| `no-method-call` | `{x.upper()}` from JS |
+| `no-method-call` | `{x.upper()}` — filters are piped, not called on values |
 | `pipe-precedence` | `{x \|> size > 0}`, which does not parse |
 | `static-style` | Interpolating into a `style` attribute |
 | `money-terminal` | Arithmetic on `Money`, or rendering it directly |
 | `escape-literal` | A bare `<` in text |
-| `slots`, `url-attribute`, `nested-components` | Syntax that has no analogue elsewhere |
+| `slots`, `url-attribute`, `nested-components` | Syntax a model has to be told, not guess |
 
 A task asserts more than "it compiled": `must` and `mustNot` substring checks
 catch a model that satisfies the compiler while ignoring the request — deleting

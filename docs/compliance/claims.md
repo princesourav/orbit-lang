@@ -305,7 +305,7 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | No payload in any category produces a script element or event handler — "no rendered case anywhere produces a script or an event handler" | conformance/differential.test.mjs | test |
 | No URL sink yields javascript:, non-image data:, or protocol-relative URLs — "URL sinks: no dangerous scheme survives" | conformance/differential.test.mjs | test |
 | JSON-LD payloads cannot close the script element and remain valid JSON — "JSON-LD: the payload cannot close the script element" | conformance/differential.test.mjs | test |
-| An empty loop body still charges the iteration counter (the LiquidJS CVE-2026-44645 shape) — "covers budget behaviour including the empty-loop-body case" | conformance/runner.test.mjs | test |
+| An empty loop body still charges the iteration counter — "covers budget behaviour including the empty-loop-body case" | conformance/runner.test.mjs | test |
 | The one known engine/browser divergence (U+0000) is pinned per context, not normalized away — "the one known divergence: U+0000" | conformance/differential.test.mjs | test |
 
 ## LLM code generation

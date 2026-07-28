@@ -9,9 +9,8 @@
 
 Orbit:
   type: markup
-  # Distinct from the neighbouring template languages, since the language bar is
-  # the main place this is ever seen:
-  #   Liquid #67b8de · Twig #c1d026 · Handlebars #f7931e · HTML #e34c26
+  # Orbit's own accent colour, checked against the palette Linguist already
+  # assigns so the language bar stays legible alongside it.
   color: "#2f5bd7"
   extensions:
     - ".orbit"

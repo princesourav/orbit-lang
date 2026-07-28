@@ -82,8 +82,9 @@ const index = `# Orbit
 > do not fully trust. XSS is a compile error, resource exhaustion is a budget
 > trip, and the data a template can touch is statically extractable.
 
-Orbit is NOT Liquid, Jinja, Handlebars or JSX. Habits from those produce code
-that does not compile. The rules that most often surprise:
+Several constructs that are ordinary in other template languages do not exist
+in Orbit, and reaching for them produces code that does not compile. The rules
+that most often surprise:
 
 - \`<if>\` requires a \`Bool\`. There is no truthiness.
 - A \`T?\` value must be given \`??\` or narrowed with \`!= none\` before use.

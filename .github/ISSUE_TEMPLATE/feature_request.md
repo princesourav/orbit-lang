@@ -21,7 +21,7 @@ following will be closed with thanks, however well argued:
   * eval, new Function, or runtime compilation to JS
   * Regex, anywhere
   * <script>, <style>, <svg>, <iframe>, or inline event handlers
-  * Migration tooling from Liquid or any other engine
+  * Migration tooling from other template engines
   * Runtime I/O, network, filesystem, or a clock that affects output
   * Anything that makes output non-deterministic or a budget forgeable
 

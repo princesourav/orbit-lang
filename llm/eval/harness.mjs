@@ -135,8 +135,8 @@ function extractSource(text) {
  * Offline provider.
  *
  * It deliberately answers the first attempt the way a competent model with NO
- * Orbit-specific knowledge does — carrying Liquid and JSX habits — and then
- * fixes itself when handed diagnostics. That makes the harness runnable, and
+ * Orbit-specific knowledge does — reaching for truthiness, method calls and a
+ * script tag — and then fixes itself when handed diagnostics. That makes the harness runnable, and
  * exercised, without an API key, and it keeps the repair loop honest: the
  * canned first attempts are wrong in the ways the traps predict.
  */
