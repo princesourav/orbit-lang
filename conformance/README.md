@@ -188,9 +188,76 @@ rather than inferred from them. A conforming implementation emits, for
   **manifest**, not in the markup, so nothing about the second pass is
   attacker-reachable through the page.
 
-Signing, transport and caching policy are deliberately NOT specified: the engine
-has no I/O and no key material, and a signing scheme baked into the engine is one
-every embedder would have to accept. The manifest is the seam.
+### The swap protocol
+
+The placeholder is only half a contract; something has to fill it. Orbit ships
+that something (`runtime/`), and the protocol is specified here so a second
+implementation can reproduce both halves.
+
+**Configuration comes from the script's own tag**, so a theme ships one tag:
+
+```html
+<script src="/orbit-islands.min.js"
+        integrity="sha384-…"
+        crossorigin="anonymous"
+        data-endpoint="/_islands"
+        data-token="…"
+        defer></script>
+```
+
+**One request per page, not per island.** The reason a fragment was deferred is
+that the page could be cached without it; paying one network round trip per
+island gives that back.
+
+```
+POST <data-endpoint>
+content-type: application/json
+credentials: same-origin
+
+{ "token": "<data-token, verbatim>", "ids": ["i0", "i1"] }
+```
+
+```
+200 OK
+{ "islands": { "i0": "<span>…</span>", "i1": "…" } }
+```
+
+The ids travel in the **body**. They are read from the DOM, and a value from the
+DOM interpolated into a request URL is a forgery surface even when the values are
+engine-generated today.
+
+**Where signing sits.** The engine has no key material and cannot sign. But the
+signed thing is the **manifest**, not the DOM: the host signs it server-side and
+emits an opaque token into the page. The script copies that token through and
+never constructs, parses or validates it. So the engine owns the protocol and the
+host owns exactly the one thing it must.
+
+**Failure is per-island and never destructive.** On network failure, a non-200,
+a malformed body, or an id absent from the response, the placeholder is left
+exactly as rendered — the fallback is already correct, and clearing it or
+substituting an error message replaces working output with worse output. A
+failed island must never invalidate already-rendered SSR output. There is no
+retry: a broken endpoint costs one request, not a storm.
+
+An implementation **MUST**:
+
+- fill only `orbit-island[data-island]` elements, and only ids it requested;
+- ignore a response entry whose value is not a string;
+- fill a duplicated id at most once — filling every copy would duplicate
+  personalized content across placeholders that were never the same island;
+- leave every other element in the document untouched.
+
+Content is assigned with `innerHTML`. That is defensible **only** because the
+value is Orbit's own render output — same engine, same six-context escaper, the
+host's own second pass over same-origin credentials — and not author markup or
+user input. An implementation that sources island content from anywhere else has
+broken the escaping guarantee, not extended it.
+
+Reporting is via DOM events on `document`, so nothing must exist before the
+script loads: `orbit:islands-filled` with `{ filled: string[] }`, and
+`orbit:islands-failed` with `{ ids: string[], reason: string }`.
+
+Caching policy remains the host's.
 
 ## Two things the corpus does not prove
 

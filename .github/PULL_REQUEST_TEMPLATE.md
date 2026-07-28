@@ -56,7 +56,7 @@ it needs an explicit argument.
       indexing remains the only exception)
 - [ ] **No `eval` / `new Function` / runtime compilation to JS**
 - [ ] **No new raw-HTML escape hatch** — the only unescaped sink remains a host
-      filter flagged `unsafeHtml: true`
+      filter flagged `trustedHtml: true`
 - [ ] **Escaping contexts stay structural** — decided by where a value is
       written, never by its type or content
 - [ ] **Allowlists stay closed** — additions carry a rationale; no switch to a

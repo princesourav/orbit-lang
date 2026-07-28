@@ -114,7 +114,7 @@ We do not suppress CVEs to keep a count low.
 
 - **Escaping bypass** — any input that causes a value to reach the output in the
   wrong escaping context, or unescaped, without a host filter having explicitly
-  declared `unsafeHtml: true`. Attribute and JSON-LD sinks are the highest-value
+  declared `trustedHtml: true`. Attribute and JSON-LD sinks are the highest-value
   targets. Context confusion between TEXT, RCDATA, ATTR, URL-ATTR and JSON-LD
   counts even when no proof-of-concept payload is supplied.
 - **Budget bypass** — any template that renders without terminating, or that
@@ -133,11 +133,20 @@ We do not suppress CVEs to keep a count low.
   closed tables, at parse time or at AST-validation time.
 - **Non-determinism** — the same program, data and options producing different
   output bytes across renders or processes.
+- **The island swap script** (`runtime/`) — the only shipped component with
+  **ambient authority**. It runs in the page, makes a network request, and
+  writes markup into the DOM, so it is first in scope rather than last.
+  Specifically: anything that makes it write into an element that is not an
+  `orbit-island` placeholder it requested; anything that gets a value from the
+  page into the request URL; anything that lets a response fill a placeholder
+  the page did not ask for, or fill one more than once; and any path on which a
+  failed island damages already-rendered output instead of leaving the fallback
+  in place.
 
 ### Out of scope
 
 - **Host misconfiguration.** Declaring untrusted data through a filter flagged
-  `unsafeHtml: true`, or registering a host filter that itself concatenates
+  `trustedHtml: true`, or registering a host filter that itself concatenates
   attacker-controlled strings into HTML, is a host bug. Report it anyway if the
   engine's API made the mistake easy or hard to see — API ergonomics that invite
   the error are in scope even when the resulting bug is not.
@@ -192,7 +201,15 @@ Stated precisely, so nobody has to guess what "tested" means here:
   behavior — is **planned for v1.0 and is not shipped today**. Until it exists,
   the tests in this repository validate the implementation against itself, with
   no external oracle.
-- There is **no third-party security audit**. One is planned for v1.0.
+- There is **no third-party security audit**. One is planned for v1.0. When it
+  happens, `runtime/` goes first: it is the only part of the system with ambient
+  authority, and everything else is a pure function.
+- The island swap script is tested against a **real DOM, not a real browser**.
+  `runtime/islands.test.mjs` runs under happy-dom, which implements DOM
+  semantics in Node. That evidences the logic — including that every failure
+  path leaves the fallback intact — and evidences nothing about Safari, an
+  older engine, or a CSP-constrained page. A browser-matrix test is not shipped
+  and is not claimed.
 - There is **no differential testing against browser parsers**. Planned for v1.0
   alongside the normative escaping spec.
 

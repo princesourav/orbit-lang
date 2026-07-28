@@ -3064,7 +3064,7 @@ Because an Orbit-rendered page contains no inline script and no event handler
 attributes, the violations you see will come from your own client bundle and
 from third-party tags — which is exactly the inventory worth having.
 
-## The one place they meet: `unsafeHtml` filters
+## The one place they meet: `trustedHtml` filters
 
 Orbit has a single unescaped sink: a host filter declared to produce `Html`.
 Rich-text fields usually go through one.
@@ -3074,7 +3074,7 @@ Rich-text fields usually go through one.
   name: 'richtext',
   params: [t.string()],
   returns: t.html(),
-  unsafeHtml: true,
+  trustedHtml: true,
   impl: ([markup]) => sanitize(String(markup)),
 }
 ```
@@ -3089,10 +3089,10 @@ server and arrives as part of the document. Two things do:
 1. **Sanitize with a maintained library**, and keep it updated. DOMPurify's
    CVE-2026-41238 is a reminder that sanitizers are themselves a moving target.
 2. **Audit the use sites.** Every one is a compile-time warning, so a build log
-   is a complete inventory. Grep for `unsafeHtml: true` and you have the list of
+   is a complete inventory. Grep for `trustedHtml: true` and you have the list of
    filters; the warnings give you the list of templates.
 
-If you can avoid an `unsafeHtml` filter entirely — by giving authors structured
+If you can avoid a `trustedHtml` filter entirely — by giving authors structured
 fields instead of a rich-text blob — do that. It removes the only sink Orbit
 cannot reason about.
 

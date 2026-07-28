@@ -447,6 +447,28 @@ prove.
 | Access-plan containment holds PER UNIT under deferral: an island reads nothing its manifest did not name — "the manifest names every path the second pass will read" | src/access-plan.property.test.ts | test |
 | The first pass reads nothing it deferred, so the page plan stays sound — "the page never reads what it deferred, so its own plan stays sound too" | src/access-plan.property.test.ts | test |
 
+## The island swap script (runtime/)
+
+The project's first shipped client artifact, and the only component with ambient
+authority. Tested against a real DOM under happy-dom — **not** a browser matrix;
+that gap is stated in SECURITY.md and is not claimed here.
+
+| claim | evidence | kind |
+|---|---|---|
+| A deferred island renders its fallback, then the island content — "renders the fallback first, then swaps in the island content" | runtime/islands.test.mjs | test |
+| Every island on a page costs ONE request, not one per island — "sends one request for every island on the page" | runtime/islands.test.mjs | test |
+| Island ids travel in the request body, never in the URL, and the host token is copied through verbatim — "puts the ids in the body and the token through verbatim, never in the URL" | runtime/islands.test.mjs | test |
+| A failing island leaves the fallback intact and the rest of the page untouched, on every failure path (network, non-200, bad JSON, malformed payload) — "a failing island never damages the page" | runtime/islands.test.mjs | test |
+| A failure is per-island: the others still fill — "fills what it can and reports only what was absent" | runtime/islands.test.mjs | test |
+| A broken endpoint costs one request, not a retry storm — "does not retry, so a broken endpoint costs one request and not a storm" | runtime/islands.test.mjs | test |
+| The script fills only placeholders it requested, at most once each, and touches no other element — "what it refuses to touch" | runtime/islands.test.mjs | test |
+| The shipped artifact is within its size budget, and exceeding it fails the build | runtime/build.mjs | artifact |
+| The shipped artifact behaves identically to its source after minification — "behaves identically after minification" | runtime/islands.test.mjs | test |
+| The shipped artifact uses no eval, Function constructor, document.write, timer or XHR — "reaches for no dynamic-code or document-rewriting primitive" | runtime/islands.test.mjs | test |
+| The shipped artifact writes markup in exactly one place — "writes markup in exactly one place" | runtime/islands.test.mjs | test |
+| An SRI hash and the script tag that carries it are emitted as build artifacts | runtime/dist/orbit-islands.json | artifact |
+| The placeholder contract and the swap protocol are specified in prose for a second implementation | conformance/README.md | artifact |
+
 ## Claims deliberately NOT listed here
 
 Some things this project will claim later are absent on purpose, because the

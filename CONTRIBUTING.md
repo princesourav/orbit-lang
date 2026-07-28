@@ -113,7 +113,7 @@ regardless of how much it improves ergonomics.
    `<style>`, `<iframe>`, `<svg>` and friends stay out permanently.
 7. **`Html` stays engine-owned and terminal.** It is not host-declarable, and it
    renders only as element content. The only producer is a host filter flagged
-   `unsafeHtml: true`.
+   `trustedHtml: true`.
 8. **Every budget stays global and unforgeable.** One iteration counter per
    render, threaded through component and slot boundaries. Per-value caps are
    re-checked at every filter step, not just at the end.
@@ -201,7 +201,7 @@ are permanent non-goals, not a backlog:
   `typeof`-style introspection, property enumeration over host objects.
 - **Raw HTML modes**: `|safe`, `|raw`, triple-mustache, `<raw>` blocks, or any
   other way for a template author to opt out of escaping. The single unescaped
-  sink is a host filter the embedder wrote and flagged `unsafeHtml: true`, and
+  sink is a host filter the embedder wrote and flagged `trustedHtml: true`, and
   that stays the only one.
 - **Regex**: in the stdlib, in the scanners, in a `matches` filter, anywhere.
 - **`<script>`, `<style>`, `<svg>`, `<iframe>` or inline event handlers**, in

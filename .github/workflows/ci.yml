@@ -76,6 +76,13 @@ jobs:
       - name: Test
         run: npx vitest run
 
+      - name: Island runtime is within budget and not stale
+        # The only artifact here that ships to browsers, so a size regression is
+        # paid by every visitor to every page. Failing the build is the point:
+        # a budget added after the first regression is a budget set to whatever
+        # that regression was.
+        run: npm run runtime:check
+
       - name: Error-code index is not stale
         run: npm run errors:check
 

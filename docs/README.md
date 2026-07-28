@@ -63,7 +63,7 @@ These are permanent, not a backlog:
 - **No dynamic member access.** `obj[expr]` is a parse error. This is what makes
   the static data-access plan sound.
 - **No raw HTML mode.** There is no escape hatch that emits unescaped markup;
-  the only unescaped sink is a host filter explicitly declared `unsafeHtml`.
+  the only unescaped sink is a host filter explicitly declared `trustedHtml`.
 - **No regular expressions**, anywhere in the engine or the stdlib.
 
 If you need more power than the language offers, the answer is a typed host
