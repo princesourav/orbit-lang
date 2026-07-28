@@ -58,6 +58,9 @@ jobs:
       - name: Build (dual ESM/CJS + CLI)
         run: npm run build
 
+      - name: llms.txt is not stale
+        run: npm run llms:check
+
       - name: Playground is not stale
         run: npm run playground:check
 

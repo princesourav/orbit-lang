@@ -1,0 +1,2221 @@
+# Orbit — complete documentation
+
+Generated from https://github.com/princesourav/orbit-lang. Do not edit by hand.
+
+Orbit is a typed, non-Turing-complete, HTML-strict template language. This
+file inlines every documentation page in reading order.
+
+
+==============================================================================
+FILE: docs/language/tutorial.md
+==============================================================================
+
+# Your first Orbit component
+
+Every snippet here compiles. If you want to follow along interactively, open
+the [playground](../../playground/) — it needs no install.
+
+## A template has two halves
+
+```orbit
+---
+component ProductCard
+props {
+  product: Product
+}
+---
+<article class="card">
+  <h3>{product.title}</h3>
+</article>
+```
+
+The part between `---` fences is **frontmatter**: it declares what the template
+is called and what it needs. Below it is markup.
+
+Frontmatter is mandatory. A template that does not declare its inputs is a
+template whose contract lives in someone's head.
+
+`component` names are PascalCase; `page` names are lowercase.
+
+## Interpolation
+
+`{expr}` inserts a value. It is escaped according to where it sits — you never
+choose an escaping filter, and there is no way to opt out:
+
+```orbit
+---
+component Card
+props {
+  title: String
+}
+---
+<h1>{title}</h1>
+<div data-label={title}>attribute values are escaped differently</div>
+```
+
+To emit a literal `<`, write `{"<"}`. A bare `<` in text is a parse error, so
+this is never ambiguous.
+
+## Conditionals
+
+`<if>` takes a `Bool`. There is no truthiness, so compare explicitly:
+
+```orbit
+---
+component Card
+props {
+  title: String
+  available: Bool
+}
+---
+<if {available}>
+  <button type="button">Add to cart</button>
+</if>
+<else>
+  <p>Sold out</p>
+</else>
+```
+
+`<else-if>` and `<else>` are **siblings** of `</if>`, not children of it.
+
+## Loops
+
+```orbit
+---
+page shop
+---
+<ul>
+  <for product, i of={collection.products} limit={24}>
+    <li data-position={i + 1}>{product.title}</li>
+    <empty>
+      <li>Nothing here yet.</li>
+    </empty>
+  </for>
+</ul>
+```
+
+Three things to notice:
+
+- The index binding (`, i`) is optional.
+- `limit` must be a **literal**, at most 250. A bound an attacker could compute
+  is not a bound. Omitted, it defaults to 250.
+- `<empty>` is required and must be the last child. The empty-collection case is
+  the one every template forgets, so the language does not let you.
+
+## Optionals
+
+A field declared `String?` may be absent, and cannot be used until you say what
+happens when it is:
+
+```orbit
+---
+component Card
+props {
+  vendor: String?
+}
+---
+{# Give it a fallback… #}
+<p>{vendor ?? "Unbranded"}</p>
+
+{# …or narrow it with a guard. #}
+<if {vendor != none}>
+  <p class="vendor">{vendor}</p>
+</if>
+```
+
+This is [the optional law](safety.md), and it is the rule you will meet most
+often. It exists so a missing vendor cannot render as a blank line in
+production.
+
+## Filters
+
+Pipe values through the [stdlib](../reference/filters.md):
+
+```orbit
+---
+component Card
+props {
+  title: String
+  tags: List<String>
+}
+---
+<h3>{title |> trim |> truncate(40)}</h3>
+<p>{tags |> join(", ")}</p>
+```
+
+`|>` is the loosest operator, so `{a + b |> round}` pipes the sum.
+
+## Components calling components
+
+A PascalCase tag is a component call:
+
+```orbit
+---
+page shop
+---
+<ul>
+  <for product of={collection.products}>
+    <li><ProductCard product={product}/></li>
+    <empty><li>Nothing here yet.</li></empty>
+  </for>
+</ul>
+```
+
+Props are typed and checked. A missing required prop, an unknown prop, or a
+wrong type is a compile error naming the prop.
+
+## Slots
+
+Components accept content from their caller:
+
+```orbit
+---
+component Panel
+slots {
+  header
+  footer?
+}
+---
+<section class="panel">
+  <header><slot name="header"/></header>
+  <div><slot/></div>
+  <footer><slot name="footer"/></footer>
+</section>
+```
+
+`header` is required; `footer?` is optional. The caller fills them with a
+`slot=` attribute:
+
+```orbit
+---
+page shop
+---
+<Panel>
+  <h2 slot="header">Featured</h2>
+  <p>Body content goes to the default slot.</p>
+  <small slot="footer">Terms apply.</small>
+</Panel>
+```
+
+Slot content is written by the caller and renders in the **caller's** scope —
+it can see the caller's data, not the component's internals.
+
+## Naming a value
+
+`<let>` binds an expression once:
+
+```orbit
+---
+component Card
+props {
+  title: String
+}
+---
+<let heading={title |> trim |> truncate(60)}/>
+<h3>{heading}</h3>
+<div data-heading={heading}>reuse it without recomputing</div>
+```
+
+## Settings
+
+Settings are values a non-developer edits in a UI. They are declared with a
+control type and a default:
+
+```orbit
+---
+component PromoBanner
+settings {
+  headline: Text = "Free shipping" label "Headline"
+  tone: Select("info", "warning") = "info" label "Tone"
+  columns: Range(1, 6, step: 1) = 3 label "Columns"
+  showBadge: Toggle = true label "Show badge"
+  accent: Color = #2f5bd7 label "Accent"
+}
+---
+<div class="promo promo--{settings.tone}">
+  <p>{settings.headline}</p>
+</div>
+```
+
+The host supplies values at render time; an invalid value falls back to the
+declared default and raises a warning rather than failing the page.
+
+## Compile it
+
+```bash
+npx orbit check src/themes/
+```
+
+One run reports every problem in every file, with a source excerpt and a caret:
+
+```
+error[O2104]: optional value used without a fallback (`String?`) — decide what happens when it is absent
+ --> card.orbit:8:5
+  |
+8 | <p>{vendor}</p>
+  |    ^^^^^^^^ use {vendor ?? ""} or wrap in <if {vendor != none}>
+```
+
+Then format:
+
+```bash
+npx orbit fmt src/themes/
+```
+
+## Where to go next
+
+- [The two rules that will surprise you](safety.md) — read this one.
+- [Templates and markup](templates.md) — why the element list is closed.
+- [Components and pages](components.md)
+- [Types](types.md)
+
+
+==============================================================================
+FILE: docs/language/safety.md
+==============================================================================
+
+# The two rules that will surprise you
+
+Most of Orbit is unremarkable if you have written templates before. Two rules
+are not, and they account for the large majority of compile errors people hit
+in their first hour. Both are deliberate, and both exist because the failure
+they prevent is silent in every other template language.
+
+Read this page before you get stuck, not after.
+
+---
+
+## 1. No truthiness
+
+`<if>` requires a `Bool`. Not a string, not a number, not a list.
+
+```orbit expect-error
+{# Compile error. #}
+<if {product.title}>
+  <h1>{product.title}</h1>
+</if>
+```
+
+```
+error[O3007]: <if> condition must be Bool, found String (there is no truthiness)
+ --> product-card.orbit:4:6
+  |
+4 | <if {product.title}>
+  |      ^^^^^^^^^^^^^ write an explicit comparison, e.g. {value != ""}
+```
+
+Write what you actually mean:
+
+```orbit
+<if {product.title != ""}>
+  <h1>{product.title}</h1>
+</if>
+```
+
+### Why
+
+"Truthy" is not one rule, it is a table, and every language's table is
+different. Is `0` false? Is `"0"`? Is `[]`? Is `"false"`? A template author
+moving between Liquid, Jinja and JavaScript carries the wrong table in their
+head, and the resulting bug is invisible: the page renders, it just renders the
+wrong branch. A missing section on a product page is not an exception anyone
+sees in a log.
+
+Requiring `Bool` means the condition says what it tests. `count != 0` and
+`items |> size != 0` are different questions, and a template that asks the wrong
+one now says so out loud.
+
+---
+
+## 2. The optional law
+
+A value of type `T?` — one that may be `none` — cannot be used where a `T` is
+required. Not rendered, not passed to a filter, not compared, not used as an
+operand. It must first be given a fallback or narrowed.
+
+```orbit expect-error
+{# vendor is String?. Compile error. #}
+<p>{product.vendor}</p>
+```
+
+```
+error[O2104]: optional value used without a fallback (`String?`) — decide what happens when it is absent
+ --> product-card.orbit:4:4
+  |
+4 | <p>{product.vendor}</p>
+  |    ^^^^^^^^^^^^^^^^ use {product.vendor ?? ""} or wrap in <if {product.vendor != none}>
+```
+
+There are two ways to satisfy it.
+
+**Give it a fallback** with `??`:
+
+```orbit
+<p>{product.vendor ?? "Unbranded"}</p>
+```
+
+**Narrow it** with an `!= none` guard. Inside the guarded branch, the value is
+known to be present:
+
+```orbit
+<if {product.vendor != none}>
+  <p>{product.vendor}</p>   {# fine: narrowed to String here #}
+</if>
+```
+
+Narrowing follows the shape of the code you would write anyway:
+
+```orbit
+{# Accumulates across an else-if chain. #}
+<if {product.vendor != none}>
+  <p>{product.vendor}</p>
+</if>
+<else-if {product.brand != none}>
+  <p>{product.brand}</p>
+</else-if>
+
+{# Propagates through && to the right-hand operand. #}
+<if {product.vendor != none && product.vendor != ""}>
+  <p>{product.vendor}</p>
+</if>
+```
+
+### `||` deliberately does not narrow
+
+```orbit expect-error
+{# Still a compile error, and correctly so. #}
+<if {product.vendor == none || product.vendor != ""}>
+  <p>{product.vendor}</p>
+</if>
+```
+
+In the branch where that condition is true, `vendor` might have been `none` —
+the left operand is exactly the case where it is. A narrowing rule that
+"worked" here would be unsound, and unsound narrowing is worse than none: it
+would let a `none` reach a sink while the compiler claimed otherwise.
+
+### `?.` does not end the obligation
+
+`product.vendor?.length` yields an optional too. Optional chaining moves the
+`none` along; it does not resolve it. You still need `??` or a guard at the
+point of use.
+
+### Why
+
+The alternative is rendering `null`, `undefined`, `None` or `` into a page. Every
+templating ecosystem has shipped that bug to production, usually into a `<title>`
+or a price. It is not caught by tests because the test fixture always has the
+field populated — the failure needs a real record with a missing vendor, on a
+Tuesday.
+
+Making it a compile error moves the discovery from a customer's screen to your
+editor, and the fix-it in the diagnostic is usually the whole change.
+
+---
+
+## These two rules compose
+
+```orbit
+{# rating is Float? — both rules apply. #}
+<if {product.rating != none && product.rating > 4.0}>
+  <span class="badge">Top rated</span>
+</if>
+```
+
+`&&` narrows `rating` for its right operand, so `product.rating > 4.0` is legal
+there; and that comparison produces the `Bool` that `<if>` requires. Neither
+rule needed a special case — they are the same rule applied twice: *a value is
+only usable where its type actually fits.*
+
+---
+
+## What this costs you
+
+Honestly: some verbosity. `{price ?? 0}` where another language lets you write
+`{price}`. The trade is that a template which compiles cannot render a missing
+value or take a branch on a definition of "truthy" you did not intend.
+
+For a template estate maintained by people who did not write it — or generated
+by a model — that trade is the entire point of using a typed template language.
+
+
+==============================================================================
+FILE: docs/language/templates.md
+==============================================================================
+
+# Templates and markup
+
+## The element allowlist is closed
+
+Orbit permits 94 elements. Everything else is a compile error — not a warning,
+not passed through.
+
+```orbit expect-error
+<blink>nope</blink>
+```
+
+```
+error[O1081]: <blink> is not in the element allowlist
+```
+
+Sixteen elements are banned with a specific reason rather than a generic
+"unknown", because people reach for them deliberately:
+
+`script`, `style`, `iframe`, `object`, `embed`, `applet`, `base`, `meta`,
+`link`, `template`, `noscript`, `svg`, `math`, `frame`, `frameset`, `portal`.
+
+```orbit expect-error
+<script>alert(1)</script>
+```
+
+```
+error[O1080]: <script> is not allowed: scripts cannot appear in templates;
+client behavior ships as platform runtime islands
+```
+
+### Why closed rather than a denylist
+
+A denylist is a list of attacks someone thought of. Every new HTML feature is
+permitted by default until somebody notices — which is how `srcdoc`, `<portal>`
+and countless `on*` variants became bug reports in other engines.
+
+The closed list also buys something structural: because `<script>` and `<style>`
+are not in it, **no code path emits into a rawtext context**, so the RAWTEXT
+escaping context is unreachable by construction rather than by careful escaping.
+
+`<html>`, `<head>` and `<body>` are also absent. Templates render *fragments*;
+the document shell and its metadata belong to the host.
+
+## Attributes
+
+Four value forms:
+
+```orbit
+{# static #}
+<div class="card">a</div>
+{# quoted, with islands #}
+<div class="card card--{product.title}">b</div>
+{# whole-expression #}
+<a href={product.url}>c</a>
+{# bare flag #}
+<button disabled>d</button>
+{# conditional: the attribute is emitted only when the Bool is true #}
+<button disabled?={!product.available}>e</button>
+```
+
+Values are always double-quoted in output. Single quotes are rejected in
+source, which is what makes the attribute escaper's job total rather than
+context-dependent.
+
+The attribute allowlist is closed too: a global set, per-element sets, and the
+`data-*` and `aria-*` families. Rejected outright: every `on*` handler,
+`srcdoc`, `ping`, `background`, `longdesc`, and any namespaced name like
+`xlink:href`.
+
+There are **no dynamic attribute names** and no spread. You cannot compute
+which attribute to set, which means an attacker cannot compute it either.
+
+### `style` must be static
+
+```orbit expect-error
+<div style="color: {settings.accent}">x</div>
+```
+
+A CSS value is its own injection context, and Orbit does not implement a CSS
+escaper — so rather than escape it badly, the language refuses. Static `style`
+attributes are fine:
+
+```orbit
+<div style="display: flex">x</div>
+```
+
+For dynamic styling, switch on a class name, or have the host supply a
+custom-property value it has validated.
+
+## URL attributes
+
+Seven attributes are marked URL-bearing at parse time: `href`, `src`, `srcset`,
+`action`, `formaction`, `poster`, `cite`.
+
+A plain `String` is allowed in them. Orbit does not require a `Url` type,
+because [it never trusts a type to mean a URL is safe](../guides/security-model.md#urls-are-sanitized-at-the-sink-never-trusted-from-a-type)
+— the scheme allowlist is applied where the value is emitted.
+
+## RCDATA elements
+
+`<title>` and `<textarea>` hold text and interpolation, but nested tags are
+treated as text:
+
+```orbit
+<title>{article.title} — Shop</title>
+```
+
+An `Html` value can never render here (`O2075`), because RCDATA does not parse
+markup and injecting markup into it would either do nothing or break out.
+
+## Text and whitespace
+
+Runs of whitespace collapse to a single space, and **boundary spaces are
+preserved**. `<p>  hello  </p>` renders as `<p> hello </p>`; a run that is
+entirely whitespace is dropped.
+
+This matters more than it sounds, because it defines where the formatter may
+break lines — see [the formatter's contract](../../src/formatter.ts). If you
+need byte-exact spacing, write it explicitly:
+
+```orbit
+<p>Price:{" "}<strong>19.00</strong></p>
+```
+
+Inside `<pre>`, text is preserved exactly.
+
+A bare `<` in text is a parse error with a fix-it, so there is never ambiguity
+about whether you meant a tag:
+
+```orbit
+<p>a {"<"} b</p>
+```
+
+### `verbatim`
+
+The `verbatim` marker disables interpolation for a subtree, so `{` is literal:
+
+```orbit
+<code verbatim>{this is not an expression}</code>
+```
+
+## Comments
+
+```orbit
+{# Stripped before rendering. Never reaches the output. #}
+<!-- Also stripped. -->
+<p>x</p>
+```
+
+Both forms are removed entirely. There is no comment that survives into the
+HTML, so a comment cannot leak template internals to a viewer.
+
+## JSON-LD
+
+```orbit
+<json-ld>{{"@type": "Product", name: product.title, url: product.url}}</json-ld>
+```
+
+Note the double braces: the outer `{}` is the interpolation island, the inner
+`{}` is the record literal. Keys that are not valid identifiers — `@type`,
+`@context` — must be quoted.
+
+Takes exactly one record expression, serialized by the engine. Strings are
+emitted with `<`, `>`, `&` and `/` escaped as `\uXXXX`, so the payload can never
+close the script element it lives in. Only primitives, records, lists and `Url`
+are permitted; `Html` is refused.
+
+
+==============================================================================
+FILE: docs/language/components.md
+==============================================================================
+
+# Components and pages
+
+Every template is one or the other, declared in frontmatter.
+
+```orbit
+---
+component ProductCard
+props {
+  product: Product
+  showVendor: Bool = false
+}
+---
+<article class="card">
+  <h3>{product.title}</h3>
+</article>
+```
+
+| | `component` | `page` |
+|---|---|---|
+| Name | PascalCase | lowercase |
+| Called by other templates | yes | **no** |
+| Receives `props` | yes | no |
+| Receives host bindings | no | yes |
+| Declares `slots` | yes | no |
+
+A page is an entry point: the host binds top-level data to it. A component is
+reusable and receives everything through props. Pages cannot be called and
+cannot declare slots — a page reached by two different routes would otherwise
+have two different contracts.
+
+## Props
+
+Props are typed, and may have a literal default:
+
+```orbit
+---
+component Badge
+props {
+  label: String
+  tone: String = "info"
+  count: Int?
+}
+---
+<span class="badge badge--{tone}">
+  {label}
+  <if {count != none}>({count})</if>
+</span>
+```
+
+Defaults must be **literals** — a default that could run code is a default that
+runs at every call site, invisibly.
+
+Calling it:
+
+```orbit
+---
+page shop
+---
+<Badge label="New"/>
+<Badge label="Sale" tone="warning"/>
+```
+
+The checker verifies each call: a missing required prop, an unknown prop, or a
+type mismatch is an error naming the prop, with a did-you-mean suggestion for
+near-misses.
+
+A bare prop means `true`:
+
+```orbit
+---
+component Card
+props {
+  product: Product
+  showVendor: Bool = false
+}
+---
+<article>
+  <h3>{product.title}</h3>
+  <if {showVendor}><p>{product.vendor ?? "Unbranded"}</p></if>
+</article>
+```
+
+```orbit
+---
+page shop
+---
+<for product of={collection.products}>
+  <Card product={product} showVendor/>
+  <empty><p>none</p></empty>
+</for>
+```
+
+Conditional props (`prop?={...}`) are rejected on component calls — a prop that
+sometimes does not exist would make the callee's contract conditional.
+
+## Slots
+
+Slots let a caller pass markup in.
+
+```orbit
+---
+component Panel
+slots {
+  header
+  footer?
+}
+---
+<section class="panel">
+  <header><slot name="header"/></header>
+  <div class="panel__body"><slot/></div>
+  <footer><slot name="footer"/></footer>
+</section>
+```
+
+`header` is required; `footer?` is optional. `<slot/>` is the default slot.
+
+The caller fills them with a static `slot=` attribute:
+
+```orbit
+---
+page shop
+---
+<Panel>
+  <h2 slot="header">Featured</h2>
+  <p>This goes to the default slot.</p>
+  <small slot="footer">Terms apply.</small>
+</Panel>
+```
+
+A missing required slot, or a fill targeting a slot that does not exist, is a
+compile error.
+
+**Slot content renders in the caller's scope.** It can see the caller's data,
+not the component's internals. That is what keeps a component's props from
+leaking into markup it did not write.
+
+There is no fallback content inside `<slot/>` in this version.
+
+### Slot transparency
+
+`<if>` and `<for>` wrappers are transparent for slot assignment, provided every
+element they render targets the *same* slot:
+
+```orbit
+---
+page shop
+---
+<Panel>
+  <h2 slot="header">Featured</h2>
+  <if {collection.title != ""}>
+    <p slot="footer">{collection.title}</p>
+  </if>
+</Panel>
+```
+
+If a wrapper's branches target different slots, that is an error (`O2085`) —
+the assignment would depend on runtime data, and slot structure is meant to be
+statically known.
+
+## `<let>`
+
+Binds an expression to a name for the rest of the enclosing scope:
+
+```orbit
+---
+component Card
+props {
+  product: Product
+}
+---
+<let heading={product.title |> trim |> truncate(60)}/>
+<h3>{heading}</h3>
+<div data-heading={heading}>reused without recomputing</div>
+```
+
+`<let>` cannot shadow `settings`, and rebinding the same name in a nested scope
+is allowed but the outer binding is unaffected — there is no assignment in
+Orbit, only binding.
+
+## The component graph must be acyclic
+
+A component that calls itself, directly or through a cycle, is a compile error
+(`O2091`) with the full cycle path in the message.
+
+This is not a limitation to work around — it is what makes rendering
+provably terminate. Combined with literal loop bounds and the global iteration
+counter, it means no template can loop forever, no matter who wrote it.
+
+## Settings
+
+Settings are values a non-developer edits in a UI, declared with a control type
+and a default:
+
+```orbit
+---
+component PromoBanner
+settings {
+  headline: Text = "Free shipping" label "Headline"
+  tone: Select("info", "warning") = "info" label "Tone"
+  columns: Range(1, 6, step: 1) = 3 label "Columns"
+  showBadge: Toggle = true label "Show badge"
+  accent: Color = #2f5bd7 label "Accent"
+}
+---
+<div class="promo promo--{settings.tone}" data-columns={settings.columns}>
+  <p>{settings.headline}</p>
+</div>
+```
+
+Controls: `Text`, `Select(...)`, `Range(min, max, step: n)`, `Toggle`, `Color`.
+A `Select` produces a string-literal union type, so the checker knows exactly
+which values `settings.tone` can hold.
+
+`settings` is a reserved name and cannot be shadowed. At render time the host
+supplies values; an invalid one falls back to the declared default and raises a
+warning rather than failing the page — a merchant typo should not take down a
+storefront.
+
+
+==============================================================================
+FILE: docs/language/types.md
+==============================================================================
+
+# Types
+
+Orbit is statically typed. Every expression has a type known before any data
+exists, and the type is what makes the safety rules checkable rather than
+hopeful.
+
+## Primitives
+
+| Type | Literals | Notes |
+|---|---|---|
+| `String` | `"hello"` | Escapes: `\n \t \r \" \\ \/`. No raw newlines. |
+| `Int` | `42`, `-7` | |
+| `Float` | `1.5` | No exponent form, no leading dot. |
+| `Bool` | `true`, `false` | The only thing `<if>` accepts. |
+| `Color` | `#2f5bd7` | Exactly `#rrggbb`. |
+| `none` | `none` | The absent value. |
+
+`Int` widens to `Float` where a `Float` is expected. Nothing else widens
+implicitly — in particular there is no implicit stringification anywhere, so
+`{count}` renders an `Int` but `"total: " + count` is an error (use
+interpolation instead).
+
+`/` always yields `Float`, even for two `Int`s, because integer division
+silently truncating a price is a bug worth a compile error. `%` is `Int`-only.
+
+## Optionals: `T?`
+
+A value that may be `none`. This is the type behind
+[the optional law](safety.md): a `T?` cannot be used where a `T` is required
+until you supply `??` or narrow it with an `!= none` guard.
+
+```orbit
+---
+component Card
+props {
+  vendor: String?
+}
+---
+<p>{vendor ?? "Unbranded"}</p>
+```
+
+Optional chaining `?.` produces an optional too — it moves the `none` along, it
+does not resolve it.
+
+## Lists: `List<T>`
+
+```orbit
+---
+component Tags
+props {
+  tags: List<String>
+}
+---
+<p>{tags |> join(", ")}</p>
+```
+
+Indexing yields `T?`, because the index may be out of range:
+
+```orbit
+---
+component Tags
+props {
+  tags: List<String>
+}
+---
+<p>{tags[0] ?? "untagged"}</p>
+```
+
+`obj[expr]` on a *record or object* is a parse error — indexing works on lists
+only. That restriction is what makes the static access plan sound.
+
+## Records and objects
+
+**Records** are structural: `{title: "x", count: 2}` has type
+`{title: String, count: Int}`, and width subtyping applies (a record with extra
+fields is assignable where fewer are required).
+
+**Objects** are nominal, declared by the host in its `TypeRegistry`. `Product`
+is assignable only to `Product`. The host owns these; the engine ships none.
+
+## String-literal unions
+
+A `Select` setting produces a union of its options:
+
+```orbit
+---
+component Banner
+settings {
+  tone: Select("info", "warning", "danger") = "info" label "Tone"
+}
+---
+<div class="banner banner--{settings.tone}">x</div>
+```
+
+`settings.tone` has type `"info" | "warning" | "danger"`, so the checker knows
+exactly which values can appear. A union widens to `String` where a `String` is
+required.
+
+## Terminal types
+
+Four branded types exist to make whole categories of mistake unrepresentable.
+They are not ordinary types with restrictions bolted on — the restrictions are
+the reason they exist.
+
+### `Money`
+
+Admits **no** operators, **no** properties, **no** equality, **no** stdlib
+filters, and **cannot be rendered**.
+
+That looks hostile until you consider what it prevents: currency arithmetic in
+a template. `{price * 1.2}` for a tax rate, `{price - discount}` for a sale
+price — every one of those is a float-rounding bug shipped to a customer's
+invoice, and none of them belongs in a presentation layer.
+
+Format it with a host filter that returns `MoneyText`:
+
+```orbit
+---
+component Price
+props {
+  product: Product
+}
+---
+<p class="price">{product.price |> money}</p>
+```
+
+### `MoneyText`
+
+The output of formatting money. Renders in content and attributes, admits no
+filters — it is already formatted, and truncating or upper-casing a formatted
+price is not something to make easy.
+
+### `Url`
+
+Renders, and is valid in URL attributes and JSON-LD. It is a convenience, **not
+a safety mechanism**: a plain `String` is equally allowed in `href`, because
+[URL safety is enforced at the sink](../guides/security-model.md#urls-are-sanitized-at-the-sink-never-trusted-from-a-type),
+never inferred from a type.
+
+### `Image`
+
+Host-filter input only. It exists so an image reference can be passed to a
+host's image pipeline without the template being able to do anything else with
+it.
+
+### `Html`
+
+Engine-owned, and the sharpest of the five. It renders **only** as element
+content — never as a prop, binding, operand, attribute value, or inside RCDATA
+or JSON-LD. It is **not host-declarable**: you cannot add a field of type
+`Html` to your registry.
+
+The only producers are host filters flagged `unsafeHtml: true`, and every use
+site raises a warning. That flag is the audit trail — grep for it and you have
+the complete list of places unescaped markup can enter a page.
+
+## Where annotations go
+
+Only in frontmatter, on props. Everything else is inferred:
+
+- `<let>` takes the type of its expression.
+- Loop variables take the element type of the subject.
+- List literals unify their elements; numeric branches unify to `Float`.
+- Ternary branches unify; a `none` branch makes the result `T?`.
+- `Url` unified with `String` gives `String` — the weaker of the two, because
+  assuming otherwise would be assuming safety.
+
+## `invalid`
+
+When the checker cannot determine a type, it produces `invalid` and
+**suppresses** downstream errors involving it. One genuine mistake yields one
+diagnostic, not a cascade of twenty consequences — the same principle the
+parser's recovery follows.
+
+
+==============================================================================
+FILE: docs/reference/grammar.md
+==============================================================================
+
+# Grammar reference
+
+Derived from `src/parser.ts`, which is the authority. The
+[tree-sitter grammar](../../tree-sitter-orbit/) mirrors it and is verified
+against the same examples.
+
+Notation: `?` optional, `*` zero or more, `+` one or more, `|` alternatives.
+
+## Template
+
+```
+template     ::= trivia* frontmatter node*
+trivia       ::= whitespace | comment
+frontmatter  ::= "---" declaration block* "---"
+declaration  ::= ("component" PascalName | "page" lowerName)
+block        ::= props | settings | slots
+```
+
+Frontmatter is **mandatory**. Only whitespace and `{# … #}` comments may
+precede it — an HTML comment may not.
+
+```
+props     ::= "props" "{" propDecl* "}"
+propDecl  ::= name ":" type ("=" literal)?
+
+settings  ::= "settings" "{" settingDecl* "}"
+settingDecl ::= name ":" control "=" literal ("label" string)?
+control   ::= "Text" | "Toggle" | "Color"
+            | "Select" "(" string ("," string)* ")"
+            | "Range" "(" number "," number ("," "step" ":" number)? ")"
+
+slots     ::= "slots" "{" slotDecl* "}"
+slotDecl  ::= name "?"?          -- "?" marks the slot optional
+
+type      ::= name | "List" "<" type ">" | type "?"
+```
+
+Prop and setting defaults must be **literals**.
+
+## Body
+
+```
+node ::= text | interpolation | comment | element | void | rcdata
+       | component | if | for | let | slot | jsonLd
+```
+
+### Elements
+
+```
+element   ::= "<" tag attribute* ">" node* "</" tag ">"
+void      ::= "<" voidTag attribute* "/"? ">"
+rcdata    ::= "<" ("title"|"textarea") attribute* ">" (text|interpolation)* "</" tag ">"
+```
+
+`tag` must be in the closed allowlist (94 elements). Every non-void element is
+explicitly closed. Inside RCDATA elements, nested tags are text.
+
+### Attributes
+
+```
+attribute ::= name                       -- bare flag
+            | name "=" quoted            -- parts with optional islands
+            | name "=" "{" expr "}"      -- whole expression
+            | name "?" "=" "{" expr "}"  -- conditional
+quoted    ::= '"' (chars | "{" expr "}")* '"'
+```
+
+Double quotes only. Names are lowercase and drawn from the closed attribute
+allowlist plus the `data-*` and `aria-*` families. `style` must be entirely
+static. No dynamic attribute names, no spread.
+
+### Control flow
+
+```
+if     ::= "<if" "{" expr "}" ">" node* "</if>"
+           ("<else-if" "{" expr "}" ">" node* "</else-if>")*
+           ("<else>" node* "</else>")?
+
+for    ::= "<for" name ("," name)? "of" "=" "{" expr "}"
+           ("limit" "=" "{" intLiteral "}")? ">"
+           node* "<empty>" node* "</empty>" "</for>"
+
+let    ::= "<let" name "=" "{" expr "}" "/>"
+slot   ::= "<slot" ("name" "=" string)? "/>"
+jsonLd ::= "<json-ld>" "{" recordExpr "}" "</json-ld>"
+```
+
+`<else-if>` and `<else>` are **siblings** of `</if>`, merged by the parser into
+one node. `<empty>` is required and must be the last child of `<for>`. `limit`
+must be an integer literal, at most 250.
+
+### Components
+
+```
+component ::= "<" PascalName prop* "/>"
+            | "<" PascalName prop* ">" node* "</" PascalName ">"
+prop      ::= name | name "=" '"' staticText '"' | name "=" "{" expr "}"
+```
+
+A bare prop means `true`. Conditional props (`?=`) are rejected on component
+calls. Slot fills use a static `slot="name"` attribute on a child element.
+
+### Comments
+
+```
+comment ::= "{#" … "#}" | "<!--" … "-->"
+```
+
+Both are stripped entirely and never reach the output.
+
+## Expressions
+
+Precedence, **loosest first**:
+
+| # | Operators | Associativity |
+|---|---|---|
+| 1 | `? :` | right |
+| 2 | `??` | left |
+| 3 | `\|>` | left |
+| 4 | `\|\|` | left |
+| 5 | `&&` | left |
+| 6 | `==` `!=` | left |
+| 7 | `<` `<=` `>` `>=` | left |
+| 8 | `..` | non-associative |
+| 9 | `+` `-` | left |
+| 10 | `*` `/` `%` | left |
+| 11 | `!` `-` (unary) | prefix |
+| 12 | `.` `?.` `[…]` call | postfix |
+
+**The pipe is the loosest operator**, as in Elixir and F#. `a + b |> round`
+pipes the whole sum. The consequence worth remembering is that a comparison
+cannot follow a pipeline without parentheses:
+
+```orbit
+{# Parse error O1019 — the pipe would swallow the comparison. #}
+{(tags |> size) > 0}
+```
+
+The right-hand side of `|>` is a **filter name only**, optionally with extra
+arguments: `x |> truncate(40)`.
+
+```
+expr    ::= ternary
+ternary ::= coalesce ("?" ternary ":" ternary)?
+coalesce::= pipe ("??" pipe)*
+pipe    ::= or ("|>" filterName ("(" args ")")?)*
+…
+postfix ::= primary ("." name | "?." name | "[" expr "]")*
+primary ::= literal | name | "(" expr ")" | list | record | call
+list    ::= "[" (expr ("," expr)*)? "]"
+record  ::= "{" (key ":" expr ("," key ":" expr)*)? "}"
+key     ::= name | string
+call    ::= filterName "(" args ")"
+```
+
+Record keys may be identifiers or quoted strings. Keys that are not valid
+identifiers — `"@type"`, `"@context"` — must be quoted.
+
+### Literals
+
+```
+int    ::= digit+                        -- max 20 digits, must round-trip exactly
+float  ::= digit+ "." digit+             -- no exponent, no leading dot
+string ::= '"' (char | escape)* '"'      -- escapes: \n \t \r \" \\ \/
+bool   ::= "true" | "false"
+none   ::= "none"
+color  ::= "#" hex hex hex hex hex hex
+range  ::= expr ".." expr                -- literal bounds, span <= 250
+```
+
+## Deliberately absent
+
+Not oversights, and not on a roadmap:
+
+- **Method calls.** `x.upper()` is `O1016`, with a fix-it pointing at `|>`.
+- **Dynamic member access.** `obj[expr]` on records or objects is `O1015`. This
+  is what makes the static access plan sound.
+- **User-defined functions, recursion, `while`.** Termination is a property of
+  the language.
+- **String concatenation with `+`.** Use interpolation; the fix-it says so.
+- **Assignment.** `<let>` binds; nothing mutates.
+- **Whitespace control syntax** (`{%-` and friends). The collapse rule is fixed;
+  use `{" "}` where you need an exact space.
+
+
+==============================================================================
+FILE: docs/reference/filters.md
+==============================================================================
+
+# Filter reference
+
+Orbit ships 19 filters. They are pure functions: same input, same output, no
+I/O, no clock, no state. None uses a regular expression, and every one that can
+grow a value is checked against the per-value caps at each step.
+
+Filters are applied with the pipe operator, which is the **loosest** operator in
+the language (as in Elixir and F#), so the whole left-hand expression is piped:
+
+```orbit
+{title |> trim |> truncate(40)}
+{basePrice + shipping |> round}      {# pipes the SUM, not just shipping #}
+```
+
+Or called directly:
+
+```orbit
+{truncate(trim(title), 40)}
+```
+
+Some arguments must be **literals**, noted below. That restriction is what keeps
+templates statically analyzable — a sort key that could be computed at runtime
+would defeat the static access plan.
+
+---
+
+## Strings
+
+### `upper(s: String) -> String`
+### `lower(s: String) -> String`
+
+Case conversion. Operates per code unit; no locale-specific casing rules (no
+Turkish dotless-i handling), because locale-dependent output would break the
+determinism guarantee.
+
+```orbit
+{"Aurora Runner" |> upper}   {# AURORA RUNNER #}
+```
+
+### `capitalize(s: String) -> String`
+
+Uppercases the first character, leaves the rest untouched. It does **not**
+lowercase the remainder — `capitalize("iPhone case")` is `"IPhone case"`, not
+`"Iphone case"`.
+
+### `trim(s: String) -> String`
+
+Removes leading and trailing whitespace (space, tab, CR, LF).
+
+### `truncate(s: String, max: Num, ellipsis?: String) -> String`
+
+Shortens to at most `max` characters **including** the ellipsis, so the result
+never exceeds `max`. Default ellipsis is `…` (one character).
+
+```orbit
+{"Aurora Runner Lightweight" |> truncate(12)}   {# "Aurora Runn…" #}
+{"Aurora Runner" |> truncate(9, "...")}         {# "Aurora..." #}
+```
+
+Returns the input unchanged when it is already short enough.
+
+### `replace(s: String, from: String, to: String) -> String`
+
+Literal substring replacement — every occurrence, no patterns. There is no
+regex form and will not be one; `from` is matched by a linear scan, and the
+result is cap-checked as it grows so a replacement that inflates the string
+cannot exceed the per-value limit.
+
+### `split(s: String, separator: String) -> List<String>`
+
+Splits on a literal separator. The result is capped at `maxListItems`.
+
+### `slugify(s: String) -> String`
+
+Lowercases, and maps runs of non-alphanumeric characters to single hyphens, with
+no leading or trailing hyphen. ASCII-oriented: it does not transliterate
+accented or non-Latin characters, so use it for URL fragments you control, not
+as a general internationalized slug function.
+
+### `urlEncode(s: String) -> String`
+
+Percent-encodes for use in a query string. This is **not** what makes a URL
+safe — URL safety is enforced at the sink when the value is emitted into a
+URL-bearing attribute, whatever the filter chain did. See
+[the security model](../guides/security-model.md).
+
+---
+
+## Lists
+
+### `join(list: List<primitive>, separator: String) -> String`
+
+Joins primitives. Structured values (records, objects) cannot be joined — there
+is no implicit stringification anywhere in Orbit.
+
+### `size(value: List | String) -> Int`
+
+Length of a list, or character count of a string. The idiomatic emptiness test,
+since there is no truthiness:
+
+```orbit
+<if {(product.tags |> size) > 0}>
+  <p>tagged</p>
+</if>
+```
+
+The parentheses are required. `|>` is the loosest operator, so
+`{tags |> size > 0}` would try to pipe into `size > 0` — the parser rejects it
+with `O1019` and says so. `{size(product.tags) > 0}` is equivalent.
+
+### `first(list: List<T>) -> T?`
+### `last(list: List<T>) -> T?`
+
+The first or last element — **optional**, because the list may be empty. That
+optional is not a nuisance; it is the empty-list case that other languages let
+you render as blank. Satisfy it with `??` or a guard.
+
+Neither takes a count argument.
+
+### `reverse(list: List<T>) -> List<T>`
+
+Returns a reversed copy. The input is never mutated — nothing in Orbit mutates.
+
+### `sortBy(list: List<T>, key: string-literal) -> List<T>`
+
+Stable sort by a field. `key` **must be a string literal**. Missing values sort
+last.
+
+```orbit
+<for product of={collection.products |> sortBy("title")}>
+  <p>{product.title}</p>
+  <empty><p>none</p></empty>
+</for>
+```
+
+### `where(list: List<T>, key: string-literal, value) -> List<T>`
+
+Keeps elements whose field equals `value`, by strict equality. `key` **must be a
+string literal**.
+
+```orbit
+<for product of={collection.products |> where("available", true)}>
+  <p>{product.title}</p>
+  <empty><p>none in stock</p></empty>
+</for>
+```
+
+---
+
+## Numbers
+
+### `round(n: Num, places?: literal 0..6) -> Int | Float`
+
+Rounds to `places` decimal places (default `0`). `places` **must be a literal**
+between 0 and 6. Returns `Int` when rounding to 0 places, `Float` otherwise.
+
+### `clamp(n: Num, min: Num, max: Num) -> Int | Float`
+
+Constrains to a range.
+
+**Note:** none of these apply to `Money`. `Money` is a terminal type that admits
+no operators, no properties, no stdlib filters and no rendering — currency
+arithmetic in a template is a bug, and the type makes it unrepresentable. Format
+money with a host filter that returns `MoneyText`.
+
+---
+
+## Dates
+
+### `formatDate(iso: String, pattern: String) -> String`
+
+Formats an ISO-8601 date string. The parse is a hand-rolled linear scan and
+deliberately does not construct a `Date`, because that would make output depend
+on the host's timezone and break determinism.
+
+Pattern tokens: `YYYY`, `MM`, `DD`, `HH`, `mm`, `ss`, and `MMMM` for the month
+name.
+
+```orbit
+{article.publishedAt |> formatDate("MMMM D, YYYY")}
+```
+
+**Limitations you should know before relying on it:**
+
+- Month names come from the injected locale data, which defaults to English.
+  Supply your own through `RenderOptions.locale`.
+- **Timezones are not applied.** The input is formatted as given. If you need a
+  value rendered in the viewer's zone, convert it host-side before binding it —
+  the engine has no clock and no timezone database, by design.
+
+For anything richer — relative times, plurals, full CLDR formatting — declare a
+host filter. That keeps the locale data, and its update cadence, on your side of
+the boundary.
+
+---
+
+## Caps
+
+Every filter is checked against the per-value caps at each step, so a chain
+cannot inflate a value past them:
+
+| Cap | Value | Code |
+|---|---|---|
+| String length | 256 KiB | `O4005` |
+| List items | 5,000 | `O4006` |
+
+A trip fails the whole render with a template, line and column. A partial page
+is never returned. See [limits](limits.md).
+
+
+==============================================================================
+FILE: docs/reference/limits.md
+==============================================================================
+
+# Limits
+
+Every cap Orbit enforces, what trips it, and the code you get.
+
+**Published values are spec minimums.** They say "a conforming engine must bound
+this". A production host configures its own, lower, unpublished values through
+`RenderOptions` — publishing the exact budget a tenant runs under only tells an
+attacker how close they may get.
+
+A runtime cap trip **fails the whole render** with a template, line and column.
+A partial page is never returned, because a truncated page is a page that ships
+half a checkout form.
+
+---
+
+## Parse-time caps
+
+Enforced while parsing, at node construction. An over-cap template never
+finishes parsing — there is no post-hoc walk that a bug could skip.
+
+| Cap | Value | Code | Trips on |
+|---|---|---|---|
+| AST nodes per template | 20,000 | `O1100` | Template too large |
+| Element nesting depth | 64 | `O1101` | Deeply nested markup |
+| Expression depth | 32 | `O1009` | Deeply nested expression |
+| Expression tokens | 512 | `O1002` | One enormous expression |
+| Numeric literal digits | 20 | — | A literal that cannot round-trip exactly |
+| Text run length | 256 KiB | `O1054` | One enormous text node |
+| Attributes per element | 64 | — | Too many attributes |
+| Parse errors per template | 100 | — | Recovery stops; the rest are cascades |
+
+Numeric literals are additionally required to **round-trip exactly**. Orbit
+numbers are IEEE-754 doubles, so a literal wider than the cap cannot be
+distinguished from its neighbours; rejecting it beats silently rounding
+someone's price.
+
+## Check-time caps
+
+| Cap | Value | Code |
+|---|---|---|
+| Loop `limit` literal | 1..250 | `O2078` |
+| Range literal span | 250 | `O2050`, `O2051` |
+| JSON-LD nesting depth | 16 | — |
+
+`limit` must be a **compile-time literal**. A loop bound that could be computed
+at runtime is a loop bound an attacker can influence.
+
+## Runtime budgets
+
+One **global** counter each per render, threaded through component calls and
+slot expansion — so nesting cannot multiply a budget.
+
+| Budget | Default | Code | What it bounds |
+|---|---|---|---|
+| Fuel | 2,000,000 | `O4001` | Total work: per emitted UTF-16 code unit, plus 8 per element |
+| Iterations | 10,000 | `O4002` | Every loop iteration and component call, globally |
+| Deadline | 250 ms | `O4003` | Wall clock, via the injected `now()` |
+| Output | 1.5 MiB | `O4004` | Total bytes emitted |
+| Component depth | 16 | — | Nesting of component calls |
+| Loop limit (implicit) | 250 | — | Iterations per loop when `limit` is omitted |
+
+Fuel is a **byte budget, not an op budget**: it is charged per code unit
+emitted, and filter outputs are charged too, so "produce something enormous and
+emit nothing" still burns fuel.
+
+The deadline uses an **injected clock** and is abort-only — `now()` never
+reaches output, so determinism is preserved. Two renders of the same program and
+data produce identical bytes regardless of how long either took.
+
+## Per-value caps
+
+Checked at **every filter step**, so a chain cannot inflate a value past them.
+
+| Cap | Value | Code |
+|---|---|---|
+| String length | 256 KiB (262,144 UTF-16 code units) | `O4005` |
+| List items | 5,000 | `O4006` |
+
+## Configuring them
+
+```ts
+render(program, 'collection', {
+  bindings,
+  hostFilters,
+  fuel: 250_000,       // well below the published minimum
+  deadlineMs: 50,
+  maxOutput: 512 * 1024,
+});
+```
+
+Choose these from your own p99 render, not from this page. The defaults are
+generous so that the engine's own test suite exercises real templates; a
+multi-tenant host should be far stricter, and should treat a budget trip as a
+signal worth alerting on rather than a routine error.
+
+## Why budgets rather than a sandbox
+
+Twig's own advisory for CVE-2026-46627 states plainly that its sandbox "does not
+protect against resource exhaustion". That is the general case: sandboxes
+constrain *what* code reaches, not *how much* work it does, so a sandboxed
+template language still needs a separate answer for a hostile author writing a
+loop that never ends.
+
+Orbit does not need one, because the language cannot express unbounded
+computation: there is no recursion, loop bounds are literals, and every budget
+above is enforced by one global counter. Termination is a property of the
+language, and the budgets bound the constant factor.
+
+
+==============================================================================
+FILE: docs/reference/errors.md
+==============================================================================
+
+# Error code index
+
+<!-- GENERATED FILE — do not edit by hand.
+     Produced by scripts/gen-error-index.mjs from the diagnostic code literals in src/.
+     Regenerate:  node scripts/gen-error-index.mjs
+     Verify:      node scripts/gen-error-index.mjs --check  -->
+
+Every Orbit diagnostic carries a stable code. Codes mean exactly one thing and are never recycled: a code that disappears from the engine is retired, not reused. This index is generated from the engine source, so it cannot drift from what the code actually raises.
+
+| range | phase |
+| --- | --- |
+| `O1xxx` | lexer + parser — syntax, allowlists, structural caps |
+| `O2xxx` | checker — signatures, types, contracts, filters |
+| `O3xxx` | checker — the truthiness rule |
+| `O4xxx` | interpreter + escaping (runtime); `O49xx` are non-fatal warnings |
+| `O5xxx` | stored-AST re-validation on load |
+
+The **message** column is the engine's own text with runtime interpolations shown as `…`. The **what to do** column is authored guidance, maintained in `scripts/gen-error-index.mjs`.
+
+Total codes: **188**.
+
+## O1xxx — lexer and parser
+
+Raised before any type exists: syntax, the element and attribute allowlists, and the structural caps. Parsing stops at the first of these, so a template with a syntax error yields exactly one diagnostic.
+
+| code | message | what to do | raised in |
+| --- | --- | --- | --- |
+| `O1001` | unterminated expression: missing closing `}` | Close the interpolation island with `}`. Every `{` in template text opens an expression. | `src/lexer.ts:143` |
+| `O1002` | expression too long (more than … tokens) | Split the expression across two or more `<let>` bindings. | `src/lexer.ts:133` |
+| `O1003` | unexpected character … in expression | Remove the character; Orbit expressions use ASCII identifiers, numbers, strings, `#colors` and the documented punctuators. | `src/lexer.ts:198` |
+| `O1004` | unterminated string literal | Add the closing `"`. Strings cannot span lines. | `src/lexer.ts:219 (+1 more)` |
+| `O1005` | string literals cannot contain raw newlines | Replace the literal newline with `\n`. | `src/lexer.ts:223 (+1 more)` |
+| `O1006` | unknown string escape \… | Use one of `\n` `\t` `\r` `\"` `\\` `\/`. | `src/lexer.ts:233 (+1 more)` |
+| `O1007` | string literal exceeds the per-value string cap | Shorten the literal, or move the text into element content where it is not a single value. | `src/lexer.ts:238` |
+| `O1008` | color literals are exactly #rrggbb (got #…) | Write the full six-digit form, e.g. `#0a0a0a`. Three-digit and named colors are not accepted. | `src/lexer.ts:250 (+1 more)` |
+| `O1009` | expression nesting exceeds depth … | Break the expression into `<let>` steps; deep nesting is capped so checking stays linear. | `src/parser.ts:147` |
+| `O1010` | unexpected … after expression | Delete the trailing token, or wrap the whole thing in parentheses if you meant one expression. | `src/parser.ts:102` |
+| `O1011` | unexpected end of expression | The expression ends mid-operator — supply the missing operand. | `src/parser.ts:114 (+1 more)` |
+| `O1012` | expected … | Insert the punctuation the parser named (usually a `)`, `]`, `}` or `:`). | `src/parser.ts:128` |
+| `O1013` | the right side of \|> must be a filter name | The right of `\|>` is a filter name, optionally with arguments: `x \|> truncate(40)`. | `src/parser.ts:241` |
+| `O1014` | expected a property name after | Write a static property name after the dot. There is no dynamic member access. | `src/parser.ts:312` |
+| `O1015` | dynamic member access is not supported | Use a static property (`obj.name`). `obj["name"]` would make data flow unanalyzable. | `src/parser.ts:329` |
+| `O1016` | method calls are not supported | Methods do not exist; pipe instead: `value \|> filter(args)`. | `src/parser.ts:347` |
+| `O1017` | expected a record key | Record keys are identifiers or string literals: `{ name: "x" }`. | `src/parser.ts:435` |
+| `O1018` | unexpected … in expression | The token cannot start an expression — check for a stray operator or an unbalanced bracket. | `src/parser.ts:451` |
+| `O1019` | `…` cannot follow a \|> pipeline — \|> binds looser than every arithmetic and comparison operator | Parenthesize: `(x \|> round) * 2`. `\|>` binds looser than every arithmetic and comparison operator. | `src/parser.ts:276` |
+| `O1020` | expected … | Supply the identifier the parser asked for (a prop, setting, slot or binding name). | `src/parser.ts:527` |
+| `O1021` | expected a tag name after < | A `<` in text must be written `{"<"}`; a tag needs a name immediately after `<`. | `src/parser.ts:537` |
+| `O1022` | unterminated {# comment #} | Close the comment with `#}`. | `src/parser.ts:548` |
+| `O1023` | unterminated <!-- comment --> | Close the comment with `-->`. | `src/parser.ts:558` |
+| `O1024` | numeric literal has … digits (the limit is …) | Orbit numbers are IEEE-754 doubles — a literal this wide has no exact representation. Shorten it. | `src/lexer.ts:300` |
+| `O1025` | numeric literal … cannot be represented exactly (it would round to …) | Write the value the double actually holds, or keep integers within the safe-integer range. | `src/lexer.ts:309` |
+| `O1030` | every template starts with a frontmatter header | Start the file with a `---` frontmatter block declaring `component Name` or `page name`. | `src/parser.ts:602` |
+| `O1031` | unterminated frontmatter (missing closing ---) | Close the frontmatter with a second `---`. | `src/parser.ts:615` |
+| `O1032` | duplicate component/page declaration | A template is either a component or a page, declared exactly once. | `src/parser.ts:620` |
+| `O1033` | component names are PascalCase | Rename the component to PascalCase: `component ProductCard`. | `src/parser.ts:625` |
+| `O1034` | page names are lowercase | Rename the page to lowercase: `page collection`. | `src/parser.ts:628` |
+| `O1035` | unknown frontmatter keyword … | Frontmatter accepts only `component`, `page`, `props`, `settings` and `slots`. | `src/parser.ts:647` |
+| `O1036` | frontmatter must declare `component Name` or `page name` | Add `component Name` or `page name` inside the frontmatter block. | `src/parser.ts:654` |
+| `O1037` | expected { to open the block | Open the block with `{`: `props { … }`. | `src/parser.ts:664` |
+| `O1038` | unterminated frontmatter block | Close the block with `}`. | `src/parser.ts:668` |
+| `O1039` | List needs an element type: List<T> | Write `List<T>` with an element type, e.g. `List<Product>`. | `src/parser.ts:679 (+1 more)` |
+| `O1040` | expected a number | Supply a numeric literal. | `src/parser.ts:743` |
+| `O1041` | expected a literal value, found … | Frontmatter defaults are literals only: numbers, strings, `true`/`false`, `none`, `#rrggbb`. | `src/parser.ts:762 (+1 more)` |
+| `O1042` | `settings` is a reserved binding name | `settings` is the reserved binding for merchant settings — pick another name. | `src/parser.ts:770 (+1 more)` |
+| `O1043` | prop … needs a type | Every prop is typed: `title: String`. | `src/parser.ts:772` |
+| `O1044` | setting … needs a control type | Every setting names a control: `heading: Text = "Sale"`. | `src/parser.ts:792` |
+| `O1045` | Select needs options: Select("a", "b") | Write `Select("a", "b")` with string-literal options. | `src/parser.ts:800 (+2 more)` |
+| `O1046` | Range needs bounds: Range(min, max, step) | Write `Range(0, 12)` or `Range(0, 12, step: 2)` with integer bounds. | `src/parser.ts:814 (+4 more)` |
+| `O1047` | unknown setting control … | Valid controls are `Text`, `Select(...)`, `Range(min, max, step)`, `Toggle`, `Color`. | `src/parser.ts:837` |
+| `O1048` | setting … needs a default | Give the setting a default: `name: Toggle = false`. Merchant settings are always populated. | `src/parser.ts:844` |
+| `O1049` | label must be a string literal | Labels are string literals: `label "Heading"`. | `src/parser.ts:857` |
+| `O1050` | missing closing tag </…> | Close the element. Orbit is HTML-strict: no implied end tags, no auto-closing. | `src/parser.ts:886 (+1 more)` |
+| `O1051` | malformed closing tag </… | Finish the closing tag with `>`. | `src/parser.ts:895 (+1 more)` |
+| `O1052` | (message is constructed at the call site) | Tags must nest properly — close the inner element before the outer one. | `src/parser.ts:899` |
+| `O1053` | unescaped `<` in text | Write `{"<"}` for a literal less-than sign. | `src/parser.ts:925` |
+| `O1054` | text run exceeds the per-value string cap | Split the text run; a single text node or attribute value is capped. | `src/parser.ts:947 (+2 more)` |
+| `O1055` | <empty> is only valid inside <for> | `<empty>` is the fallback branch of `<for>` and is valid nowhere else. | `src/parser.ts:981` |
+| `O1056` | duplicate <empty> in <for> | A `<for>` has at most one `<empty>` branch. | `src/parser.ts:984` |
+| `O1057` | <empty> takes no attributes | `<empty>` takes no attributes: write `<empty>…</empty>`. | `src/parser.ts:987` |
+| `O1058` | <empty> must be the last child of <for> | Move `<empty>` after every repeated child; it must be the last child of `<for>`. | `src/parser.ts:992` |
+| `O1059` | <…> without a preceding <if> sibling | `<else-if>` and `<else>` are siblings of `<if>` — put them immediately after `</if>`. | `src/parser.ts:998` |
+| `O1060` | <else-if> needs a condition: <else-if {cond}> | Write `<else-if {cond}>…</else-if>` with a condition island. | `src/parser.ts:1018 (+1 more)` |
+| `O1061` | malformed <else> | Write `<else>…</else>`; `<else>` takes no condition. | `src/parser.ts:1029` |
+| `O1062` | <if> needs a condition: <if {cond}> | Write `<if {cond}>…</if>` with a condition island. | `src/parser.ts:1041 (+1 more)` |
+| `O1063` | expected `of` in <for>, found … | Write `<for item of={list}>` (optionally `<for item, i of={list}>`). | `src/parser.ts:1062 (+2 more)` |
+| `O1064` | expected limit={n} | Write `limit={12}` with a literal integer. | `src/parser.ts:1070 (+1 more)` |
+| `O1065` | malformed <for> tag | Finish the `<for>` tag with `>`; the only attributes are `of=` and `limit=`. | `src/parser.ts:1075` |
+| `O1066` | <let> needs a value: <let name={expr}/> | Write `<let name={expr}/>`. | `src/parser.ts:1087 (+1 more)` |
+| `O1067` | <let> is self-closing: <let name={expr}/> | `<let>` is self-closing: `<let total={a + b}/>`. | `src/parser.ts:1091` |
+| `O1068` | slot names are static: <slot name="badge"/> | Slot names are static strings: `<slot name="badge"/>`. | `src/parser.ts:1102 (+1 more)` |
+| `O1069` | <slot> is self-closing (no fallback content in v0) | `<slot>` is self-closing and has no fallback content. | `src/parser.ts:1113` |
+| `O1070` | <json-ld> takes no attributes | `<json-ld>` takes no attributes. | `src/parser.ts:1121` |
+| `O1071` | <json-ld> contains exactly one { record expression } | `<json-ld>` wraps exactly one record expression: `<json-ld>{ … }</json-ld>`. | `src/parser.ts:1123 (+1 more)` |
+| `O1072` | components cannot carry slot=; wrap the call in an element | Wrap the component call in an element and put `slot=` on that element. | `src/parser.ts:1138` |
+| `O1073` | malformed <…> tag | Finish the component tag with `>` or `/>`. | `src/parser.ts:1147` |
+| `O1080` | <…> is not allowed: … | The element is banned for the stated reason — there is no flag to re-enable it. | `src/parser.ts:1157` |
+| `O1081` | <…> is not in the element allowlist | Only allowlisted elements parse. Use a semantic element from the allowlist. | `src/parser.ts:1160` |
+| `O1082` | <…> is not a void element | Only void elements self-close. Write `<tag>…</tag>`. | `src/parser.ts:1169` |
+| `O1083` | malformed <…> tag | Finish the tag with `>` or `/>`. | `src/parser.ts:1175` |
+| `O1084` | more than … attributes on one element | Reduce the number of attributes on the element. | `src/parser.ts:1259` |
+| `O1085` | duplicate attribute … | Remove the repeated attribute. | `src/parser.ts:1261` |
+| `O1086` | attribute … is not allowed: … | The attribute is banned for the stated reason (event handlers, `srcdoc`, `ping`, namespaced names, legacy URL attributes). | `src/parser.ts:1266` |
+| `O1087` | attribute … is not in the attribute allowlist | Use an allowlisted attribute, or a `data-*` / `aria-*` attribute for custom data. | `src/parser.ts:1268` |
+| `O1088` | conditional attribute needs an expression: …?={cond} | Conditional attributes need a Bool island: `disabled?={isSoldOut}`. | `src/parser.ts:1276` |
+| `O1089` | attribute values are double-quoted | Attribute values are double-quoted. | `src/parser.ts:1288` |
+| `O1090` | attribute values must be quoted or an {expression} | Write `name="text"` or `name={expr}`. Unquoted values are not accepted. | `src/parser.ts:1290` |
+| `O1091` | component props take whole expressions, not text with islands | Component props take whole expressions: `title={product.title}`, not `title="a {x}"`. | `src/parser.ts:1301` |
+| `O1092` | expected an attribute name | Supply an attribute name. | `src/parser.ts:1311` |
+| `O1093` | attribute names are lowercase (got …) | Attribute names are lowercase. | `src/parser.ts:1320` |
+| `O1094` | unterminated attribute value for … | Close the attribute value with `"`. | `src/parser.ts:1335` |
+| `O1095` | interpolation inside style attributes is not allowed (W-09) | Interpolation in `style` is banned. Choose a class from a static set, or use a host `cssVar` helper. | `src/parser.ts:1363` |
+| `O1096` | slot= must be a static name: slot="badge" | `slot=` is a static name: `slot="badge"`. | `src/parser.ts:1372` |
+| `O1097` | verbatim is a bare marker attribute | `verbatim` is a bare marker attribute: `<pre verbatim>`. | `src/parser.ts:1375` |
+| `O1098` | duplicate template name … | Template names are the program-wide key — rename one of the two templates. | `src/parser.ts:1453` |
+| `O1100` | template exceeds … AST nodes | Split the template into components; the per-template node cap is structural. | `src/ast.ts:251` |
+| `O1101` | element nesting exceeds depth … | Flatten the markup or extract a component; element nesting is capped. | `src/ast.ts:260` |
+
+## O2xxx — checker: signatures, types, contracts, filters
+
+Raised by `check()`. The checker never throws and never stops early: it returns every diagnostic it found, each with a span and, where one can be computed, a fix-it suggestion.
+
+| code | message | what to do | raised in |
+| --- | --- | --- | --- |
+| `O2010` | duplicate prop … | Remove the duplicate prop declaration. | `src/checker.ts:152` |
+| `O2011` | Html cannot be a prop type (it is element-content-only) | Html is element-content-only: it can never be a prop type or a prop value. | `src/checker.ts:157 (+1 more)` |
+| `O2012` | default for prop … is …, expected … | Make the default literal match the declared prop type. | `src/checker.ts:165` |
+| `O2013` | duplicate setting … | Remove the duplicate setting declaration. | `src/checker.ts:178` |
+| `O2014` | duplicate slot … | Remove the duplicate slot declaration. | `src/checker.ts:191` |
+| `O2015` | setting …: Text default must be a string | The default must be valid for the control (a string for `Text`, an option for `Select`, an in-range Int for `Range`, …). | `src/checker.ts:251 (+4 more)` |
+| `O2016` | unknown type … | Declare the type in the host `TypeRegistry`, or use a built-in (`Int`, `Float`, `String`, `Bool`, `Color`). | `src/checker.ts:286` |
+| `O2017` | page … cannot declare props (prop …) — pages are entry points, not callees | Pages are entry points, not callees. Move the data to `pageGlobals` in `CheckOptions`. | `src/checker.ts:145` |
+| `O2018` | setting …: Range min (…) is greater than max (…) | Swap the bounds: `Range(min, max)` with `min <= max`. | `src/checker.ts:218` |
+| `O2019` | setting …: Range step must be greater than 0 (found …) | A `Range` step must be greater than zero. | `src/checker.ts:227` |
+| `O2020` | setting …: step … never reaches max (…..… is … wide) | Warning: the declared maximum is unreachable. Pick a step that divides the span, or adjust `max`. | `src/checker.ts:239` |
+| `O2030` | unknown identifier … | The name is not in scope. Check spelling, or declare it as a prop / page global / `<let>`. | `src/checker.ts:729` |
+| `O2031` | `…` has no property `…` | The object has no such field. Check the host `TypeRegistry` (or the record literal) for the real name. | `src/checker.ts:857 (+1 more)` |
+| `O2032` | … has no properties | The value has no properties. Lists use `size(list)` or a `<for>` loop. | `src/checker.ts:874` |
+| `O2033` | duplicate record key … | Remove the duplicate record key. | `src/checker.ts:748` |
+| `O2034` | list index must be Int, found … | List indices are Int. | `src/checker.ts:777` |
+| `O2035` | only lists can be indexed (found …) — dynamic member access is not supported | Only lists can be indexed; there is no dynamic member access. | `src/checker.ts:785` |
+| `O2036` | unary - needs Int or Float, found … | Unary `-` needs an Int or Float. | `src/checker.ts:801` |
+| `O2037` | operator … needs Int or Float, found … | Arithmetic and ordering need numbers. Strings compose via interpolation: `{a}{b}`. | `src/checker.ts:921 (+1 more)` |
+| `O2050` | range bounds must be literal integers (a..b) | Range bounds are literal integers (`1..5`). Loop over a host-resolved list for dynamic counts. | `src/checker.ts:759` |
+| `O2051` | range spans more than … values | Shorten the range; ranges are bounded at compile time. | `src/checker.ts:766` |
+| `O2060` | Money cannot be rendered directly; pass it to a host money filter | Money is terminal: no operators, no equality, no properties, no stdlib filters. Pass it to a host money filter. | `src/checker.ts:511 (+4 more)` |
+| `O2061` | Image is an opaque handle; pass it to a host image filter | Image is an opaque handle. Pass it to a host image filter to obtain a Url. | `src/checker.ts:515 (+2 more)` |
+| `O2062` | MoneyText admits no filters — it only renders | MoneyText only renders — it admits no filters. Format it in the host filter instead. | `src/checker.ts:989` |
+| `O2063` | Html cannot be a filter operand | Html cannot be a filter operand; it can only be interpolated into element content. | `src/checker.ts:985` |
+| `O2064` | URL attribute … needs a Url or String, found … | URL attributes take a `Url` or a `String`. | `src/checker.ts:522` |
+| `O2065` | comparing … to none is always … | Warning: the value can never be `none`, so the comparison is constant. Drop it. | `src/checker.ts:948` |
+| `O2066` | cannot compare … and … | The two sides have no common comparable type. Compare precomputed flags from the host model. | `src/checker.ts:963 (+1 more)` |
+| `O2070` | unknown filter … | No such filter. Check the stdlib reference and the host filter list. | `src/checker.ts:1055` |
+| `O2071` | host filter … returns raw Html — its output is NOT escaped | Warning: this host filter returns raw Html and its output is NOT escaped. Confirm the host sanitizes it at write time. | `src/checker.ts:1018` |
+| `O2072` | left of ?? is never none (…) | Warning: the left of `??` is never `none` — the fallback is dead. Remove it. | `src/checker.ts:812` |
+| `O2073` | branches have incompatible types: … vs … | Both branches must have a common type. Convert one side, or move the difference into the markup. | `src/checker.ts:1086` |
+| `O2074` | cannot render a … in an attribute | The value has no textual form. Project it into a printable primitive first. | `src/checker.ts:539 (+2 more)` |
+| `O2075` | Html cannot render inside <title>/<textarea> | Html cannot render inside `<title>` / `<textarea>`; those are RCDATA. | `src/checker.ts:655` |
+| `O2076` | Html cannot appear in attributes (element-content only) | Html cannot appear in attributes. | `src/checker.ts:507` |
+| `O2077` | <for> needs a List or Range, found … | `<for>` iterates a List or a Range. | `src/checker.ts:407` |
+| `O2078` | limit must be a literal Int between 1 and … | `limit` is a literal Int within the engine loop cap. | `src/checker.ts:412` |
+| `O2079` | Html cannot be bound with <let> (element-content only) | Html cannot be bound with `<let>`; interpolate it directly into element content. | `src/checker.ts:430` |
+| `O2080` | unknown component … | No such component in the program. Check the name and that the file is in the compiled set. | `src/checker.ts:555` |
+| `O2081` | … is a page and cannot be called as a component | Pages cannot be called. Extract the markup into a component. | `src/checker.ts:559` |
+| `O2082` | component … has no prop … | The component declares no such prop. | `src/checker.ts:566` |
+| `O2083` | prop … expects …, found … | The argument type does not match the declared prop type. | `src/checker.ts:600` |
+| `O2084` | missing required prop … on <…> | Supply the required prop, or give it a default / optional type in the component. | `src/checker.ts:608` |
+| `O2085` | ambiguous slot attribution: every element a control-flow wrapper can render must target the same slot | Every element a control-flow wrapper can render must target the same slot. Split the wrapper. | `src/checker.ts:615` |
+| `O2086` | (message is constructed at the call site) | The component declares no such slot. Add it to `slots { … }`, or use `<slot/>` for default content. | `src/checker.ts:623` |
+| `O2087` | slot … on <…> is required | The slot is required — provide content for it with `slot="name"`. | `src/checker.ts:634` |
+| `O2088` | <slot> is only valid inside components | `<slot>` is only valid inside a component. | `src/checker.ts:443` |
+| `O2089` | slot … is not declared in frontmatter | Declare the slot in frontmatter: `slots { name? }`. | `src/checker.ts:449` |
+| `O2090` | json-ld admits primitives, records and lists only (found …) | `<json-ld>` admits primitives, records and lists. Project host objects into a record first. | `src/checker.ts:461` |
+| `O2091` | component cycle: … | Break the cycle; the component graph must be acyclic (this is what makes rendering total). | `src/checker.ts:326` |
+| `O2092` | prop … cannot use ?= (that form is for conditional HTML attributes) | `?=` is the conditional-attribute form. Component props take `name={boolExpr}`. | `src/checker.ts:582` |
+| `O2093` | ?. on a value that is never none (…) | Warning: the value is never `none`, so `?.` is redundant. Use plain `.`. | `src/checker.ts:848` |
+| `O2100` | … takes … arguments, got … | Wrong argument count — check the filter signature. | `src/checker.ts:1003 (+1 more)` |
+| `O2101` | …: argument … must be …, found … | Wrong argument type — check the filter signature. | `src/checker.ts:1012 (+5 more)` |
+| `O2102` | …: the key must be a string literal | The argument must be a literal so the filter stays statically analyzable. | `src/stdlib.ts:132 (+1 more)` |
+| `O2103` | sortBy: … has no field … | The field does not exist on the element type, or is not sortable. | `src/stdlib.ts:418 (+2 more)` |
+| `O2104` | optional value used without a fallback (`…`) — decide what happens when it is absent | THE OPTIONAL LAW: decide what happens when the value is absent. Use `{x ?? fallback}`, or narrow with `<if {x != none}>`. | `src/checker.ts:703` |
+
+## O3xxx — checker: the truthiness rule
+
+Its own range because it is the rule newcomers hit first, and the one that never bends.
+
+| code | message | what to do | raised in |
+| --- | --- | --- | --- |
+| `O3007` | … must be Bool, found … | There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`. | `src/checker.ts:683 (+1 more)` |
+
+## O4xxx — interpreter and escaping (runtime)
+
+Raised during `render()`. Every one of these FAILS the render — a partial page is never returned. The O49xx sub-range is different: those are non-fatal `RenderWarning`s returned alongside a successful render.
+
+| code | message | what to do | raised in |
+| --- | --- | --- | --- |
+| `O4001` | render fuel exhausted (output byte budget) | The render exhausted its fuel (a byte budget). Emit less, or raise `fuel` in `RenderOptions`. | `src/interpreter.ts:249 (+3 more)` |
+| `O4002` | global iteration budget of … exhausted | The render exceeded the global iteration budget. Lower loop limits, or raise `maxIterations`. | `src/interpreter.ts:266` |
+| `O4003` | render exceeded the …ms wall-clock deadline | The render passed its wall-clock deadline. Usually a slow host filter; raise `deadlineMs` only if the work is legitimate. | `src/interpreter.ts:273` |
+| `O4004` | output exceeds … characters | The output exceeded `maxOutput`. Paginate the page, or raise the cap. | `src/interpreter.ts:252` |
+| `O4005` | intermediate string exceeds … characters | An intermediate string exceeded the per-value cap inside a filter chain. | `src/interpreter.ts:279` |
+| `O4006` | intermediate list exceeds … items | An intermediate list exceeded the per-value cap inside a filter chain. | `src/interpreter.ts:286` |
+| `O4010` | unbound identifier … | The AST references a binding the host did not supply. Check `bindings` / `props` against the access plan. | `src/interpreter.ts:667` |
+| `O4011` | accessed property … of none | Property access on a value that is not a record. The host data does not match its declared type. | `src/interpreter.ts:696 (+1 more)` |
+| `O4012` | rendered value is none — data violated its declared type | The host supplied `none` where a non-optional value was declared. Fix the data or declare the field `T?`. | `src/interpreter.ts:861` |
+| `O4013` | division by zero | Division or modulo by zero. Guard the denominator with `<if>`. | `src/interpreter.ts:781 (+1 more)` |
+| `O4014` | cannot render a structured value | A structured value reached a text sink. The checker allows this only for `<invalid>` types — check the data shape. | `src/interpreter.ts:863` |
+| `O4015` | component nesting exceeds depth … | Component nesting exceeded the depth cap. Flatten the composition. | `src/interpreter.ts:601` |
+| `O4016` | unknown template … | The entry name is not in the loaded program. | `src/interpreter.ts:192 (+1 more)` |
+| `O4020` | …: expected a string value | A filter received a value of the wrong runtime shape — the host data contradicts its declared type. | `src/stdlib.ts:148 (+4 more)` |
+| `O4021` | formatDate: not an ISO date: … | `formatDate` needs an ISO-8601 date string (`YYYY-MM-DD`, optionally `Thh:mm[:ss]`). | `src/stdlib.ts:514` |
+| `O4022` | conditional attribute …?= needs a Bool | A conditional attribute evaluated to a non-Bool at runtime. | `src/interpreter.ts:506` |
+| `O4023` | Html cannot appear in attributes | An Html value reached an attribute sink. | `src/interpreter.ts:528` |
+| `O4024` | <for> subject is not a list or range | The `<for>` subject, or an indexed value, was not a list at runtime. | `src/interpreter.ts:585 (+1 more)` |
+| `O4025` | condition did not evaluate to a Bool | A condition evaluated to a non-Bool at runtime. | `src/interpreter.ts:638 (+1 more)` |
+| `O4026` | expected an Int | An arithmetic operand was not a number at runtime. | `src/interpreter.ts:644 (+2 more)` |
+| `O4027` | unknown operator … | Unknown binary operator in the AST — only a hand-built AST can produce this. | `src/interpreter.ts:787` |
+| `O4028` | unknown filter … | The AST names a filter that is not registered for this render. | `src/interpreter.ts:844` |
+| `O4029` | cannot render a non-finite number | A non-finite number (NaN / Infinity) reached a text sink. | `src/interpreter.ts:856` |
+| `O4030` | json-ld nesting exceeds depth … | The json-ld value nests deeper than the cap. Flatten the record. | `src/escape.ts:326` |
+| `O4031` | json-ld numbers must be finite | json-ld numbers must be finite. | `src/escape.ts:332` |
+| `O4032` | Html values cannot appear in json-ld | Html values cannot appear in json-ld. | `src/escape.ts:347` |
+| `O4033` | json-ld admits primitives, records and lists only (found …) | json-ld admits primitives, records and lists only. | `src/escape.ts:359` |
+| `O4034` | Html cannot render inside <title>/<textarea> | Html cannot render inside `<title>` / `<textarea>`. | `src/interpreter.ts:405` |
+| `O4035` | host filter … declared Html but returned a non-string | A host filter declared `Html` but returned a non-string. Fix the host implementation. | `src/interpreter.ts:837` |
+| `O4036` | host filter … threw …; host filters must handle their own failures | A host filter threw. Host filters must handle their own failures and return a value. | `src/interpreter.ts:822` |
+| `O4037` | blocked unsafe URL in …: … | A URL was blocked by the sink under `urlPolicy: "error"`. Fix the data; the scheme is not allowlisted. | `src/interpreter.ts:539` |
+| `O4038` | component entry …: required prop … of type … was not supplied and has no default | A prop supplied at a component entry is missing or has the wrong shape for its declared type. | `src/interpreter.ts:364 (+1 more)` |
+| `O4039` | record field … is a reserved property name | A reserved property name (`__proto__`, `constructor`, `prototype`) can never be read from or written to data. | `src/interpreter.ts:680 (+1 more)` |
+| `O4900` | blocked unsafe URL in …: … | Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead. | `src/interpreter.ts:541` |
+| `O4901` | setting ….…: provided value is invalid for its … control; using the declared default | Warning: a merchant setting value was invalid for its control; the declared default was used. | `src/interpreter.ts:309` |
+| `O4902` | emitted Html from an unsafeHtml host filter without escaping | Warning: an `unsafeHtml` host filter emitted raw Html. Audit that the host sanitized it at write time. | `src/interpreter.ts:409` |
+| `O4903` | component entry …: prop … is not declared by the component and was ignored | Warning: a prop supplied at a component entry is not declared by the component and was ignored. | `src/interpreter.ts:384` |
+| `O4909` | warning list truncated at … entries | Warning: the per-render warning list hit its cap and was truncated. | `src/interpreter.ts:231` |
+
+## O5xxx — stored-AST re-validation
+
+Raised by `loadCheckedAst(data, { trust: "verify" })` when a stored AST row fails structural re-validation.
+
+| code | message | what to do | raised in |
+| --- | --- | --- | --- |
+| `O5000` | (message is constructed at the call site) | Structural re-validation of a stored AST failed. The row is malformed or was not produced by this engine version; re-compile from source. | `src/validate-ast.ts:61` |
+| `O5001` | stored AST has no templates record | The stored AST has no `templates` record — the row is not an Orbit program. | `src/validate-ast.ts:446` |
+
+
+==============================================================================
+FILE: docs/guides/embedding.md
+==============================================================================
+
+# Embedding Orbit
+
+Orbit ships no object model. It does not know what a product is, where data
+comes from, or what a URL means in your system. You supply all of that, and the
+engine guarantees the rest: termination, escaping, and no ambient authority.
+
+This guide walks the whole seam.
+
+## Install
+
+```bash
+npm install @orbitlang/core
+```
+
+Zero runtime dependencies, dual ESM/CJS, no I/O. It runs unchanged on Node,
+Deno, Bun, Cloudflare Workers and in a browser.
+
+## The pipeline
+
+```
+parseProgram(files)        → syntax
+check(program, host)       → types, laws, contracts
+serializeProgram(program)  → plain JSON, safe to store
+loadCheckedAst(json)       → structural re-validation on the way back in
+render(program, entry, …)  → HTML
+extractAccessPlan(…)       → exactly which data a render can touch
+```
+
+Parse and check once, at publish time. Store the AST. Render many times.
+
+---
+
+## 1. Declare your types
+
+```ts
+import { t, TypeRegistry } from '@orbitlang/core';
+
+const registry = new TypeRegistry();
+
+registry.defineObject('Product', {
+  title: t.string(),
+  url: t.url(),
+  vendor: t.optional(t.string()),   // String? — the optional law applies
+  price: t.money(),                 // terminal: no operators, no rendering
+  tags: t.list(t.string()),
+  available: t.bool(),
+});
+
+registry.defineObject('Collection', {
+  title: t.string(),
+  products: t.list(t.object('Product')),
+});
+```
+
+Type constructors: `t.string()`, `t.int()`, `t.float()`, `t.bool()`,
+`t.color()`, `t.optional(T)`, `t.list(T)`, `t.object(name)`, plus the branded
+terminals `t.money()`, `t.moneyText()`, `t.url()`, `t.image()`.
+
+Mark a field `t.optional(...)` whenever it can be absent. That is not
+bookkeeping — it is what makes the optional law able to catch a missing vendor
+at compile time instead of rendering blank.
+
+## 2. Declare host filters
+
+Anything the language cannot do is a typed function you provide:
+
+```ts
+import type { HostFilterDecl } from '@orbitlang/core';
+
+const filters: HostFilterDecl[] = [
+  {
+    name: 'money',
+    params: [t.money()],
+    returns: t.moneyText(),
+    impl: ([value]) => {
+      const m = value as { amountMinor: number; currency: string };
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: m.currency,
+      }).format(m.amountMinor / 100);
+    },
+  },
+];
+```
+
+Rules the engine enforces, at declaration time via `assertValidHostFilters`:
+
+- Names are camelCase and may not collide with a stdlib filter.
+- `Html` may never be a **parameter** type.
+- `Html` may only be a **top-level return** type.
+- A filter returning `Html` **must** set `unsafeHtml: true`, and every use site
+  is warned. That flag is the audit trail: grep for it and you have the complete
+  list of places unescaped markup can enter a page.
+
+Filters must be pure and fast. A throwing filter fails the render cleanly (it
+does not escape as an unhandled exception), and the deadline is checked either
+side of the call — but a slow filter still spends your budget.
+
+## 3. Compile
+
+```ts
+import { parseProgram, check, formatDiagnostics } from '@orbitlang/core';
+
+const parsed = parseProgram([
+  { name: 'components/card.orbit', source: cardSource },
+  { name: 'pages/collection.orbit', source: pageSource },
+]);
+
+if (!parsed.ok) {
+  // One pass reports every error in every file.
+  const sources = new Map([['components/card.orbit', cardSource]]);
+  throw new Error(formatDiagnostics(parsed.diagnostics, sources));
+}
+
+const result = check(parsed.program, {
+  registry,
+  hostFilters: filters,
+  pageGlobals: { collection: t.object('Collection') },
+});
+
+const errors = result.diagnostics.filter((d) => d.severity === 'error');
+if (errors.length > 0) throw new Error('theme does not compile');
+```
+
+`check` never throws. It returns diagnostics with spans and fix-its; render
+them with `formatDiagnosticWithSource` for a code frame.
+
+## 4. Store the AST, and re-validate it coming back
+
+```ts
+import { serializeProgram, loadCheckedAst } from '@orbitlang/core';
+
+const stored = JSON.stringify(serializeProgram(parsed.program));
+
+// Later, on a render path:
+const program = loadCheckedAst(JSON.parse(stored), { trust: 'verify' });
+```
+
+Treat the stored AST as **executable code**, because it is. `loadCheckedAst`
+re-walks the whole structure — node kinds, the element and attribute
+allowlists, content models, loop limits — so a row that was tampered with in
+your database cannot smuggle a `<script>` into a page that once compiled
+cleanly.
+
+There is also `unsafe_loadTrustedAst`, deliberately named so that its use is
+visible in review. Reach for it only when the bytes came from memory you just
+produced.
+
+### Signing stored ASTs
+
+The engine holds no key material. It provides the canonicalization and a
+constant-time comparison; you provide the HMAC primitive:
+
+```ts
+import { createHmac } from 'node:crypto';
+import { signAst, verifyAstTag } from '@orbitlang/core';
+
+const hmac = (key: Uint8Array, msg: Uint8Array) =>
+  new Uint8Array(createHmac('sha256', key).update(msg).digest());
+
+const tag = signAst(hmac, key, { storeId, themeVersionId, astBytes });
+const ok = verifyAstTag(hmac, key, { storeId, themeVersionId, astBytes }, tag);
+```
+
+Binding the tag to `storeId` is what stops a valid theme from one tenant being
+replayed against another.
+
+## 5. Fetch only what the template uses
+
+```ts
+import { extractAccessPlan } from '@orbitlang/core';
+
+const plan = extractAccessPlan(program, 'collection');
+// [ 'collection.products', 'collection.products[].title', … ]
+```
+
+The plan is exact because Orbit has **no dynamic member access** — there is no
+`obj[key]` for a runtime `key`, so every path a render can touch is visible
+statically. Use it to drive a declare-then-fetch data layer: resolve precisely
+these paths, and nothing more.
+
+The plan is deliberately an **over-approximation** where it cannot be exact
+(paths through filters, for example): it may list a path a given render does not
+reach, but never omits one it does. Over-fetching is a performance problem;
+under-fetching is a correctness bug.
+
+## 6. Render
+
+```ts
+import { render } from '@orbitlang/core';
+
+const out = render(program, 'collection', {
+  bindings: { collection: await fetchCollection(plan) },
+  hostFilters: filters,
+  settings: { collection: { showVendors: true } },
+
+  // Configure these from your own p99, not from the published minimums.
+  fuel: 250_000,
+  maxIterations: 2_000,
+  maxOutput: 512 * 1024,
+  deadlineMs: 50,
+
+  urlPolicy: 'error',   // fail instead of emitting a placeholder
+});
+
+if (!out.ok) {
+  logger.error({ code: out.error.code, at: `${out.error.template}:${out.error.line}` });
+  return renderFallbackPage();
+}
+
+for (const w of out.warnings) {
+  // Structured: code, message, line, col. Route them to the theme author.
+  logger.warn({ code: w.code, message: w.message, line: w.line });
+}
+
+return out.html;
+```
+
+### `urlPolicy`
+
+By default a URL that fails the scheme allowlist is replaced with `#` and
+raises an `O4900` warning, so one bad link does not take down a page. Set
+`urlPolicy: 'error'` to fail the render instead. Choose deliberately: the
+default favours availability, `'error'` favours noticing.
+
+## The responsibility split
+
+The engine guarantees, and tests:
+
+- **Termination.** No recursion, literal loop bounds, one global iteration
+  counter, fuel, and a deadline.
+- **Escaping.** Six contexts assigned structurally, closed element and
+  attribute allowlists, URL sanitization at the sink.
+- **No ambient authority.** No I/O, no clock beyond the one you inject, no
+  module state. Renders cannot see each other.
+- **Determinism.** Same program, same data, same bytes.
+
+You are responsible for:
+
+- **Authorization.** The engine will happily render whatever you bind. Scope
+  your data fetches by tenant.
+- **Data scoping.** An access plan tells you what to fetch, not who may see it.
+- **Key custody** for stored-AST signing.
+- **Budgets** appropriate to your traffic.
+- **Document metadata.** `<html>`, `<head>`, `<meta>` and `<link>` are not in
+  the element allowlist; templates render fragments and you own the shell.
+
+See [the security model](security-model.md) for the reasoning behind each
+guarantee.
+
+
+==============================================================================
+FILE: docs/guides/security-model.md
+==============================================================================
+
+# Security model
+
+What the engine guarantees, how, and precisely what it does not.
+
+The short version: Orbit does not have a sandbox, because it does not have an
+escape surface to sandbox. Every guarantee below is a property of the language
+or of a closed allowlist, not of a filter that has to anticipate an attack.
+
+## Threat model
+
+**Assumed hostile:** the template author, the data bound into a render, and the
+stored AST row. Any of the three may be attacker-controlled.
+
+**Assumed trusted:** the host process, its type registry, its host filter
+implementations, and its key material.
+
+Orbit exists for the multi-tenant case — a platform where a merchant, a
+customer, or a language model writes templates and the platform renders them
+next to other tenants. If your templates are written only by your own engineers
+and reviewed in pull requests, you have a much weaker threat model and most of
+this page is insurance you may not need.
+
+---
+
+## Escaping: contexts are structural, not inferred
+
+Every interpolation's escaping context is a property of **where it sits in the
+AST**, decided before any data exists:
+
+| Context | Where | Escapes |
+|---|---|---|
+| TEXT | Element content | `&` `<` `>` |
+| RCDATA | Inside `<title>`, `<textarea>` | `&` `<` |
+| ATTR | Any attribute value | `&` `"` `<` `>` |
+| URL-ATTR | `href`, `src`, `srcset`, `action`, `formaction`, `poster`, `cite` | Sanitized, then ATTR-escaped |
+| JSON-LD | Inside `<json-ld>` | `<` `>` `&` `/`, U+2028/9 as `\uXXXX` |
+| RAWTEXT | — | **Unreachable** |
+
+RAWTEXT is unreachable *by construction*: `<script>` and `<style>` are not in
+the element allowlist at all, so no code path emits into a rawtext context.
+Stored-AST validation rejects a `rawtext` content model outright, so a poisoned
+row cannot manufacture one either.
+
+This matters because context-confusion is the classic autoescaping failure. An
+engine that decides escaping by inspecting the value, or by a filter the author
+must remember, has a bug class Orbit does not have: there is nothing to
+remember and nothing to infer.
+
+## Allowlists are closed
+
+94 elements are permitted. 16 more are banned with a specific reason attached
+(`<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<base>`, `<meta>`,
+`<link>`, `<template>`, `<noscript>`, `<svg>`, `<math>`, `<portal>`, …).
+Anything else is rejected as unknown.
+
+Attributes are likewise closed: a global set, per-element sets, and the
+`data-*` / `aria-*` families. Rejected outright: every `on*` handler, `srcdoc`,
+`ping`, `background`, `longdesc`, and any namespaced name such as `xlink:href`.
+
+Two further restrictions are worth calling out:
+
+- **No dynamic attribute names.** You cannot compute which attribute to set.
+- **`style` must be fully static.** Interpolation inside a `style` attribute is
+  a parse error, because a CSS value is its own injection context and Orbit does
+  not implement a CSS escaper. Dynamic styling goes through a class name or a
+  host-supplied custom property.
+
+A closed allowlist means new HTML features are safe-by-default: an element
+invented after this release is rejected until someone deliberately adds it.
+
+## URLs are sanitized at the sink, never trusted from a type
+
+This is worth stating precisely, because it is the design decision most often
+misread. A plain `String` **is** allowed in `href`. Orbit does not require a
+`Url` type there, and would not be safer if it did.
+
+Sanitization happens where the value is emitted:
+
+1. C0 control characters and DEL are stripped **first**, which defeats
+   `java\tscript:` style splits.
+2. The scheme must be `http`, `https`, `mailto`, `tel`, or the value must be
+   site-relative, `./`, `../`, `?`, or `#`.
+3. Protocol-relative `//host` is rejected.
+4. `data:` is permitted only as `data:image/*`, and only in `src`.
+5. `srcset` is parsed as a candidate list and each URL sanitized independently.
+
+A blocked URL becomes `#` with a structured `O4900` warning, or fails the render
+if you set `urlPolicy: 'error'`.
+
+The reason for sink-side enforcement is that type-based URL safety keeps
+failing in practice: a `Url` value acquires its contents from somewhere, and
+that somewhere is usually a string a human or an API supplied. Enforcing at the
+sink means the guarantee holds no matter what the filter chain did or which
+type the value claims to be.
+
+## Terminal types
+
+Some types exist to make a category of mistake unrepresentable:
+
+- **`Html`** renders only as element content — never as a prop, binding,
+  operand, attribute value, or inside RCDATA or JSON-LD. It is **not
+  host-declarable**: the only producers are host filters flagged
+  `unsafeHtml: true`, and every use site raises a warning. That flag is your
+  complete audit list for unescaped output.
+- **`Money`** admits no operators, no properties, no equality, no stdlib
+  filters and no rendering. Currency arithmetic in a template is a bug; the type
+  makes it impossible to write. Format it with a host filter returning
+  `MoneyText`.
+- **`MoneyText`** renders, but admits no filters — it is already formatted.
+- **`Image`** is host-filter input only.
+
+## Termination
+
+- No user-defined functions, no recursion, no `while`.
+- Loop `limit` must be a compile-time literal, at most 250.
+- One **global** iteration counter, threaded through component calls and slot
+  expansion, so nesting cannot multiply a budget.
+- Fuel charged per emitted code unit plus a per-element cost, including filter
+  output — so "produce something enormous and emit nothing" still costs.
+- A wall-clock deadline using an injected clock, abort-only.
+- An output cap.
+
+Twig's advisory for CVE-2026-46627 states that its sandbox "does not protect
+against resource exhaustion", which is the general shape of the problem: a
+sandbox constrains what code can reach, not how much work it does. Orbit's
+answer is that the language cannot express unbounded computation in the first
+place, and the budgets bound the constant factor.
+
+## Determinism and statelessness
+
+Same program, same data, same options → identical bytes. The injected `now()` is
+used only to abort on the deadline and never reaches output. The interpreter
+holds no cache and no module state, so one tenant's render cannot observe or
+influence another's. Memoization, if you want it, belongs in your adapter where
+the cache key can include the tenant.
+
+## Stored ASTs are executable
+
+`loadCheckedAst(json, { trust: 'verify' })` re-walks every node: kinds against
+an allowlist, elements and attributes against the same closed tables the parser
+uses, content-model consistency, loop-limit literals, name shapes, and every
+depth and size cap. A tampered row cannot introduce a construct the parser would
+have refused.
+
+Sign the row too. `signAst` canonicalizes `(storeId, themeVersionId, astBytes)`
+with domain separation, and `verifyAstTag` compares in constant time; you supply
+the HMAC primitive, because the engine holds no key material. Binding to
+`storeId` is what stops a valid theme from one tenant being replayed against
+another.
+
+---
+
+## What Orbit does NOT protect against
+
+Stated plainly, because a security page that only lists strengths is marketing:
+
+- **Authorization.** The engine renders whatever you bind. If you bind another
+  tenant's data, it will render it faithfully.
+- **Downstream mXSS.** Orbit guarantees its output is correctly escaped for the
+  context it emitted into. If you then pass that HTML through a rewriter, a
+  sanitizer with different parsing rules, or an email client's mangler, that
+  pipeline owns the outcome.
+- **Host filter bugs.** A filter flagged `unsafeHtml` emits raw markup. That is
+  the point of the flag, and it is your code.
+- **Denial of service by an authorized operator.** Budgets bound a single
+  render, not how many renders a legitimate caller may request.
+- **Data exfiltration through legitimate output.** A template that is permitted
+  to read a field can render that field. Restrict what you bind.
+- **Anything in the browser.** Orbit is a server-side renderer. Pair it with a
+  Content-Security-Policy; Orbit is the server half of that pipeline, not a
+  substitute for it.
+
+## Reporting a vulnerability
+
+See [SECURITY.md](../../SECURITY.md): private reporting through GitHub Security
+Advisories, 72-hour acknowledgement, 90-day coordinated disclosure, and a CVE
+requested for anything confirmed.
+
+In scope: escaping bypasses, budget bypasses, termination escapes, stored-AST
+poisoning. Out of scope: host misconfiguration, missing authorization in the
+host, and resource exhaustion by an authorized operator — all of which are the
+embedder's responsibility by design and are documented as such above.

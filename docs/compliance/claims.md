@@ -258,6 +258,18 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## LLM code generation
+
+| claim | evidence | kind |
+|---|---|---|
+| The eval harness compiles generated templates for real and rejects the traps the tasks target — "rejects the traps the tasks are built around" | llm/eval/harness.test.mjs | test |
+| Diagnostics fed back to a model carry a stable code, a span and a message — "produces diagnostics a model could act on" | llm/eval/harness.test.mjs | test |
+| The generate-compile-repair loop reaches 100% on the offline provider — "reaches 100% after repair with the offline provider" | llm/eval/harness.test.mjs | test |
+| The measurement is not vacuous: first-attempt pass rate is strictly below the post-repair rate — "does NOT reach 100% on the first attempt", "reports first-try and post-repair rates separately" | llm/eval/harness.test.mjs | test |
+| Every eval task asserts something beyond "it compiled" — "every task asserts something beyond \"it compiled\"" | llm/eval/harness.test.mjs | test |
+| A system prompt teaching the language, its rules and its error codes is shipped | llm/system-prompt.md | artifact |
+| llms.txt and llms-full.txt are generated from the docs, with a CI staleness check | scripts/gen-llms-txt.mjs | artifact |
+
 ## Documentation
 
 | claim | evidence | kind |

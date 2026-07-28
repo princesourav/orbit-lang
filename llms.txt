@@ -1,0 +1,42 @@
+# Orbit
+
+> A typed, non-Turing-complete, HTML-strict template language for storefronts,
+> content sites, and anywhere templates are authored by people — or models — you
+> do not fully trust. XSS is a compile error, resource exhaustion is a budget
+> trip, and the data a template can touch is statically extractable.
+
+Orbit is NOT Liquid, Jinja, Handlebars or JSX. Habits from those produce code
+that does not compile. The rules that most often surprise:
+
+- `<if>` requires a `Bool`. There is no truthiness.
+- A `T?` value must be given `??` or narrowed with `!= none` before use.
+- Only allowlisted HTML. No `<script>`, no `on*` handlers, no `<iframe>`.
+- `style` attributes must be fully static.
+- No method calls (`{x |> upper}`, not `{x.upper()}`) and no dynamic member access.
+- `<for>` requires an `<empty>` block as its last child.
+- `|>` is the LOOSEST operator, so a comparison after a pipeline needs parentheses.
+
+## Generating Orbit
+
+- [System prompt](https://github.com/princesourav/orbit-lang/blob/main/llm/system-prompt.md): paste into a model's system prompt. Dense, rule-shaped, states the failure modes.
+- [Eval harness](https://github.com/princesourav/orbit-lang/blob/main/llm/eval/): measures generate → compile → repair success. Runs offline.
+
+## Documentation
+
+- [tutorial](https://github.com/princesourav/orbit-lang/blob/main/docs/language/tutorial.md): Your first component, end to end.
+- [safety](https://github.com/princesourav/orbit-lang/blob/main/docs/language/safety.md): The two rules that cause most first-hour errors: no truthiness, and the optional law.
+- [templates](https://github.com/princesourav/orbit-lang/blob/main/docs/language/templates.md): Markup rules: the closed element allowlist, attributes, whitespace, RCDATA, JSON-LD.
+- [components](https://github.com/princesourav/orbit-lang/blob/main/docs/language/components.md): Components vs pages, props, slots, <let>, settings.
+- [types](https://github.com/princesourav/orbit-lang/blob/main/docs/language/types.md): The type system, including the branded terminal types.
+- [grammar](https://github.com/princesourav/orbit-lang/blob/main/docs/reference/grammar.md): Full grammar and operator precedence.
+- [filters](https://github.com/princesourav/orbit-lang/blob/main/docs/reference/filters.md): All 19 stdlib filters with signatures and limitations.
+- [limits](https://github.com/princesourav/orbit-lang/blob/main/docs/reference/limits.md): Every cap, its value, and the diagnostic it trips.
+- [errors](https://github.com/princesourav/orbit-lang/blob/main/docs/reference/errors.md): Every diagnostic code, generated from source.
+- [embedding](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/embedding.md): Implementing a host: types, filters, stored ASTs, access plans.
+- [security-model](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/security-model.md): Threat model, each guarantee and its mechanism, and what Orbit does NOT protect against.
+
+## Optional
+
+- [Full documentation, inlined](https://github.com/princesourav/orbit-lang/blob/main/llms-full.txt)
+- [Examples](https://github.com/princesourav/orbit-lang/blob/main/examples/): six real templates, compiled by CI.
+- [Playground](https://github.com/princesourav/orbit-lang/blob/main/playground/): single self-contained HTML file, runs offline.

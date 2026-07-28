@@ -1,0 +1,106 @@
+{
+  "$comment": "Generation tasks for the Orbit LLM eval harness. Each task is a natural-language request plus assertions that a correct answer must satisfy. `must` and `mustNot` are substring checks on the generated source; `compiles` requires zero error diagnostics. Tasks are ordered roughly by difficulty, and the traps are deliberate: each one targets a habit carried over from Liquid, Jinja or JSX that Orbit rejects.",
+  "tasks": [
+    {
+      "id": "hello",
+      "prompt": "Write an Orbit component called Greeting that takes a prop `name` of type String and renders it inside an <h1>.",
+      "compiles": true,
+      "must": ["component Greeting", "{name}"],
+      "trap": "none — baseline"
+    },
+    {
+      "id": "optional-fallback",
+      "prompt": "Write an Orbit component called Byline with a prop `author` of type String? that renders the author inside a <p>, showing \"Anonymous\" when it is absent.",
+      "compiles": true,
+      "must": ["??"],
+      "trap": "the optional law: {author} alone does not compile"
+    },
+    {
+      "id": "no-truthiness",
+      "prompt": "Write an Orbit page called shop that renders <h1>{collection.title}</h1> only when the collection title is not empty. `collection` is a page global with a `title` String field and a `products` List<Product> field.",
+      "compiles": true,
+      "must": ["!=", "<if"],
+      "mustNot": ["<if {collection.title}>"],
+      "trap": "no truthiness: a String is not a condition"
+    },
+    {
+      "id": "loop-with-empty",
+      "prompt": "Write an Orbit page called shop that lists every product title in `collection.products` as <li> elements inside a <ul>, and shows \"Nothing here yet.\" when the list is empty.",
+      "compiles": true,
+      "must": ["<for", "<empty>"],
+      "trap": "<for> requires an <empty> block as its last child"
+    },
+    {
+      "id": "no-script",
+      "prompt": "Write an Orbit page called shop with an <h1> reading \"Shop\" and a button labelled \"Track\" that logs a click. Use whatever Orbit supports.",
+      "compiles": true,
+      "mustNot": ["<script", "onclick"],
+      "trap": "script and on* handlers are banned; a correct answer omits the behaviour rather than inventing it"
+    },
+    {
+      "id": "pipe-precedence",
+      "prompt": "Write an Orbit page called shop that renders <p>In stock</p> only when `collection.products` has more than zero items. Use the size filter.",
+      "compiles": true,
+      "must": ["size"],
+      "trap": "the pipe is loosest, so `{x |> size > 0}` does not parse — parentheses or call syntax are required"
+    },
+    {
+      "id": "no-method-call",
+      "prompt": "Write an Orbit page called shop that renders `collection.title` in uppercase.",
+      "compiles": true,
+      "must": ["upper"],
+      "mustNot": [".upper()", ".toUpperCase()"],
+      "trap": "no method calls; filters are piped"
+    },
+    {
+      "id": "static-style",
+      "prompt": "Write an Orbit component called Banner with a setting `tone` that is a Select of \"info\" and \"warning\", defaulting to \"info\", and render a div whose appearance depends on the tone.",
+      "compiles": true,
+      "mustNot": ["style=\"color: {", "style=\"background: {"],
+      "trap": "style attributes must be fully static; the tone belongs in a class name"
+    },
+    {
+      "id": "money-terminal",
+      "prompt": "Write an Orbit component called Price with a prop `product` of type Product, rendering the product's price. Product has a `price` field of type Money and the host provides a `money` filter.",
+      "compiles": true,
+      "must": ["money"],
+      "mustNot": ["price * ", "price + ", "price - "],
+      "trap": "Money admits no arithmetic and cannot render directly"
+    },
+    {
+      "id": "url-attribute",
+      "prompt": "Write an Orbit component called ProductLink with a prop `product` of type Product, rendering an anchor to product.url with the product title as its text.",
+      "compiles": true,
+      "must": ["href="],
+      "trap": "whole-expression attribute syntax: href={product.url}, not href=\"{product.url}\""
+    },
+    {
+      "id": "slots",
+      "prompt": "Write an Orbit component called Card with a required slot named `header` and an optional slot named `footer`, plus a default slot for the body.",
+      "compiles": true,
+      "must": ["slots {", "<slot", "footer?"],
+      "trap": "slot declaration syntax, and ? marking the optional one"
+    },
+    {
+      "id": "narrowing",
+      "prompt": "Write an Orbit component called Vendor with a prop `product` of type Product. Product has a `vendor` field of type String?. Render the vendor inside a <p class=\"vendor\"> only when it is present, without using a fallback value.",
+      "compiles": true,
+      "must": ["!= none"],
+      "mustNot": ["??"],
+      "trap": "flow narrowing rather than a fallback"
+    },
+    {
+      "id": "escape-literal",
+      "prompt": "Write an Orbit page called shop that renders the literal text: a < b",
+      "compiles": true,
+      "trap": "a bare < in text is a parse error; it must be written as {\"<\"}"
+    },
+    {
+      "id": "nested-components",
+      "prompt": "Write an Orbit page called shop that renders a ProductCard component for every product in collection.products, passing the product as a prop named `product`, with an empty state.",
+      "compiles": true,
+      "must": ["<ProductCard", "product={", "<empty>"],
+      "trap": "component call syntax and the required empty block"
+    }
+  ]
+}
