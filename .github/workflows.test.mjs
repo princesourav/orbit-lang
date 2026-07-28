@@ -132,6 +132,28 @@ describe('ci.yml specifically', () => {
     expect(runsAfterSwitch).toContain('dist/esm/index.js');
   });
 
+  it('builds before it tests', () => {
+    /*
+     * Not a style preference — a hard requirement.
+     *
+     * editors/lsp/analysis.mjs imports `@orbitlang/core` rather than reaching
+     * into src/, which is right: it is what a real consumer does, and it keeps
+     * the language server honest about the public API. Node resolves that
+     * self-reference through the `exports` map to dist/, so the package must be
+     * built before its own test suite can load it.
+     *
+     * Reordering these two steps turns the whole LSP suite into "Failed to
+     * resolve entry for package", which is a confusing way to discover a
+     * workflow ordering bug.
+     */
+    const names = doc.jobs.test.steps.map((s) => s.name ?? '');
+    const buildAt = names.findIndex((n) => n.startsWith('Build'));
+    const testAt = names.findIndex((n) => n === 'Test');
+    expect(buildAt, 'no Build step').toBeGreaterThanOrEqual(0);
+    expect(testAt, 'no Test step').toBeGreaterThanOrEqual(0);
+    expect(buildAt, 'Build must run before Test').toBeLessThan(testAt);
+  });
+
   it('runs the staleness gates that keep generated files honest', () => {
     const steps = JSON.stringify(doc.jobs.test.steps);
     for (const gate of ['errors:check', 'llms:check', 'playground:check', 'conformance']) {

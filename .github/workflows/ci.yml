@@ -60,11 +60,21 @@ jobs:
       - name: Typecheck (CLI)
         run: npx tsc -p tsconfig.cli.json --noEmit
 
-      - name: Test
-        run: npx vitest run
-
+      # Build BEFORE test, deliberately.
+      #
+      # The language server imports `@orbitlang/core` rather than reaching into
+      # src/ — which is right, because that is what a real consumer does and it
+      # keeps the LSP honest about the public API. Node's self-referencing
+      # resolution sends that import through the `exports` map to dist/, so the
+      # package has to be built before its own tests can load it.
+      #
+      # The upside is that the LSP tests then exercise the built artifact, which
+      # is the thing an editor actually loads.
       - name: Build (dual ESM/CJS + CLI)
         run: npm run build
+
+      - name: Test
+        run: npx vitest run
 
       - name: Error-code index is not stale
         run: npm run errors:check
