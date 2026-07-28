@@ -1,0 +1,48 @@
+{
+  "name": "tree-sitter-orbit",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the Orbit template language (@orbitlang/core).",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/princesourav/orbit-lang.git",
+    "directory": "tree-sitter-orbit"
+  },
+  "keywords": [
+    "tree-sitter",
+    "parser",
+    "orbit",
+    "template-language",
+    "syntax-highlighting"
+  ],
+  "main": "bindings/node",
+  "files": [
+    "grammar.js",
+    "tree-sitter.json",
+    "queries/*",
+    "src/**",
+    "verify.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse",
+    "verify": "node verify.mjs",
+    "build:wasm": "tree-sitter build --wasm"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.0",
+    "web-tree-sitter": "^0.26.0"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.orbit",
+      "file-types": [
+        "orbit"
+      ],
+      "highlights": "queries/highlights.scm",
+      "injections": "queries/injections.scm"
+    }
+  ]
+}

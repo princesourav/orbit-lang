@@ -14,3 +14,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# tree-sitter subpackage deps
+tree-sitter-orbit/node_modules/
+tree-sitter-orbit/build/
+tree-sitter-orbit/src/
+*.wasm

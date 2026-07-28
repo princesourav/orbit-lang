@@ -1,0 +1,288 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Orbit",
+  "scopeName": "source.orbit",
+  "fileTypes": ["orbit"],
+  "patterns": [
+    { "include": "#frontmatter" },
+    { "include": "#body" }
+  ],
+  "repository": {
+    "frontmatter": {
+      "comment": "Frontmatter is mandatory and fenced by --- ... --- at the very top of every template.",
+      "begin": "\\A(?:\\s|\\{#(?:[^#]|#(?!\\}))*#\\})*(-{3})\\s*$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.frontmatter.begin.orbit" }
+      },
+      "end": "^\\s*(-{3})\\s*$",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.frontmatter.end.orbit" }
+      },
+      "name": "meta.frontmatter.orbit",
+      "patterns": [
+        { "include": "#comment" },
+        {
+          "comment": "component Name / page name",
+          "match": "\\b(component|page)\\s+([A-Za-z_][A-Za-z0-9_-]*)",
+          "captures": {
+            "1": { "name": "keyword.control.declaration.orbit" },
+            "2": { "name": "entity.name.type.template.orbit" }
+          }
+        },
+        {
+          "match": "\\b(props|settings|slots)\\b",
+          "name": "keyword.control.block.orbit"
+        },
+        {
+          "comment": "Setting controls are a closed set.",
+          "match": "\\b(Select|Range|Text|Toggle|Color)\\b",
+          "name": "support.class.control.orbit"
+        },
+        {
+          "match": "\\b(label)\\b",
+          "name": "keyword.other.label.orbit"
+        },
+        {
+          "comment": "Built-in and user type names, plus the optional marker.",
+          "match": "\\b(String|Int|Float|Bool|Color|List|Money|MoneyText|Url|Image|Html)\\b",
+          "name": "support.type.builtin.orbit"
+        },
+        { "match": "\\?", "name": "keyword.operator.optional.orbit" },
+        { "include": "#string" },
+        { "include": "#numeric" },
+        { "include": "#constant" },
+        {
+          "match": "\\b([a-z_][A-Za-z0-9_]*)\\s*(?=:)",
+          "captures": { "1": { "name": "variable.parameter.orbit" } }
+        }
+      ]
+    },
+
+    "body": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#html-comment" },
+        { "include": "#banned-element" },
+        { "include": "#control-tag" },
+        { "include": "#component-tag" },
+        { "include": "#element" },
+        { "include": "#interpolation" }
+      ]
+    },
+
+    "comment": {
+      "name": "comment.block.orbit",
+      "begin": "\\{#",
+      "end": "#\\}",
+      "captures": { "0": { "name": "punctuation.definition.comment.orbit" } }
+    },
+
+    "html-comment": {
+      "name": "comment.block.html.orbit",
+      "begin": "<!--",
+      "end": "-->",
+      "captures": { "0": { "name": "punctuation.definition.comment.orbit" } }
+    },
+
+    "banned-element": {
+      "comment": "These elements are not in the allowlist; the engine rejects them at parse time, so they are marked invalid rather than merely unhighlighted.",
+      "match": "(</?)(script|style|iframe|object|embed|applet|base|meta|link|template|noscript|svg|math|frame|frameset|portal)\\b",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.orbit" },
+        "2": { "name": "invalid.illegal.banned-element.orbit" }
+      }
+    },
+
+    "control-tag": {
+      "comment": "Control flow is expressed as tags in Orbit, but reads as control flow.",
+      "begin": "(</?)(if|else-if|else|for|empty|let|slot|json-ld)\\b",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.orbit" },
+        "2": { "name": "keyword.control.orbit" }
+      },
+      "end": "(/?>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.orbit" }
+      },
+      "name": "meta.tag.control.orbit",
+      "patterns": [
+        { "include": "#interpolation" },
+        { "include": "#attribute" }
+      ]
+    },
+
+    "component-tag": {
+      "comment": "PascalCase tags are component calls.",
+      "begin": "(</?)([A-Z][A-Za-z0-9_-]*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.orbit" },
+        "2": { "name": "entity.name.type.component.orbit" }
+      },
+      "end": "(/?>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.orbit" }
+      },
+      "name": "meta.tag.component.orbit",
+      "patterns": [
+        { "include": "#interpolation" },
+        { "include": "#attribute" }
+      ]
+    },
+
+    "element": {
+      "begin": "(</?)([a-z][a-zA-Z0-9_]*(?:-[a-zA-Z0-9_]+)*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.orbit" },
+        "2": { "name": "entity.name.tag.orbit" }
+      },
+      "end": "(/?>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.orbit" }
+      },
+      "name": "meta.tag.orbit",
+      "patterns": [
+        { "include": "#interpolation" },
+        { "include": "#attribute" }
+      ]
+    },
+
+    "attribute": {
+      "patterns": [
+        {
+          "comment": "on* and srcdoc are rejected outright by the engine.",
+          "match": "\\b(on[a-z]+|srcdoc|ping|background|longdesc)\\s*(?==)",
+          "name": "invalid.illegal.banned-attribute.orbit"
+        },
+        {
+          "comment": "Conditional attribute form: name?={boolExpr}",
+          "match": "\\b([a-z][a-zA-Z0-9_-]*)(\\?)(?==)",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.orbit" },
+            "2": { "name": "keyword.operator.conditional-attribute.orbit" }
+          }
+        },
+        {
+          "match": "\\b([a-z][a-zA-Z0-9_-]*)\\b",
+          "name": "entity.other.attribute-name.orbit"
+        },
+        { "match": "=", "name": "punctuation.separator.key-value.orbit" },
+        { "include": "#attribute-string" }
+      ]
+    },
+
+    "attribute-string": {
+      "name": "string.quoted.double.orbit",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.orbit" }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.orbit" }
+      },
+      "patterns": [{ "include": "#interpolation" }]
+    },
+
+    "interpolation": {
+      "comment": "Expression islands. Orbit is not Turing-complete: no method calls, no dynamic member access.",
+      "name": "meta.embedded.expression.orbit",
+      "begin": "\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.embedded.begin.orbit" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.end.orbit" }
+      },
+      "patterns": [{ "include": "#expression" }]
+    },
+
+    "expression": {
+      "patterns": [
+        { "include": "#string" },
+        { "include": "#numeric" },
+        { "include": "#constant" },
+        { "include": "#operator" },
+        { "include": "#filter-call" },
+        { "include": "#property-access" },
+        {
+          "match": "\\b([a-z_][A-Za-z0-9_]*)\\b",
+          "name": "variable.other.orbit"
+        }
+      ]
+    },
+
+    "filter-call": {
+      "match": "\\b([a-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+      "captures": { "1": { "name": "entity.name.function.orbit" } }
+    },
+
+    "property-access": {
+      "match": "(\\.|\\?\\.)\\s*([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.operator.accessor.orbit" },
+        "2": { "name": "variable.other.property.orbit" }
+      }
+    },
+
+    "operator": {
+      "patterns": [
+        {
+          "comment": "|> is the loosest operator in Orbit, matching Elixir/F#.",
+          "match": "\\|>",
+          "name": "keyword.operator.pipe.orbit"
+        },
+        { "match": "\\?\\?", "name": "keyword.operator.coalesce.orbit" },
+        { "match": "\\.\\.", "name": "keyword.operator.range.orbit" },
+        {
+          "match": "==|!=|<=|>=|<|>",
+          "name": "keyword.operator.comparison.orbit"
+        },
+        { "match": "&&|\\|\\||!", "name": "keyword.operator.logical.orbit" },
+        {
+          "match": "[+\\-*/%]",
+          "name": "keyword.operator.arithmetic.orbit"
+        },
+        { "match": "[?:]", "name": "keyword.operator.ternary.orbit" }
+      ]
+    },
+
+    "string": {
+      "name": "string.quoted.double.orbit",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.orbit" }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.orbit" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\[ntr\"\\\\/]",
+          "name": "constant.character.escape.orbit"
+        }
+      ]
+    },
+
+    "numeric": {
+      "patterns": [
+        {
+          "comment": "Color literals are exactly #rrggbb.",
+          "match": "#[0-9a-fA-F]{6}\\b",
+          "name": "constant.other.color.orbit"
+        },
+        {
+          "match": "\\b\\d+\\.\\d+\\b",
+          "name": "constant.numeric.float.orbit"
+        },
+        { "match": "\\b\\d+\\b", "name": "constant.numeric.integer.orbit" }
+      ]
+    },
+
+    "constant": {
+      "match": "\\b(true|false|none)\\b",
+      "name": "constant.language.orbit"
+    }
+  }
+}

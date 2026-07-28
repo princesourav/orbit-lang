@@ -1,0 +1,55 @@
+---
+component ProductCard
+props {
+  product: Product
+  showVendor: Bool = false
+  imageWidth: Int = 640
+}
+---
+{# A product card. Every branded value is terminal: `price` is Money, so it
+   cannot be printed, compared or arithmetic'd — it goes through the host's
+   `money` filter, which returns MoneyText. `cover` is Image and only reaches
+   the page through the host's `imgUrl` filter, which returns a Url. #}
+<article class="card" data-handle={product.handle}>
+  <let cover={imgUrl(product.cover, imageWidth)}/>
+  <a class="card__link" href={product.url}>
+    <img
+      class="card__image"
+      src={cover}
+      alt={product.title}
+      width={imageWidth}
+      height={imageWidth}
+      loading="lazy"
+      decoding="async"
+    />
+    <h3 class="card__title">{product.title}</h3>
+  </a>
+
+  <if {showVendor && product.vendor != none}>
+    <p class="card__vendor">{product.vendor}</p>
+  </if>
+
+  <p class="card__price">
+    <span class="card__price-current">{product.price |> money}</span>
+    <if {product.compareAt != none}>
+      <s class="card__price-was">{product.compareAt |> money}</s>
+    </if>
+  </p>
+
+  <if {product.rating != none}>
+    <p class="card__rating">{product.rating |> round(1)} out of 5</p>
+  </if>
+
+  <if {size(product.tags) > 0}>
+    <ul class="card__tags">
+      <for tag of={product.tags} limit={4}>
+        <li class="card__tag">{tag |> capitalize}</li>
+      </for>
+    </ul>
+  </if>
+
+  <button class="card__cta" type="button" disabled?={!product.available}>
+    <if {product.available}>Add to cart</if>
+    <else>Sold out</else>
+  </button>
+</article>

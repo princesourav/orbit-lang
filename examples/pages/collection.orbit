@@ -1,0 +1,42 @@
+---
+page collection
+---
+{# A listing page. Pages are ENTRY POINTS: they declare no props, and their
+   free identifiers (`collection`, `pageNumber`, …) are the host's page
+   globals, declared in `CheckOptions.pageGlobals` and resolved before the
+   render. `extractAccessPlan(program, "collection")` returns exactly the data
+   paths below — that is the declare-then-fetch contract. #}
+<main class="collection" id="main">
+  <header class="collection__header">
+    <h1>{collection.title}</h1>
+    <if {collection.description != none}>
+      <p class="collection__description">{collection.description}</p>
+    </if>
+    <p class="collection__count">{collection.productCount} products</p>
+  </header>
+
+  <ul class="collection__grid">
+    <for product, i of={collection.products} limit={24}>
+      <li class="collection__cell" data-position={i + 1}>
+        <ProductCard product={product} showVendor imageWidth={480}/>
+      </li>
+      <empty>
+        <li class="collection__cell collection__cell--empty">
+          <p>Nothing here yet. Check back soon.</p>
+        </li>
+      </empty>
+    </for>
+  </ul>
+
+  <nav class="pagination" aria-label="Pagination">
+    <if {prevUrl != none}>
+      <a class="pagination__link" href={prevUrl} rel="prev">Previous</a>
+    </if>
+
+    <span class="pagination__status">Page {pageNumber} of {totalPages}</span>
+
+    <if {nextUrl != none}>
+      <a class="pagination__link" href={nextUrl} rel="next">Next</a>
+    </if>
+  </nav>
+</main>

@@ -34,13 +34,18 @@ export {
   slotNameOf,
 } from './ast';
 export {
+  type CodeFrameOptions,
   type Diagnostic,
   type Pos,
   type RenderWarning,
   type Severity,
   type Span,
+  codeFrame,
   formatDiagnostic,
+  formatDiagnostics,
+  formatDiagnosticWithSource,
   formatRenderWarning,
+  splitSourceLines,
   OrbitAstError,
   OrbitParseError,
   OrbitRenderError,
