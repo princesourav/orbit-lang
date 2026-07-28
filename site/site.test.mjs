@@ -4,6 +4,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { main as buildSite } from './build.mjs';
+import { BANNED_ELEMENTS, ELEMENT_ALLOWLIST } from '@orbitlang/core';
+
+import { highlight, highlightOrbit } from './highlight.mjs';
 import { escapeHtml, renderInline, renderMarkdown, rewriteLink, slugify } from './markdown.mjs';
 
 /**
@@ -206,7 +209,7 @@ describe('every internal link resolves', () => {
       const dir = path.dirname(file);
       for (const m of html.matchAll(/href="([^"]+)"/g)) {
         const href = m[1];
-        if (href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) continue;
+        if (/^(https?:|mailto:|#|data:)/i.test(href)) continue;
         const [rel] = href.split('#');
         if (rel === '' || rel === './') continue;
         // Directory links resolve to their index.
@@ -228,9 +231,8 @@ describe('every internal link resolves', () => {
     // to `.` — the off-site rewrite mistook that for a repository path and
     // pointed the whole nav at GitHub.
     const nested = readFileSync(path.join(DIST, 'docs', 'language', 'tutorial.html'), 'utf8');
-    const nav = nested.slice(nested.indexOf('<nav>'), nested.indexOf('</nav>'));
-    expect(nav).toContain('href="../../"');
-    expect(nav).not.toContain('tree/main/."');
+    expect(nested).toContain('class="brand" href="../../"');
+    expect(nested).not.toContain('tree/main/."');
   });
 
   it('uses only relative links, so the site works under a project subpath', () => {
@@ -243,5 +245,116 @@ describe('every internal link resolves', () => {
       const absolute = [...html.matchAll(/href="(\/[^/][^"]*)"/g)].map((m) => m[1]);
       expect(absolute, path.relative(DIST, file)).toEqual([]);
     }
+  });
+});
+
+describe('syntax highlighting uses the engine, not a copy of it', () => {
+  /**
+   * The highlighter imports the element allowlist, the banned table, the URL
+   * attributes and the filter names from the compiled package. A highlighter
+   * with its own copy of those lists starts lying the first time a list
+   * changes; this one cannot drift, and these assertions are what says so.
+   */
+  it('colours an allowlisted element and a component call differently', () => {
+    const out = highlightOrbit('<div><ProductCard product={p}/></div>');
+    expect(out).toContain('class="t-tag">div');
+    expect(out).toContain('class="t-comp">ProductCard');
+  });
+
+  it('marks a banned element as an error, using the engine’s own table', () => {
+    // The documentation then SHOWS the rule rather than only describing it:
+    // `<script>` is visibly wrong on the page explaining why it is rejected.
+    expect(BANNED_ELEMENTS.has('script')).toBe(true);
+    expect(highlightOrbit('<script>x</script>')).toContain('class="t-err">script');
+  });
+
+  it('marks a tag outside the closed allowlist as a warning', () => {
+    expect(ELEMENT_ALLOWLIST.has('blink')).toBe(false);
+    expect(highlightOrbit('<blink>x</blink>')).toContain('class="t-warn">blink');
+  });
+
+  it('distinguishes a URL attribute, a custom property and an ordinary one', () => {
+    const out = highlightOrbit('<img src={u} alt="a" --accent={c}/>');
+    expect(out).toContain('class="t-url">src');
+    expect(out).toContain('class="t-attr">alt');
+    expect(out).toContain('class="t-prop">--accent');
+  });
+
+  it('highlights control flow, interpolations and filters', () => {
+    const out = highlightOrbit('<if {a != none}><p>{title |> upper}</p></if>');
+    expect(out).toContain('class="t-ctl">if');
+    expect(out).toContain('class="t-island">{');
+    expect(out).toContain('class="t-fn">upper');
+  });
+
+  it('highlights frontmatter keywords and types', () => {
+    const out = highlightOrbit('---\ncomponent Card\nprops {\n  title: String\n}\n---\n<p>x</p>');
+    expect(out).toContain('class="t-kw">component');
+    expect(out).toContain('class="t-type">String');
+  });
+
+  it('escapes everything it does not recognise', () => {
+    const out = highlightOrbit('<p>{"<script>alert(1)</script>"}</p>');
+    expect(out).not.toMatch(/<script>alert/);
+    expect(out).toContain('&lt;script&gt;');
+  });
+
+  it('survives a deliberately broken snippet', () => {
+    // A large share of the snippets in these docs are invalid on purpose,
+    // because they illustrate diagnostics. A highlighter that needed a clean
+    // parse would fail on exactly the examples that matter most.
+    for (const broken of ['<div', '{unclosed', '<p>a < b</p>', '---\nbroken', '<if {}>']) {
+      expect(() => highlightOrbit(broken)).not.toThrow();
+    }
+  });
+
+  it('leaves a non-Orbit language alone, escaped', () => {
+    expect(highlight('ts', 'const a = "<b>";')).toBe('const a = &quot;&lt;b&gt;&quot;;');
+  });
+});
+
+describe('the documentation chrome', () => {
+  it('gives every docs page a sidebar and marks the current entry', () => {
+    const page = readFileSync(path.join(DIST, 'docs', 'reference', 'grammar.html'), 'utf8');
+    expect(page).toContain('class="sidebar"');
+    expect(page).toMatch(/href="[^"]*docs\/reference\/grammar\.html" aria-current="page"/);
+  });
+
+  it('builds an on-page table of contents from the headings', () => {
+    const page = readFileSync(path.join(DIST, 'docs', 'reference', 'grammar.html'), 'utf8');
+    expect(page).toContain('class="toc"');
+    expect(page).toContain('On this page');
+  });
+
+  it('links previous and next in reading order', () => {
+    const page = readFileSync(path.join(DIST, 'docs', 'language', 'types.html'), 'utf8');
+    expect(page).toContain('class="pager"');
+    expect(page).toContain('Previous');
+    expect(page).toContain('Next');
+  });
+
+  it('ships a landing page that is not the README', () => {
+    const landing = readFileSync(path.join(DIST, 'index.html'), 'utf8');
+    const readme = readFileSync(path.join(DIST, 'README.html'), 'utf8');
+    expect(landing).toContain('class="hero"');
+    expect(landing).not.toBe(readme);
+    // And it shows real, highlighted Orbit rather than a screenshot of it.
+    expect(landing).toContain('class="t-kw">component');
+  });
+
+  it('has one navigation, not a duplicated mobile copy', () => {
+    // The disclosure and the desktop list are the same markup; CSS decides
+    // which is visible. Two copies is two things to keep in step.
+    const page = readFileSync(path.join(DIST, 'docs', 'scope.html'), 'utf8');
+    expect(page.split('class="nav-body"').length - 1).toBe(1);
+  });
+
+  it('needs no JavaScript for navigation', () => {
+    // The mobile menu is a <details> disclosure. A docs site that shipped a
+    // framework to render prose would be an odd advertisement for a language
+    // whose pitch is that most pages do not need one.
+    const page = readFileSync(path.join(DIST, 'docs', 'scope.html'), 'utf8');
+    expect(page).toContain('<details class="mobile-nav">');
+    expect(page).not.toMatch(/<script/);
   });
 });

@@ -167,7 +167,7 @@ const isTableDivider = (line) => /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(line) && line
  * Render a markdown document to an HTML fragment, and collect its headings so
  * a page can build its own table of contents.
  */
-export function renderMarkdown(source) {
+export function renderMarkdown(source, { highlight } = {}) {
   const lines = source.split('\n');
   const out = [];
   const headings = [];
@@ -198,7 +198,11 @@ export function renderMarkdown(source) {
       }
       i += 1; // closing fence
       const cls = lang ? ` class="language-${escapeHtml(lang)}"` : '';
-      out.push(`<pre><code${cls}>${escapeHtml(body.join('\n'))}</code></pre>`);
+      const code = body.join('\n');
+      // A highlighter, when one is supplied, is responsible for its own
+      // escaping — it has to emit markup. Without one, escape and emit plain.
+      const rendered = highlight === undefined ? escapeHtml(code) : highlight(lang, code);
+      out.push(`<pre><code${cls}>${rendered}</code></pre>`);
       continue;
     }
 

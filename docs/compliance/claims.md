@@ -508,6 +508,14 @@ independently of the site.
 | The playground and llms.txt are published byte-identical to the repository copies — "publishes byte-identical copies, so the site cannot drift from the repo" | site/site.test.mjs | test |
 | The site is rebuilt and link-checked in CI on every pull request | .github/workflows/ci.yml | workflow |
 | The site deploys only from `main`, after its published artifacts are regenerated and proven current | .github/workflows/pages.yml | workflow |
+| Code samples are highlighted using the engine's OWN element allowlist, banned table, URL attributes and filter names, so highlighting cannot drift from the language — "syntax highlighting uses the engine, not a copy of it" | site/highlight.mjs | artifact |
+| A banned element is coloured as an error, from the engine's table — "marks a banned element as an error, using the engine's own table" | site/site.test.mjs | test |
+| A tag outside the closed allowlist is coloured as a warning — "marks a tag outside the closed allowlist as a warning" | site/site.test.mjs | test |
+| The highlighter survives deliberately-broken snippets, which the docs are full of because they illustrate diagnostics — "survives a deliberately broken snippet" | site/site.test.mjs | test |
+| The highlighter escapes everything it does not recognise — "escapes everything it does not recognise" | site/site.test.mjs | test |
+| Documentation pages carry a sidebar, an on-page table of contents and previous/next links — "the documentation chrome" | site/site.test.mjs | test |
+| Navigation needs no JavaScript: the mobile menu is a `<details>` disclosure — "needs no JavaScript for navigation" | site/site.test.mjs | test |
+| There is one navigation in the markup, not a duplicated mobile copy — "has one navigation, not a duplicated mobile copy" | site/site.test.mjs | test |
 
 ## Claims deliberately NOT listed here
 
