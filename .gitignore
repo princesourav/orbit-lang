@@ -20,3 +20,6 @@ tree-sitter-orbit/node_modules/
 tree-sitter-orbit/build/
 tree-sitter-orbit/src/
 *.wasm
+
+# Generated documentation site (rebuilt by `npm run site`)
+site/dist/

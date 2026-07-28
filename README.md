@@ -388,7 +388,7 @@ node scripts/audit-claims.mjs    # every doc claim still has its evidence
 | **Property** (fast-check) | Stored-AST round-trip integrity, escaping oracles, URL sink safety, fuel termination, budget monotonicity, cap enforcement, access-plan soundness. Example tests cover cases someone thought of; these cover the space between them. |
 | **Conformance** (620 cases) | Language-agnostic JSON. Pins observable behaviour so the language cannot drift silently, and lets a second implementation be verified rather than trusted. |
 | **Differential** (parse5) | Every escaping case rendered and fed to a real WHATWG parser. The corpus captured its expectations from this engine, so this is the oracle it did not write. |
-| **Docs** | Every ```orbit block in the documentation is compiled; blocks documented as errors must actually fail. |
+| **Docs** | Every `` ```orbit `` block in the documentation is compiled; blocks documented as errors must actually fail. |
 | **Examples** | Six real templates compiled, rendered, and asserted to be canonically formatted. |
 
 Additional gates:

@@ -80,7 +80,9 @@
     "errors:check": "node scripts/gen-error-index.mjs --check",
     "errors": "node scripts/gen-error-index.mjs",
     "runtime": "node runtime/build.mjs",
-    "runtime:check": "node runtime/build.mjs --check"
+    "runtime:check": "node runtime/build.mjs --check",
+    "site": "node site/build.mjs",
+    "site:check": "node site/build.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

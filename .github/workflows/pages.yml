@@ -1,0 +1,80 @@
+name: Pages
+
+# The documentation site is GENERATED from files already in the repository and
+# already checked by CI — the docs, the playground and llms.txt. Nothing on the
+# site is authored separately, so it cannot drift from the engine.
+#
+# Deploys only from `main`, and only after the artifacts it publishes have been
+# regenerated and proven current. A site built from stale inputs is worse than
+# no site: it looks maintained.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. `cancel-in-progress: false` because cancelling a
+# half-finished deploy is how a site ends up serving a partial upload.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          run_install: false
+
+      - run: pnpm install --frozen-lockfile
+
+      # The site publishes these, so they are rebuilt rather than trusted: a
+      # stale playground or llms.txt on the site is a claim that has drifted.
+      - name: Regenerate published artifacts
+        run: |
+          pnpm run build
+          pnpm run llms
+          pnpm run playground
+
+      - name: Verify nothing was stale
+        run: |
+          pnpm run llms:check
+          pnpm run playground:check
+          pnpm run errors:check
+          pnpm run runtime:check
+
+      - name: Build the site
+        run: pnpm run site
+
+      # Broken cross-references and unrendered markdown fail here rather than
+      # being served.
+      - name: Test the site
+        run: npx vitest run site/site.test.mjs
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

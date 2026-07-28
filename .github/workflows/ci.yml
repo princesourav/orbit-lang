@@ -76,6 +76,14 @@ jobs:
       - name: Test
         run: npx vitest run
 
+      - name: Documentation site builds and every internal link resolves
+        # The site is generated from the docs, so this doubles as the only
+        # link checker the documentation has: a broken cross-reference is
+        # invisible on GitHub until someone clicks it.
+        run: |
+          npm run site
+          npx vitest run site/site.test.mjs
+
       - name: Island runtime is within budget and not stale
         # The only artifact here that ships to browsers, so a size regression is
         # paid by every visitor to every page. Failing the build is the point:

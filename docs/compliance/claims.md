@@ -490,6 +490,25 @@ that gap is stated in SECURITY.md and is not claimed here.
 | An SRI hash and the script tag that carries it are emitted as build artifacts | runtime/dist/orbit-islands.json | artifact |
 | The placeholder contract and the swap protocol are specified in prose for a second implementation | conformance/README.md | artifact |
 
+## The documentation site (site/)
+
+Generated from files already in the repository and already checked by CI, so it
+cannot drift from the engine. The link check is the part worth having
+independently of the site.
+
+| claim | evidence | kind |
+|---|---|---|
+| Every internal link in the documentation resolves — "resolves every relative link in the generated site" | site/site.test.mjs | test |
+| The site works under a project subpath: no root-absolute links — "uses only relative links, so the site works under a project subpath" | site/site.test.mjs | test |
+| No page leaks unrendered markdown — "leaves no raw markdown in the output" | site/site.test.mjs | test |
+| The renderer escapes text before anything else can reach the output — "escapes text before anything else can reach the output" | site/site.test.mjs | test |
+| The renderer supports no raw-HTML passthrough, the feature that makes markdown renderers dangerous | site/site.test.mjs | test |
+| The renderer refuses `javascript:` and every non-allowlisted URL scheme, using the engine's own rule — "refuses any other unknown scheme, and keeps the ones a doc needs" | site/site.test.mjs | test |
+| Generated pages carry no script tag and no inline event handler — "carries no inline event handler and no script tag of its own" | site/site.test.mjs | test |
+| The playground and llms.txt are published byte-identical to the repository copies — "publishes byte-identical copies, so the site cannot drift from the repo" | site/site.test.mjs | test |
+| The site is rebuilt and link-checked in CI on every pull request | .github/workflows/ci.yml | workflow |
+| The site deploys only from `main`, after its published artifacts are regenerated and proven current | .github/workflows/pages.yml | workflow |
+
 ## Claims deliberately NOT listed here
 
 Some things this project will claim later are absent on purpose, because the
