@@ -21,10 +21,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 20 = minimum supported (package.json engines), 22 = active LTS,
-        # 24 = current. The engine has zero runtime deps, so this matrix is
-        # purely about the language/runtime surface it compiles against.
-        node: ['20', '22', '24']
+        # The DEV TOOLCHAIN matrix: 22 = active LTS, 24 = current.
+        #
+        # Node 20 is deliberately absent here even though package.json declares
+        # `engines: >=20`. pnpm 11 requires Node >= 22.13, so a Node 20 job
+        # cannot even install dependencies — it fails in setup, long before it
+        # tests anything about Orbit.
+        #
+        # That is a constraint on the toolchain, not on the library: the engine
+        # has zero runtime dependencies and targets ES2022, so it genuinely runs
+        # on Node 20. The `node20-compat` job below verifies exactly that claim
+        # against the BUILT ARTIFACT, which is what `engines` is actually about.
+        node: ['22', '24']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -102,6 +110,63 @@ jobs:
             }
             console.log('zero runtime dependencies');
           "
+
+  node20-compat:
+    name: built artifact runs on Node 20
+    runs-on: ubuntu-latest
+    steps:
+      # package.json declares `engines: node >=20`. That is a claim about the
+      # PUBLISHED PACKAGE, not about the dev toolchain — pnpm 11 needs Node
+      # 22.13+, so the build itself cannot run on 20.
+      #
+      # This job builds on a supported Node, then switches the runtime to 20 and
+      # exercises the built artifact. It is a more faithful test of the engines
+      # field than running the whole toolchain on 20 would have been: it checks
+      # the thing a consumer actually installs.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22 (to build)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: npm run build
+
+      - name: Switch to Node 20 (the declared minimum)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: The built package loads and works on Node 20
+        run: |
+          node --version
+          node -e "
+            const orbit = require('./dist/cjs/index.js');
+            const parsed = orbit.parseProgram([
+              { name: 'a.orbit', source: '---\npage p\n---\n<p>{title}</p>\n' },
+            ]);
+            if (!parsed.ok) throw new Error('parse failed on Node 20');
+            console.log('CJS ok on Node 20');
+          "
+          node --input-type=module -e "
+            import { parseProgram, render, LIMITS } from './dist/esm/index.js';
+            if (typeof parseProgram !== 'function') throw new Error('ESM entrypoint broken');
+            if (typeof LIMITS.defaultFuel !== 'number') throw new Error('LIMITS missing');
+            console.log('ESM ok on Node 20');
+          "
+          node dist/cli/cli.js --version
+          node dist/cli/cli.js check examples/
 
   dco:
     name: DCO sign-off

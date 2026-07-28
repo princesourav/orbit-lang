@@ -258,6 +258,16 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## CI configuration
+
+| claim | evidence | kind |
+|---|---|---|
+| Every workflow is valid YAML with at least one job and least-privilege permissions — "is valid YAML with at least one job", "sets least-privilege permissions somewhere" | .github/workflows.test.mjs | test |
+| Every action reference is pinned, and publishers without floating major tags are pinned to a full version — "pins every action to a version", "never references a floating tag a publisher does not provide" | .github/workflows.test.mjs | test |
+| The declared `engines.node` minimum is verified against the built artifact — "still verifies the declared minimum Node version somewhere" | .github/workflows.test.mjs | test |
+| CI runs every staleness gate for generated files — "runs the staleness gates that keep generated files honest" | .github/workflows.test.mjs | test |
+| The claims audit runs without an install step, so a broken dependency tree cannot disable it — "runs the claims audit without an install step" | .github/workflows.test.mjs | test |
+
 ## Governance and stability
 
 | claim | evidence | kind |

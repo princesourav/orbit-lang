@@ -1,9 +1,24 @@
 # @orbitlang/core
 
 [![CI](https://github.com/princesourav/orbit-lang/actions/workflows/ci.yml/badge.svg)](https://github.com/princesourav/orbit-lang/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@orbitlang/core.svg)](https://www.npmjs.com/package/@orbitlang/core)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/princesourav/orbit-lang/badge)](https://scorecard.dev/viewer/?uri=github.com/princesourav/orbit-lang)
+[![Tests](https://img.shields.io/badge/tests-1145-brightgreen.svg)](#tests)
+[![Conformance](https://img.shields.io/badge/conformance-620%20cases-brightgreen.svg)](./conformance/)
+
+<!--
+  The npm and OpenSSF Scorecard badges are deliberately absent.
+
+  Both would render as errors right now — "invalid" and "invalid repo path" —
+  because nothing has been published to npm and the Scorecard API has no data
+  for this repository yet. A badge advertising something that does not exist is
+  the same category of overclaim this project spent v0.2 removing, and a broken
+  badge is worse than no badge: it reads as a failing check.
+
+  Add them back when they are true:
+    npm       once `@orbitlang/core` is published
+    Scorecard once the Scorecard workflow has completed with publish_results
+-->
+
 
 **Orbit** is a typed, non-Turing-complete, HTML-strict template language engine
 for templates written by people — or AI agents — you do not fully trust.
@@ -20,11 +35,13 @@ bring-your-own-object-model host interface. Zero runtime dependencies, zero I/O,
 no DOM, no Node built-ins — it runs unchanged on Node, Deno, Bun, Cloudflare
 Workers and in the browser.
 
-> **Status: v0.2.** The engine core is complete and heavily tested. The public
-> API surface (`parseProgram` / `check` / `render` / `serializeProgram` /
-> `loadCheckedAst` / `extractAccessPlan`) is stable in intent but not yet
-> covered by a semver stability promise — that lands with the normative spec at
-> v1.0. See [Known gaps](#known-gaps-honest-list).
+> **Status: pre-release, not yet published.** The engine, tooling, normative
+> [specification](./spec/SPEC.md) and [conformance corpus](./conformance/) are
+> complete and on `main`. Nothing has been published to npm, there has been no
+> third-party security audit, and there is no second implementation.
+> The [stability policy](./STABILITY.md) describes what a 1.0 will promise;
+> until it is tagged, treat the API as stable in intent only.
+> See [Known gaps](#known-gaps-honest-list).
 
 ## Install
 

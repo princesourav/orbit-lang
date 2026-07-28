@@ -86,7 +86,8 @@
     "typescript": "^5.6.0",
     "vitest": "^4.1.9",
     "vscode-languageserver": "^10.1.0",
-    "vscode-languageserver-textdocument": "^1.0.12"
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "yaml": "^2.9.0"
   },
   "bin": {
     "orbit": "./dist/cli/cli.js"
