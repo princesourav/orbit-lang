@@ -277,9 +277,8 @@ specific platform's object model and data plane are not:
 **Anyone can run Orbit anywhere** via the host interface — a `TypeRegistry`,
 typed host filters, and resolved data. **Nobody can render a CommerceOS theme
 without CommerceOS**, because the object model, the data plane and distribution
-custody belong to the platform. That is the split this project is built around
-for fifteen years, and it is why the engine can be fully open without giving the
-platform away.
+custody belong to the platform. That is the split this project is built around,
+and it is why the engine can be fully open without giving the platform away.
 
 ## Tooling
 
