@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orbit playground</title>
+    <meta
+      name="description"
+      content="Try Orbit — a typed, non-Turing-complete template language where XSS is a compile error. Runs entirely in your browser."
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --panel: #f6f7f9;
+        --border: #d8dbe0;
+        --text: #16181d;
+        --muted: #5b616e;
+        --accent: #2f5bd7;
+        --error: #c0392b;
+        --warn: #a06000;
+        --ok: #1d7a4c;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161a;
+          --panel: #1c1f25;
+          --border: #2e333c;
+          --text: #e6e8ec;
+          --muted: #9aa1ad;
+          --accent: #7aa2f7;
+          --error: #f07178;
+          --warn: #e0af68;
+          --ok: #73daca;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      header h1 { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); font-size: 13px; }
+      header a { color: var(--accent); }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--border);
+        min-height: calc(100vh - 58px);
+      }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+      .pane { background: var(--bg); display: flex; flex-direction: column; min-width: 0; }
+      .pane-head {
+        padding: 8px 14px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .pane-head .spacer { flex: 1; }
+      button, select {
+        font: inherit;
+        font-size: 12px;
+        padding: 3px 9px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        background: var(--bg);
+        color: var(--text);
+        cursor: pointer;
+      }
+      button:hover { border-color: var(--accent); }
+      textarea {
+        flex: 1;
+        border: 0;
+        padding: 14px;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.55;
+        tab-size: 2;
+        background: var(--bg);
+        color: var(--text);
+        resize: none;
+        outline: none;
+        min-height: 320px;
+      }
+      .tabs { display: flex; gap: 2px; padding: 6px 10px 0; background: var(--panel); }
+      .tab {
+        border: 1px solid transparent;
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        padding: 5px 11px;
+        font-size: 12px;
+        background: transparent;
+        color: var(--muted);
+      }
+      .tab[aria-selected="true"] {
+        background: var(--bg);
+        border-color: var(--border);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .out { flex: 1; overflow: auto; padding: 14px; }
+      pre {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .status { padding: 7px 14px; border-top: 1px solid var(--border); font-size: 12.5px; background: var(--panel); }
+      .status.ok { color: var(--ok); }
+      .status.bad { color: var(--error); }
+      table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+      th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+      code { font-family: var(--mono); font-size: 12.5px; }
+      .ctx {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      .meter { margin-bottom: 12px; }
+      .meter-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+      .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+      .bar > div { height: 100%; background: var(--accent); }
+      .hint { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+      .empty { color: var(--muted); font-size: 13px; }
+      iframe { width: 100%; height: 100%; min-height: 300px; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Orbit playground</h1>
+      <p>
+        A typed, non-Turing-complete template language where XSS is a compile error.
+        Everything below runs in your browser — no server, nothing uploaded.
+      </p>
+      <span class="spacer"></span>
+      <p><a href="https://github.com/princesourav/orbit-lang">GitHub</a></p>
+    </header>
+
+    <main>
+      <section class="pane">
+        <div class="pane-head">
+          <span>Template</span>
+          <span class="spacer"></span>
+          <select id="examples" aria-label="Load an example"></select>
+          <button id="format" title="Rewrite in canonical form">Format</button>
+        </div>
+        <textarea id="source" spellcheck="false" aria-label="Orbit template source"></textarea>
+        <div class="status" id="status">Ready.</div>
+      </section>
+
+      <section class="pane">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-tab="diagnostics" aria-selected="true">Diagnostics</button>
+          <button class="tab" role="tab" data-tab="output" aria-selected="false">Output</button>
+          <button class="tab" role="tab" data-tab="preview" aria-selected="false">Preview</button>
+          <button class="tab" role="tab" data-tab="escaping" aria-selected="false">Escaping</button>
+          <button class="tab" role="tab" data-tab="plan" aria-selected="false">Data plan</button>
+          <button class="tab" role="tab" data-tab="budgets" aria-selected="false">Budgets</button>
+        </div>
+        <div class="out" id="out"></div>
+      </section>
+    </main>
+
+    <script>
+      /*__ORBIT_BUNDLE__*/
+    </script>
+    <script>
+      (function () {
+        var api = window.OrbitPlayground;
+        var $ = function (id) { return document.getElementById(id); };
+        var source = $('source');
+        var out = $('out');
+        var status = $('status');
+        var current = 'diagnostics';
+        var last = null;
+
+        var EXAMPLES = {
+          'Product card': [
+            '---',
+            'page shop',
+            '---',
+            '<section class="collection">',
+            '  <h1>{collection.title}</h1>',
+            '  <ul>',
+            '    <for product of={collection.products} limit={12}>',
+            '      <li>',
+            '        <a href={product.url}>{product.title}</a>',
+            '        <p>{product.price |> money}</p>',
+            '        <if {product.vendor != none}>',
+            '          <span class="vendor">{product.vendor ?? ""}</span>',
+            '        </if>',
+            '      </li>',
+            '      <empty>',
+            '        <li>Nothing here yet.</li>',
+            '      </empty>',
+            '    </for>',
+            '  </ul>',
+            '</section>',
+            ''
+          ].join('\n'),
+
+          'XSS is a compile error': [
+            '---',
+            'page shop',
+            '---',
+            "{# Every line below is rejected at COMPILE time. Delete one at a",
+            '   time to see the reason for each. #}',
+            '<script>alert(1)</script>',
+            '<div onclick="steal()">x</div>',
+            '<iframe src="//evil.example"></iframe>',
+            '<div style="color: {collection.title}">interpolated style</div>',
+            ''
+          ].join('\n'),
+
+          'Hostile URLs die at the sink': [
+            '---',
+            'page shop',
+            '---',
+            "{# A plain String IS allowed in href — Orbit never trusts a TYPE to",
+            '   mean a URL is safe. The scheme allowlist is applied where the',
+            '   value is emitted, so the demo title (which is not a URL at all)',
+            '   is replaced with # and a structured warning is raised.',
+            '',
+            '   Check the Output tab, then the status line for the warning. #}',
+            '<a href={collection.title}>where does this go?</a>',
+            ''
+          ].join('\n'),
+
+          'The optional law': [
+            '---',
+            'page shop',
+            '---',
+            "{# vendor is String? — using it directly is a compile error. #}",
+            '<for product of={collection.products}>',
+            '  <p>{product.vendor}</p>',
+            '  <empty><p>none</p></empty>',
+            '</for>',
+            ''
+          ].join('\n'),
+
+          'No truthiness': [
+            '---',
+            'page shop',
+            '---',
+            "{# <if> requires a Bool. A String is not a condition. #}",
+            '<if {collection.title}>',
+            '  <p>has a title</p>',
+            '</if>',
+            ''
+          ].join('\n'),
+
+          'Escaping in every context': [
+            '---',
+            'page shop',
+            '---',
+            '<title>{collection.title}</title>',
+            '<h1>{collection.title}</h1>',
+            '<div data-label={collection.title}>attribute</div>',
+            '<for product of={collection.products}>',
+            '  <a href={product.url}>link</a>',
+            '  <empty><p>none</p></empty>',
+            '</for>',
+            ''
+          ].join('\n')
+        };
+
+        var select = $('examples');
+        Object.keys(EXAMPLES).forEach(function (name) {
+          var opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+
+        function esc(s) {
+          return String(s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+          });
+        }
+
+        function meter(label, used, max) {
+          var pct = max > 0 ? Math.min(100, (used / max) * 100) : 0;
+          return (
+            '<div class="meter"><div class="meter-label"><span>' + esc(label) + '</span><span>' +
+            used.toLocaleString() + ' / ' + max.toLocaleString() + '</span></div>' +
+            '<div class="bar"><div style="width:' + pct.toFixed(2) + '%"></div></div></div>'
+          );
+        }
+
+        function draw() {
+          if (!last) { out.innerHTML = ''; return; }
+          if (current === 'diagnostics') {
+            out.innerHTML = last.diagnostics
+              ? '<pre>' + esc(last.diagnostics) + '</pre>'
+              : '<p class="empty">No diagnostics. The template compiles.</p>';
+          } else if (current === 'output') {
+            out.innerHTML = last.html
+              ? '<pre>' + esc(last.html) + '</pre>'
+              : '<p class="empty">Nothing rendered — fix the diagnostics first.</p>';
+          } else if (current === 'preview') {
+            if (!last.html) {
+              out.innerHTML = '<p class="empty">Nothing to preview.</p>';
+            } else {
+              // Sandboxed with no allow-scripts: Orbit cannot emit script, and
+              // the preview should not be the one place that could.
+              var frame = document.createElement('iframe');
+              frame.setAttribute('sandbox', '');
+              frame.srcdoc = last.html;
+              out.innerHTML = '';
+              out.appendChild(frame);
+            }
+          } else if (current === 'escaping') {
+            if (!last.sites.length) {
+              out.innerHTML = '<p class="empty">No interpolation sites yet.</p>';
+            } else {
+              var rows = last.sites.map(function (s) {
+                return (
+                  '<tr><td><code>' + s.line + ':' + s.col + '</code></td>' +
+                  '<td><span class="ctx">' + esc(s.context) + '</span></td>' +
+                  '<td>' + esc(s.detail) + '</td></tr>'
+                );
+              }).join('');
+              out.innerHTML =
+                '<p class="hint">Every interpolation’s escaping context is decided by where it sits, ' +
+                'before any data exists. RAWTEXT is absent because <code>&lt;script&gt;</code> and ' +
+                '<code>&lt;style&gt;</code> are not in the element allowlist at all.</p>' +
+                '<table><thead><tr><th>At</th><th>Context</th><th>Meaning</th></tr></thead><tbody>' +
+                rows + '</tbody></table>';
+            }
+          } else if (current === 'plan') {
+            out.innerHTML = last.plan.length
+              ? '<p class="hint">Extracted statically, before rendering. A host fetches exactly these ' +
+                'paths and nothing more — possible because Orbit has no dynamic member access.</p><pre>' +
+                esc(last.plan.join('\n')) + '</pre>'
+              : '<p class="empty">No access plan available.</p>';
+          } else {
+            out.innerHTML =
+              '<p class="hint">Published caps are spec minimums; a production host configures lower, ' +
+              'unpublished values. A trip fails the whole render — a partial page is never returned.</p>' +
+              meter('Output bytes', last.budgets.outputBytes, last.budgets.outputMax) +
+              meter('Fuel (lower bound: emitted code units)', last.budgets.fuelUsed, last.budgets.fuelMax) +
+              '<p class="hint">Iteration cap: ' + api.limits.defaultMaxIterations.toLocaleString() +
+              ' (one global counter shared across loops, component calls and slots, so nesting cannot ' +
+              'multiply the budget). Deadline: ' + api.limits.defaultDeadlineMs + ' ms.</p>';
+          }
+        }
+
+        function runNow() {
+          var text = source.value;
+          try {
+            last = api.run(text);
+          } catch (err) {
+            status.textContent = 'internal error: ' + (err && err.message ? err.message : String(err));
+            status.className = 'status bad';
+            return;
+          }
+          if (last.errorCount > 0) {
+            status.textContent =
+              last.errorCount + (last.errorCount === 1 ? ' error' : ' errors') + ' — nothing rendered.';
+            status.className = 'status bad';
+          } else {
+            var warn = last.warnings.length
+              ? ' (' + last.warnings.length + (last.warnings.length === 1 ? ' warning' : ' warnings') + ')'
+              : '';
+            status.textContent = 'Compiles and renders' + warn + '.';
+            status.className = 'status ok';
+          }
+          draw();
+        }
+
+        var timer = null;
+        source.addEventListener('input', function () {
+          clearTimeout(timer);
+          timer = setTimeout(runNow, 180);
+        });
+
+        select.addEventListener('change', function () {
+          source.value = EXAMPLES[select.value];
+          runNow();
+        });
+
+        $('format').addEventListener('click', function () {
+          var result = api.format(source.value);
+          if (result.ok) {
+            source.value = result.text;
+            runNow();
+          } else {
+            status.textContent = 'Cannot format a template that does not parse.';
+            status.className = 'status bad';
+          }
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (tab) {
+          tab.addEventListener('click', function () {
+            Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
+              t.setAttribute('aria-selected', String(t === tab));
+            });
+            current = tab.getAttribute('data-tab');
+            draw();
+          });
+        });
+
+        source.value = EXAMPLES['Product card'];
+        select.value = 'Product card';
+        runNow();
+      })();
+    </script>
+  </body>
+</html>

@@ -258,6 +258,16 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## Playground
+
+| claim | evidence | kind |
+|---|---|---|
+| The playground is a single self-contained HTML file with no external requests | playground/build.mjs | artifact |
+| The playground's "XSS is a compile error" examples genuinely fail to compile — "rejects script, event handlers and iframes" | playground/playground.test.ts | test |
+| A plain String in `href` compiles but is neutralized at the sink with a warning — "accepts a plain String in href but neutralizes it at the sink" | playground/playground.test.ts | test |
+| The escaping panel labels each interpolation by position, and never reports RAWTEXT — "labels each interpolation with the context its position implies", "never reports a RAWTEXT context, because none is reachable" | playground/playground.test.ts | test |
+| The optional law and no-truthiness examples produce the diagnostics they advertise — "rejects an unguarded optional (the optional law)", "rejects a String used as a condition (no truthiness)" | playground/playground.test.ts | test |
+
 ## Editor tooling
 
 | claim | evidence | kind |

@@ -58,6 +58,9 @@ jobs:
       - name: Build (dual ESM/CJS + CLI)
         run: npm run build
 
+      - name: Playground is not stale
+        run: npm run playground:check
+
       - name: Smoke test the CLI
         run: |
           node dist/cli/cli.js --version

@@ -65,7 +65,9 @@
     "sbom": "node scripts/sbom.mjs",
     "prepublishOnly": "npm run typecheck && npm run test && npm run build",
     "build:cli": "tsc -p tsconfig.cli.json",
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "playground": "node playground/build.mjs",
+    "playground:check": "node playground/build.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
