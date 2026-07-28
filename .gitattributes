@@ -1,0 +1,64 @@
+# Line endings
+#
+# One canonical form in the repository, LF, regardless of who committed from
+# where. Without this, a Windows checkout rewrites files on commit and every
+# `git add` prints a wall of "LF will be replaced by CRLF" warnings — and a
+# formatter that asserts byte-exact output has to keep normalizing around it.
+* text=auto eol=lf
+
+# Files whose content is bytes, not text.
+*.wasm binary
+*.png binary
+*.jpg binary
+*.vsix binary
+
+# ---------------------------------------------------------------------------
+# Language statistics
+#
+# GitHub computes the language bar with Linguist, which counts every tracked
+# file it recognizes unless told otherwise. Three things distort it here, and
+# all three are marked rather than deleted, because each file is legitimately
+# committed:
+#
+#   * playground/index.html is 131 KB of GENERATED bundle — the whole engine
+#     inlined by playground/build.mjs. Left unmarked it is the single largest
+#     file in the repository and reports the project as substantially "HTML",
+#     which describes the build output rather than anything anyone wrote.
+#   * llms.txt / llms-full.txt are the documentation re-emitted for machines.
+#   * The conformance corpus and the error index are generated from source.
+#
+# `linguist-generated` also collapses these in diffs, which is what you want:
+# a 620-case corpus regeneration should not bury a one-line source change in
+# review.
+# ---------------------------------------------------------------------------
+
+playground/index.html linguist-generated=true
+llms.txt linguist-generated=true
+llms-full.txt linguist-generated=true
+docs/reference/errors.md linguist-generated=true
+conformance/cases/*.json linguist-generated=true
+conformance/manifest.json linguist-generated=true
+
+# Vendored grammar output, when it is built locally.
+tree-sitter-orbit/src/** linguist-generated=true
+
+# ---------------------------------------------------------------------------
+# .orbit files
+#
+# These currently render on GitHub as plain text and count toward nothing,
+# because Linguist does not know the extension. That is not something a
+# repository can configure: `linguist-language` can only map a file to a
+# language Linguist ALREADY defines, so the options are to be listed upstream
+# or to be nothing.
+#
+# Mapping `.orbit` to a neighbouring language to borrow its highlighting was
+# considered and rejected. It would report Orbit as Liquid — a language it is
+# deliberately not compatible with — in exchange for approximate colours.
+#
+# The real fix is the upstream submission prepared in linguist/, which is
+# gated on adoption rather than on engineering: Linguist requires a language to
+# be in use across a few hundred repositories before it will accept it.
+# Marking the intent here so the next person does not re-derive it.
+# ---------------------------------------------------------------------------
+
+*.orbit text eol=lf linguist-detectable=true

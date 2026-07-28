@@ -1,0 +1,22 @@
+# Entry for github-linguist/linguist -> lib/linguist/languages.yml
+#
+# Insert alphabetically (between "OpenType Feature File" and "Org").
+# Omit `language_id` in the PR — Linguist assigns it.
+#
+# See ./README.md for the submission checklist and for why this has not been
+# submitted yet: Linguist requires ~2,000 `.orbit` files across many public
+# repositories, and there are currently 6, all in this one.
+
+Orbit:
+  type: markup
+  # Distinct from the neighbouring template languages, since the language bar is
+  # the main place this is ever seen:
+  #   Liquid #67b8de · Twig #c1d026 · Handlebars #f7931e · HTML #e34c26
+  color: "#2f5bd7"
+  extensions:
+    - ".orbit"
+  tm_scope: source.orbit
+  # Ace has no Orbit mode; `text` is accurate rather than aspirational.
+  # codemirror_mode is omitted for the same reason.
+  ace_mode: text
+  language_id: 0
