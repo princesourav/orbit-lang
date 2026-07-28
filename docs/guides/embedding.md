@@ -86,11 +86,16 @@ const filters: HostFilterDecl[] = [
 Rules the engine enforces, at declaration time via `assertValidHostFilters`:
 
 - Names are camelCase and may not collide with a stdlib filter.
-- `Html` may never be a **parameter** type.
-- `Html` may only be a **top-level return** type.
-- A filter returning `Html` **must** set `unsafeHtml: true`, and every use site
-  is warned. That flag is the audit trail: grep for it and you have the complete
-  list of places unescaped markup can enter a page.
+- `Html` may only be a **top-level return** type — never nested in a list,
+  record or optional.
+- `Html` may be a **parameter** in exactly one shape: the first parameter of an
+  `htmlTransform` filter. Anywhere else it is rejected, because a filter taking
+  Html alongside untrusted arguments is asking to interleave the two.
+- A filter returning `Html` **must** declare exactly one of `sanitizer`,
+  `trustedHtml` or `htmlTransform`. Each names a different obligation, and
+  only `trustedHtml` warns at use sites — see the table in
+  [types](../language/types.md#terminal-types). Declaring two, or none, throws
+  at `assertValidHostFilters`: it is an embedder bug, not a template one.
 
 Filters must be pure and fast. A throwing filter fails the render cleanly (it
 does not escape as an unhandled exception), and the deadline is checked either

@@ -1,0 +1,139 @@
+{
+  "category": "html-accepted",
+  "cases": [
+    {
+      "id": "html-accepted/sanitizer-in-content",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<div>{data.text |> richtext}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "hi <b>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div><p>hi &lt;b></p></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-accepted/trusted-in-content",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<div>{data.text |> rawHtml}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "<p>hello</p>",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div><p>hello</p></div>",
+        "warnings": [
+          "O4902"
+        ]
+      }
+    },
+    {
+      "id": "html-accepted/transform-chain",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<div>{data.text |> richtext |> truncateHtml(6)}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "abcdefghijkl",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div><p></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-accepted/ternary-both-branches",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<div>{data.flag ? (data.text |> richtext) : ((data.note ?? \"\") |> richtext)}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "a",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": true,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div><p>a</p></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-accepted/nested-element-content",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<section><article><p>{data.text |> richtext}</p></article></section>\n",
+      "bindings": {
+        "data": {
+          "text": "deep",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<section><article><p><p>deep</p></p></article></section>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-accepted/coalesce-pipe-parenthesised",
+      "category": "html-accepted",
+      "template": "---\npage page\n---\n<div>{(data.note ?? \"\") |> richtext}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div><p></p></div>",
+        "warnings": []
+      }
+    }
+  ]
+}

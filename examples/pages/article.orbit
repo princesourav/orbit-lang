@@ -38,5 +38,6 @@ page article
   <div class="article__body">{article.bodyHtml |> richtext}</div>
   <footer class="article__footer">
     <p class="article__summary">{article.excerpt ?? "Thanks for reading."}</p>
+    <p class="article__legal">{legalNoticeHtml |> platformHtml}</p>
   </footer>
 </main>

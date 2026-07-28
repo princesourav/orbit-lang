@@ -1,6 +1,6 @@
 # Orbit conformance suite
 
-620 cases in plain JSON. An implementation conforms when it reproduces every
+644 cases in plain JSON. An implementation conforms when it reproduces every
 expectation here.
 
 Nothing in the corpus is TypeScript-specific. That is the point: a second
@@ -80,6 +80,57 @@ shout(String) -> String     — ASCII-uppercases its argument
 type checking, byte-charging of output) without depending on anything
 platform-specific.
 
+### Html host filters
+
+Three filters, one per Html obligation. **These must be reproduced exactly** —
+the expected bytes depend on their behaviour, not only their declarations, so
+behaviour is specified here rather than left to be inferred.
+
+| Name | Signature | Flag | Warns at use sites |
+|---|---|---|---|
+| `richtext` | `(String) -> Html` | `sanitizer` | no |
+| `rawHtml` | `(String) -> Html` | `trustedHtml` | **yes** |
+| `truncateHtml` | `(Html, Int) -> Html` | `htmlTransform` | no |
+
+**`richtext`** wraps its input in `<p>…</p>` and replaces every `<` with `&lt;`.
+It is deliberately not a pass-through: a sanitizer that returned its input
+unchanged would make every escaping case in this category vacuous.
+
+```
+""        ->  "<p></p>"
+"a<b"     ->  "<p>a&lt;b</p>"
+"<script>" -> "<p>&lt;script></p>"
+```
+
+**`rawHtml`** is the identity function. The host asserts the input is already
+trusted, which is exactly what the flag means.
+
+```
+""        ->  ""
+"<b>x"    ->  "<b>x"
+```
+
+**`truncateHtml`** returns its input unchanged when the markup is at most `max`
+characters. Otherwise it cuts at the **last `>` at or before `max`**, keeping
+that `>`, so a tag is never sliced open. When there is no such `>`, it returns
+the empty string rather than a fragment of a tag — the `htmlTransform`
+obligation is to preserve well-formedness, and half a tag changes how the whole
+remainder of the document parses.
+
+```
+("<p>hello</p>", 6)  ->  "<p>"
+("<p>hi</p>", 99)    ->  "<p>hi</p>"
+("abcdef", 3)        ->  ""
+```
+
+An implementation that warns at a `sanitizer` or `htmlTransform` use site, or
+stays silent at a `trustedHtml` one, fails the `html-accepted` category: the
+expected `warnings` arrays encode exactly that distinction.
+
+The host is defined once, in [`host.mjs`](./host.mjs), and imported by both the
+generator and the runner. It was previously duplicated between them, and the two
+drifted the first time a filter was added.
+
 ## Categories
 
 | Category | Cases | What it pins |
@@ -103,6 +154,9 @@ platform-specific.
 | `filter` | 35 | Every stdlib filter, at its edges |
 | `structure` | 16 | Control flow, `<let>`, void elements, conditional attributes, comments |
 | `component` | 5 | Props, defaults, slots, calls inside loops |
+| `html-accepted` | 7 | Html in element content: sanitizer, trusted, transform chain, ternary |
+| `html-rejected` | 10 | Every other sink, plus the `??`/`|>` precedence trap |
+| `html-prop` | 8 | Html crossing a component boundary, forwarded, and mis-typed |
 
 The 43-case sweeps come from one payload table crossed with every context —
 markup-significant characters, quote-breaking, `javascript:` with tab, newline

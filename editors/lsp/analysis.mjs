@@ -75,6 +75,27 @@ export const FILTER_DOCS = {
 
 const CONTROL_TAGS = ['if', 'else-if', 'else', 'for', 'empty', 'let', 'slot', 'json-ld'];
 
+/**
+ * Types a `props` block may declare, with the note a reader needs at the moment
+ * they are choosing one.
+ *
+ * `Html` is here because it became a legal prop type: a shared rich-text
+ * component is the reason the restriction was lifted, and an author will not
+ * discover that from a type list that omits it.
+ */
+const PROP_TYPES = {
+  String: 'String — text. Escaped wherever it renders.',
+  Int: 'Int — whole number.',
+  Float: 'Float — decimal. `/` always yields Float.',
+  Bool: 'Bool — the only thing <if> accepts; there is no truthiness.',
+  Color: 'Color — exactly #rrggbb.',
+  Url: 'Url — renders and is valid in URL attributes. Carries no safety guarantee: URL safety is enforced at the sink.',
+  Money: 'Money — terminal. No operators, no properties, no rendering. Format with a host filter.',
+  MoneyText: 'MoneyText — formatted money. Renders; admits no filters.',
+  Image: 'Image — opaque handle. Host-filter input only.',
+  Html: 'Html — sanitized markup from a host filter. Element-content only: never an attribute, <let> binding, filter operand or <title>. Cannot be optional or listed — sanitize before the ?? instead.',
+};
+
 /** Convert an Orbit diagnostic (1-based) to an LSP one (0-based). */
 export function toLspDiagnostic(d) {
   const startLine = Math.max(0, (d.span?.start.line ?? 1) - 1);
@@ -125,6 +146,27 @@ function templateOf(source) {
  */
 export function complete(source, linePrefix) {
   const trimmed = linePrefix.trimEnd();
+
+  /*
+   * Inside a frontmatter block, after `name:`, the only legal continuation is a
+   * type. Offering elements and filters there would be noise, and the type list
+   * is exactly where an author discovers that Html is available.
+   *
+   * Detected from the line shape (`  name:`) plus being before the closing
+   * fence, which is cheap and does not need a second parse of a buffer that is
+   * mid-edit and may not parse at all.
+   */
+  if (trimmed.endsWith(':') && /^\s+[A-Za-z_][A-Za-z0-9_]*\s*:$/.test(trimmed)) {
+    const beforeCursor = source.slice(0, source.length);
+    const fenceCount = beforeCursor.split('\n---').length - 1;
+    if (fenceCount >= 1) {
+      return Object.entries(PROP_TYPES).map(([label, detail]) => ({
+        label,
+        kind: KIND.property,
+        detail,
+      }));
+    }
+  }
 
   // After a pipe only a filter name is legal — the grammar allows nothing else
   // there, so offering elements would be noise.
@@ -236,6 +278,8 @@ export function hover(source, word, linePrefix = '') {
   if (setting !== undefined) {
     return `\`${word}\` — setting (\`${setting.setting.control}\`)`;
   }
+
+  if (PROP_TYPES[word] !== undefined) return PROP_TYPES[word];
 
   if (FILTER_DOCS[word] !== undefined) return `\`\`\`\n${FILTER_DOCS[word]}\n\`\`\``;
 

@@ -122,63 +122,63 @@ Raised by `check()`. The checker never throws and never stops early: it returns 
 
 | code | message | what to do | raised in |
 | --- | --- | --- | --- |
-| `O2010` | duplicate prop … | Remove the duplicate prop declaration. | `src/checker.ts:152` |
-| `O2011` | Html cannot be a prop type (it is element-content-only) | Html is element-content-only: it can never be a prop type or a prop value. | `src/checker.ts:157 (+1 more)` |
-| `O2012` | default for prop … is …, expected … | Make the default literal match the declared prop type. | `src/checker.ts:165` |
-| `O2013` | duplicate setting … | Remove the duplicate setting declaration. | `src/checker.ts:178` |
-| `O2014` | duplicate slot … | Remove the duplicate slot declaration. | `src/checker.ts:191` |
-| `O2015` | setting …: Text default must be a string | The default must be valid for the control (a string for `Text`, an option for `Select`, an in-range Int for `Range`, …). | `src/checker.ts:251 (+4 more)` |
-| `O2016` | unknown type … | Declare the type in the host `TypeRegistry`, or use a built-in (`Int`, `Float`, `String`, `Bool`, `Color`). | `src/checker.ts:286` |
-| `O2017` | page … cannot declare props (prop …) — pages are entry points, not callees | Pages are entry points, not callees. Move the data to `pageGlobals` in `CheckOptions`. | `src/checker.ts:145` |
-| `O2018` | setting …: Range min (…) is greater than max (…) | Swap the bounds: `Range(min, max)` with `min <= max`. | `src/checker.ts:218` |
-| `O2019` | setting …: Range step must be greater than 0 (found …) | A `Range` step must be greater than zero. | `src/checker.ts:227` |
-| `O2020` | setting …: step … never reaches max (…..… is … wide) | Warning: the declared maximum is unreachable. Pick a step that divides the span, or adjust `max`. | `src/checker.ts:239` |
-| `O2030` | unknown identifier … | The name is not in scope. Check spelling, or declare it as a prop / page global / `<let>`. | `src/checker.ts:729` |
-| `O2031` | `…` has no property `…` | The object has no such field. Check the host `TypeRegistry` (or the record literal) for the real name. | `src/checker.ts:857 (+1 more)` |
-| `O2032` | … has no properties | The value has no properties. Lists use `size(list)` or a `<for>` loop. | `src/checker.ts:874` |
-| `O2033` | duplicate record key … | Remove the duplicate record key. | `src/checker.ts:748` |
-| `O2034` | list index must be Int, found … | List indices are Int. | `src/checker.ts:777` |
-| `O2035` | only lists can be indexed (found …) — dynamic member access is not supported | Only lists can be indexed; there is no dynamic member access. | `src/checker.ts:785` |
-| `O2036` | unary - needs Int or Float, found … | Unary `-` needs an Int or Float. | `src/checker.ts:801` |
-| `O2037` | operator … needs Int or Float, found … | Arithmetic and ordering need numbers. Strings compose via interpolation: `{a}{b}`. | `src/checker.ts:921 (+1 more)` |
-| `O2050` | range bounds must be literal integers (a..b) | Range bounds are literal integers (`1..5`). Loop over a host-resolved list for dynamic counts. | `src/checker.ts:759` |
-| `O2051` | range spans more than … values | Shorten the range; ranges are bounded at compile time. | `src/checker.ts:766` |
-| `O2060` | Money cannot be rendered directly; pass it to a host money filter | Money is terminal: no operators, no equality, no properties, no stdlib filters. Pass it to a host money filter. | `src/checker.ts:511 (+4 more)` |
-| `O2061` | Image is an opaque handle; pass it to a host image filter | Image is an opaque handle. Pass it to a host image filter to obtain a Url. | `src/checker.ts:515 (+2 more)` |
-| `O2062` | MoneyText admits no filters — it only renders | MoneyText only renders — it admits no filters. Format it in the host filter instead. | `src/checker.ts:989` |
-| `O2063` | Html cannot be a filter operand | Html cannot be a filter operand; it can only be interpolated into element content. | `src/checker.ts:985` |
-| `O2064` | URL attribute … needs a Url or String, found … | URL attributes take a `Url` or a `String`. | `src/checker.ts:522` |
-| `O2065` | comparing … to none is always … | Warning: the value can never be `none`, so the comparison is constant. Drop it. | `src/checker.ts:948` |
-| `O2066` | cannot compare … and … | The two sides have no common comparable type. Compare precomputed flags from the host model. | `src/checker.ts:963 (+1 more)` |
-| `O2070` | unknown filter … | No such filter. Check the stdlib reference and the host filter list. | `src/checker.ts:1055` |
-| `O2071` | host filter … returns raw Html — its output is NOT escaped | Warning: this host filter returns raw Html and its output is NOT escaped. Confirm the host sanitizes it at write time. | `src/checker.ts:1018` |
-| `O2072` | left of ?? is never none (…) | Warning: the left of `??` is never `none` — the fallback is dead. Remove it. | `src/checker.ts:812` |
-| `O2073` | branches have incompatible types: … vs … | Both branches must have a common type. Convert one side, or move the difference into the markup. | `src/checker.ts:1086` |
-| `O2074` | cannot render a … in an attribute | The value has no textual form. Project it into a printable primitive first. | `src/checker.ts:539 (+2 more)` |
-| `O2075` | Html cannot render inside <title>/<textarea> | Html cannot render inside `<title>` / `<textarea>`; those are RCDATA. | `src/checker.ts:655` |
-| `O2076` | Html cannot appear in attributes (element-content only) | Html cannot appear in attributes. | `src/checker.ts:507` |
-| `O2077` | <for> needs a List or Range, found … | `<for>` iterates a List or a Range. | `src/checker.ts:407` |
-| `O2078` | limit must be a literal Int between 1 and … | `limit` is a literal Int within the engine loop cap. | `src/checker.ts:412` |
-| `O2079` | Html cannot be bound with <let> (element-content only) | Html cannot be bound with `<let>`; interpolate it directly into element content. | `src/checker.ts:430` |
-| `O2080` | unknown component … | No such component in the program. Check the name and that the file is in the compiled set. | `src/checker.ts:555` |
-| `O2081` | … is a page and cannot be called as a component | Pages cannot be called. Extract the markup into a component. | `src/checker.ts:559` |
-| `O2082` | component … has no prop … | The component declares no such prop. | `src/checker.ts:566` |
-| `O2083` | prop … expects …, found … | The argument type does not match the declared prop type. | `src/checker.ts:600` |
-| `O2084` | missing required prop … on <…> | Supply the required prop, or give it a default / optional type in the component. | `src/checker.ts:608` |
-| `O2085` | ambiguous slot attribution: every element a control-flow wrapper can render must target the same slot | Every element a control-flow wrapper can render must target the same slot. Split the wrapper. | `src/checker.ts:615` |
-| `O2086` | (message is constructed at the call site) | The component declares no such slot. Add it to `slots { … }`, or use `<slot/>` for default content. | `src/checker.ts:623` |
-| `O2087` | slot … on <…> is required | The slot is required — provide content for it with `slot="name"`. | `src/checker.ts:634` |
-| `O2088` | <slot> is only valid inside components | `<slot>` is only valid inside a component. | `src/checker.ts:443` |
-| `O2089` | slot … is not declared in frontmatter | Declare the slot in frontmatter: `slots { name? }`. | `src/checker.ts:449` |
-| `O2090` | json-ld admits primitives, records and lists only (found …) | `<json-ld>` admits primitives, records and lists. Project host objects into a record first. | `src/checker.ts:461` |
-| `O2091` | component cycle: … | Break the cycle; the component graph must be acyclic (this is what makes rendering total). | `src/checker.ts:326` |
-| `O2092` | prop … cannot use ?= (that form is for conditional HTML attributes) | `?=` is the conditional-attribute form. Component props take `name={boolExpr}`. | `src/checker.ts:582` |
-| `O2093` | ?. on a value that is never none (…) | Warning: the value is never `none`, so `?.` is redundant. Use plain `.`. | `src/checker.ts:848` |
-| `O2100` | … takes … arguments, got … | Wrong argument count — check the filter signature. | `src/checker.ts:1003 (+1 more)` |
-| `O2101` | …: argument … must be …, found … | Wrong argument type — check the filter signature. | `src/checker.ts:1012 (+5 more)` |
+| `O2010` | duplicate prop … | Remove the duplicate prop declaration. | `src/checker.ts:153` |
+| `O2011` | Html cannot appear inside … — it may only be a prop's own type | Html is element-content-only: it can never be a prop type or a prop value. | `src/checker.ts:179 (+1 more)` |
+| `O2012` | default for prop … is …, expected … | Make the default literal match the declared prop type. | `src/checker.ts:191` |
+| `O2013` | duplicate setting … | Remove the duplicate setting declaration. | `src/checker.ts:204` |
+| `O2014` | duplicate slot … | Remove the duplicate slot declaration. | `src/checker.ts:217` |
+| `O2015` | setting …: Text default must be a string | The default must be valid for the control (a string for `Text`, an option for `Select`, an in-range Int for `Range`, …). | `src/checker.ts:277 (+4 more)` |
+| `O2016` | unknown type … | Declare the type in the host `TypeRegistry`, or use a built-in (`Int`, `Float`, `String`, `Bool`, `Color`). | `src/checker.ts:312` |
+| `O2017` | page … cannot declare props (prop …) — pages are entry points, not callees | Pages are entry points, not callees. Move the data to `pageGlobals` in `CheckOptions`. | `src/checker.ts:146` |
+| `O2018` | setting …: Range min (…) is greater than max (…) | Swap the bounds: `Range(min, max)` with `min <= max`. | `src/checker.ts:244` |
+| `O2019` | setting …: Range step must be greater than 0 (found …) | A `Range` step must be greater than zero. | `src/checker.ts:253` |
+| `O2020` | setting …: step … never reaches max (…..… is … wide) | Warning: the declared maximum is unreachable. Pick a step that divides the span, or adjust `max`. | `src/checker.ts:265` |
+| `O2030` | unknown identifier … | The name is not in scope. Check spelling, or declare it as a prop / page global / `<let>`. | `src/checker.ts:767` |
+| `O2031` | `…` has no property `…` | The object has no such field. Check the host `TypeRegistry` (or the record literal) for the real name. | `src/checker.ts:895 (+1 more)` |
+| `O2032` | … has no properties | The value has no properties. Lists use `size(list)` or a `<for>` loop. | `src/checker.ts:912` |
+| `O2033` | duplicate record key … | Remove the duplicate record key. | `src/checker.ts:786` |
+| `O2034` | list index must be Int, found … | List indices are Int. | `src/checker.ts:815` |
+| `O2035` | only lists can be indexed (found …) — dynamic member access is not supported | Only lists can be indexed; there is no dynamic member access. | `src/checker.ts:823` |
+| `O2036` | unary - needs Int or Float, found … | Unary `-` needs an Int or Float. | `src/checker.ts:839` |
+| `O2037` | operator … needs Int or Float, found … | Arithmetic and ordering need numbers. Strings compose via interpolation: `{a}{b}`. | `src/checker.ts:959 (+1 more)` |
+| `O2050` | range bounds must be literal integers (a..b) | Range bounds are literal integers (`1..5`). Loop over a host-resolved list for dynamic counts. | `src/checker.ts:797` |
+| `O2051` | range spans more than … values | Shorten the range; ranges are bounded at compile time. | `src/checker.ts:804` |
+| `O2060` | Money cannot be rendered directly; pass it to a host money filter | Money is terminal: no operators, no equality, no properties, no stdlib filters. Pass it to a host money filter. | `src/checker.ts:537 (+4 more)` |
+| `O2061` | Image is an opaque handle; pass it to a host image filter | Image is an opaque handle. Pass it to a host image filter to obtain a Url. | `src/checker.ts:541 (+2 more)` |
+| `O2062` | MoneyText admits no filters — it only renders | MoneyText only renders — it admits no filters. Format it in the host filter instead. | `src/checker.ts:1054` |
+| `O2063` | (message is constructed at the call site) | Html cannot be a filter operand; it can only be interpolated into element content. | `src/checker.ts:1042` |
+| `O2064` | URL attribute … needs a Url or String, found … | URL attributes take a `Url` or a `String`. | `src/checker.ts:548` |
+| `O2065` | comparing … to none is always … | Warning: the value can never be `none`, so the comparison is constant. Drop it. | `src/checker.ts:986` |
+| `O2066` | cannot compare … and … | The two sides have no common comparable type. Compare precomputed flags from the host model. | `src/checker.ts:1001 (+1 more)` |
+| `O2070` | unknown filter … | No such filter. Check the stdlib reference and the host filter list. | `src/checker.ts:1134` |
+| `O2071` | host filter … is declared trustedHtml — its output is emitted raw, unsanitized | Warning: this host filter is declared trustedHtml, so its output is emitted raw and unsanitized. The host asserts the input is trusted; verify that where the filter is DECLARED, not at this call site. A sanitizer or htmlTransform filter does not raise this. | `src/checker.ts:1097` |
+| `O2072` | left of ?? is never none (…) | Warning: the left of `??` is never `none` — the fallback is dead. Remove it. | `src/checker.ts:850` |
+| `O2073` | branches have incompatible types: … vs … | Both branches must have a common type. Convert one side, or move the difference into the markup. | `src/checker.ts:1165` |
+| `O2074` | cannot render a … in an attribute | The value has no textual form. Project it into a printable primitive first. | `src/checker.ts:565 (+2 more)` |
+| `O2075` | Html cannot render inside <title>/<textarea> | Html cannot render inside `<title>` / `<textarea>`; those are RCDATA. | `src/checker.ts:693` |
+| `O2076` | Html cannot appear in attributes (element-content only) | Html cannot appear in attributes. | `src/checker.ts:533` |
+| `O2077` | <for> needs a List or Range, found … | `<for>` iterates a List or a Range. | `src/checker.ts:433` |
+| `O2078` | limit must be a literal Int between 1 and … | `limit` is a literal Int within the engine loop cap. | `src/checker.ts:438` |
+| `O2079` | Html cannot be bound with <let> (element-content only) | Html cannot be bound with `<let>`; interpolate it directly into element content. | `src/checker.ts:456` |
+| `O2080` | unknown component … | No such component in the program. Check the name and that the file is in the compiled set. | `src/checker.ts:581` |
+| `O2081` | … is a page and cannot be called as a component | Pages cannot be called. Extract the markup into a component. | `src/checker.ts:585` |
+| `O2082` | component … has no prop … | The component declares no such prop. | `src/checker.ts:592` |
+| `O2083` | prop … expects …, found … | The argument type does not match the declared prop type. | `src/checker.ts:638` |
+| `O2084` | missing required prop … on <…> | Supply the required prop, or give it a default / optional type in the component. | `src/checker.ts:646` |
+| `O2085` | ambiguous slot attribution: every element a control-flow wrapper can render must target the same slot | Every element a control-flow wrapper can render must target the same slot. Split the wrapper. | `src/checker.ts:653` |
+| `O2086` | (message is constructed at the call site) | The component declares no such slot. Add it to `slots { … }`, or use `<slot/>` for default content. | `src/checker.ts:661` |
+| `O2087` | slot … on <…> is required | The slot is required — provide content for it with `slot="name"`. | `src/checker.ts:672` |
+| `O2088` | <slot> is only valid inside components | `<slot>` is only valid inside a component. | `src/checker.ts:469` |
+| `O2089` | slot … is not declared in frontmatter | Declare the slot in frontmatter: `slots { name? }`. | `src/checker.ts:475` |
+| `O2090` | json-ld admits primitives, records and lists only (found …) | `<json-ld>` admits primitives, records and lists. Project host objects into a record first. | `src/checker.ts:487` |
+| `O2091` | component cycle: … | Break the cycle; the component graph must be acyclic (this is what makes rendering total). | `src/checker.ts:352` |
+| `O2092` | prop … cannot use ?= (that form is for conditional HTML attributes) | `?=` is the conditional-attribute form. Component props take `name={boolExpr}`. | `src/checker.ts:608` |
+| `O2093` | ?. on a value that is never none (…) | Warning: the value is never `none`, so `?.` is redundant. Use plain `.`. | `src/checker.ts:886` |
+| `O2100` | … takes … arguments, got … | Wrong argument count — check the filter signature. | `src/checker.ts:1068 (+1 more)` |
+| `O2101` | …: argument … must be …, found … | Wrong argument type — check the filter signature. | `src/checker.ts:1077 (+5 more)` |
 | `O2102` | …: the key must be a string literal | The argument must be a literal so the filter stays statically analyzable. | `src/stdlib.ts:132 (+1 more)` |
 | `O2103` | sortBy: … has no field … | The field does not exist on the element type, or is not sortable. | `src/stdlib.ts:418 (+2 more)` |
-| `O2104` | optional value used without a fallback (`…`) — decide what happens when it is absent | THE OPTIONAL LAW: decide what happens when the value is absent. Use `{x ?? fallback}`, or narrow with `<if {x != none}>`. | `src/checker.ts:703` |
+| `O2104` | optional value used without a fallback (`…`) — decide what happens when it is absent | THE OPTIONAL LAW: decide what happens when the value is absent. Use `{x ?? fallback}`, or narrow with `<if {x != none}>`. | `src/checker.ts:741` |
 
 ## O3xxx — checker: the truthiness rule
 
@@ -186,7 +186,7 @@ Its own range because it is the rule newcomers hit first, and the one that never
 
 | code | message | what to do | raised in |
 | --- | --- | --- | --- |
-| `O3007` | … must be Bool, found … | There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`. | `src/checker.ts:683 (+1 more)` |
+| `O3007` | … must be Bool, found … | There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`. | `src/checker.ts:721 (+1 more)` |
 
 ## O4xxx — interpreter and escaping (runtime)
 
@@ -200,36 +200,36 @@ Raised during `render()`. Every one of these FAILS the render — a partial page
 | `O4004` | output exceeds … characters | The output exceeded `maxOutput`. Paginate the page, or raise the cap. | `src/interpreter.ts:252` |
 | `O4005` | intermediate string exceeds … characters | An intermediate string exceeded the per-value cap inside a filter chain. | `src/interpreter.ts:279` |
 | `O4006` | intermediate list exceeds … items | An intermediate list exceeded the per-value cap inside a filter chain. | `src/interpreter.ts:286` |
-| `O4010` | unbound identifier … | The AST references a binding the host did not supply. Check `bindings` / `props` against the access plan. | `src/interpreter.ts:667` |
-| `O4011` | accessed property … of none | Property access on a value that is not a record. The host data does not match its declared type. | `src/interpreter.ts:696 (+1 more)` |
-| `O4012` | rendered value is none — data violated its declared type | The host supplied `none` where a non-optional value was declared. Fix the data or declare the field `T?`. | `src/interpreter.ts:861` |
-| `O4013` | division by zero | Division or modulo by zero. Guard the denominator with `<if>`. | `src/interpreter.ts:781 (+1 more)` |
-| `O4014` | cannot render a structured value | A structured value reached a text sink. The checker allows this only for `<invalid>` types — check the data shape. | `src/interpreter.ts:863` |
-| `O4015` | component nesting exceeds depth … | Component nesting exceeded the depth cap. Flatten the composition. | `src/interpreter.ts:601` |
+| `O4010` | unbound identifier … | The AST references a binding the host did not supply. Check `bindings` / `props` against the access plan. | `src/interpreter.ts:676` |
+| `O4011` | accessed property … of none | Property access on a value that is not a record. The host data does not match its declared type. | `src/interpreter.ts:705 (+1 more)` |
+| `O4012` | rendered value is none — data violated its declared type | The host supplied `none` where a non-optional value was declared. Fix the data or declare the field `T?`. | `src/interpreter.ts:870` |
+| `O4013` | division by zero | Division or modulo by zero. Guard the denominator with `<if>`. | `src/interpreter.ts:790 (+1 more)` |
+| `O4014` | cannot render a structured value | A structured value reached a text sink. The checker allows this only for `<invalid>` types — check the data shape. | `src/interpreter.ts:872` |
+| `O4015` | component nesting exceeds depth … | Component nesting exceeded the depth cap. Flatten the composition. | `src/interpreter.ts:610` |
 | `O4016` | unknown template … | The entry name is not in the loaded program. | `src/interpreter.ts:192 (+1 more)` |
 | `O4020` | …: expected a string value | A filter received a value of the wrong runtime shape — the host data contradicts its declared type. | `src/stdlib.ts:148 (+4 more)` |
 | `O4021` | formatDate: not an ISO date: … | `formatDate` needs an ISO-8601 date string (`YYYY-MM-DD`, optionally `Thh:mm[:ss]`). | `src/stdlib.ts:514` |
-| `O4022` | conditional attribute …?= needs a Bool | A conditional attribute evaluated to a non-Bool at runtime. | `src/interpreter.ts:506` |
-| `O4023` | Html cannot appear in attributes | An Html value reached an attribute sink. | `src/interpreter.ts:528` |
-| `O4024` | <for> subject is not a list or range | The `<for>` subject, or an indexed value, was not a list at runtime. | `src/interpreter.ts:585 (+1 more)` |
-| `O4025` | condition did not evaluate to a Bool | A condition evaluated to a non-Bool at runtime. | `src/interpreter.ts:638 (+1 more)` |
-| `O4026` | expected an Int | An arithmetic operand was not a number at runtime. | `src/interpreter.ts:644 (+2 more)` |
-| `O4027` | unknown operator … | Unknown binary operator in the AST — only a hand-built AST can produce this. | `src/interpreter.ts:787` |
-| `O4028` | unknown filter … | The AST names a filter that is not registered for this render. | `src/interpreter.ts:844` |
-| `O4029` | cannot render a non-finite number | A non-finite number (NaN / Infinity) reached a text sink. | `src/interpreter.ts:856` |
+| `O4022` | conditional attribute …?= needs a Bool | A conditional attribute evaluated to a non-Bool at runtime. | `src/interpreter.ts:515` |
+| `O4023` | Html cannot appear in attributes | An Html value reached an attribute sink. | `src/interpreter.ts:537` |
+| `O4024` | <for> subject is not a list or range | The `<for>` subject, or an indexed value, was not a list at runtime. | `src/interpreter.ts:594 (+1 more)` |
+| `O4025` | condition did not evaluate to a Bool | A condition evaluated to a non-Bool at runtime. | `src/interpreter.ts:647 (+1 more)` |
+| `O4026` | expected an Int | An arithmetic operand was not a number at runtime. | `src/interpreter.ts:653 (+2 more)` |
+| `O4027` | unknown operator … | Unknown binary operator in the AST — only a hand-built AST can produce this. | `src/interpreter.ts:796` |
+| `O4028` | unknown filter … | The AST names a filter that is not registered for this render. | `src/interpreter.ts:853` |
+| `O4029` | cannot render a non-finite number | A non-finite number (NaN / Infinity) reached a text sink. | `src/interpreter.ts:865` |
 | `O4030` | json-ld nesting exceeds depth … | The json-ld value nests deeper than the cap. Flatten the record. | `src/escape.ts:326` |
 | `O4031` | json-ld numbers must be finite | json-ld numbers must be finite. | `src/escape.ts:332` |
 | `O4032` | Html values cannot appear in json-ld | Html values cannot appear in json-ld. | `src/escape.ts:347` |
 | `O4033` | json-ld admits primitives, records and lists only (found …) | json-ld admits primitives, records and lists only. | `src/escape.ts:359` |
 | `O4034` | Html cannot render inside <title>/<textarea> | Html cannot render inside `<title>` / `<textarea>`. | `src/interpreter.ts:405` |
-| `O4035` | host filter … declared Html but returned a non-string | A host filter declared `Html` but returned a non-string. Fix the host implementation. | `src/interpreter.ts:837` |
-| `O4036` | host filter … threw …; host filters must handle their own failures | A host filter threw. Host filters must handle their own failures and return a value. | `src/interpreter.ts:822` |
-| `O4037` | blocked unsafe URL in …: … | A URL was blocked by the sink under `urlPolicy: "error"`. Fix the data; the scheme is not allowlisted. | `src/interpreter.ts:539` |
+| `O4035` | host filter … declared Html but returned a non-string | A host filter declared `Html` but returned a non-string. Fix the host implementation. | `src/interpreter.ts:846` |
+| `O4036` | host filter … threw …; host filters must handle their own failures | A host filter threw. Host filters must handle their own failures and return a value. | `src/interpreter.ts:831` |
+| `O4037` | blocked unsafe URL in …: … | A URL was blocked by the sink under `urlPolicy: "error"`. Fix the data; the scheme is not allowlisted. | `src/interpreter.ts:548` |
 | `O4038` | component entry …: required prop … of type … was not supplied and has no default | A prop supplied at a component entry is missing or has the wrong shape for its declared type. | `src/interpreter.ts:364 (+1 more)` |
-| `O4039` | record field … is a reserved property name | A reserved property name (`__proto__`, `constructor`, `prototype`) can never be read from or written to data. | `src/interpreter.ts:680 (+1 more)` |
-| `O4900` | blocked unsafe URL in …: … | Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead. | `src/interpreter.ts:541` |
+| `O4039` | record field … is a reserved property name | A reserved property name (`__proto__`, `constructor`, `prototype`) can never be read from or written to data. | `src/interpreter.ts:689 (+1 more)` |
+| `O4900` | blocked unsafe URL in …: … | Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead. | `src/interpreter.ts:550` |
 | `O4901` | setting ….…: provided value is invalid for its … control; using the declared default | Warning: a merchant setting value was invalid for its control; the declared default was used. | `src/interpreter.ts:309` |
-| `O4902` | emitted Html from an unsafeHtml host filter without escaping | Warning: an `unsafeHtml` host filter emitted raw Html. Audit that the host sanitized it at write time. | `src/interpreter.ts:409` |
+| `O4902` | emitted raw Html from a trustedHtml host filter | Warning: a trustedHtml host filter emitted raw Html at runtime. Sanitizer and htmlTransform output is silent, so this list is an audit surface rather than a census of every rich-text field. | `src/interpreter.ts:417` |
 | `O4903` | component entry …: prop … is not declared by the component and was ignored | Warning: a prop supplied at a component entry is not declared by the component and was ignored. | `src/interpreter.ts:384` |
 | `O4909` | warning list truncated at … entries | Warning: the per-render warning list hit its cap and was truncated. | `src/interpreter.ts:231` |
 

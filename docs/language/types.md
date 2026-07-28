@@ -150,9 +150,23 @@ content — never as a prop, binding, operand, attribute value, or inside RCDATA
 or JSON-LD. It is **not host-declarable**: you cannot add a field of type
 `Html` to your registry.
 
-The only producers are host filters flagged `unsafeHtml: true`, and every use
-site raises a warning. That flag is the audit trail — grep for it and you have
-the complete list of places unescaped markup can enter a page.
+The only producers are host filters, and each must declare one of three
+obligations:
+
+| Flag | The host promises | Warns at use sites |
+|---|---|---|
+| `sanitizer` | input is untrusted; this filter sanitizes it | no |
+| `trustedHtml` | input is trusted; emitted raw | **yes** |
+| `htmlTransform` | Html in, Html out; well-formedness preserved | no |
+
+Only `trustedHtml` warns, because only it asserts trust rather than
+establishing it. Grep for `trustedHtml` and you have the complete list of
+places markup enters a page on the host’s word alone.
+
+`Html` may be a **component prop**, so a shared `<RichText content={…}/>`
+can own prose typography. It stays element-content-only everywhere inside
+that component: not an attribute, not `<let>`-bound, not a filter operand
+(except an `htmlTransform` first argument), never in `<title>`.
 
 ## Where annotations go
 

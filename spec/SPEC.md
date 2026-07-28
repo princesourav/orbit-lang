@@ -166,10 +166,32 @@ conversion for any other type.
 | `MoneyText` | Renders in content and attributes; **MUST NOT** admit filters. |
 | `Url` | Renders; valid in URL attributes and JSON-LD. Carries no safety guarantee (§3.3). |
 | `Image` | **MUST** be host-filter input only. |
-| `Html` | **MUST** render only as element content; **MUST NOT** appear as a prop, binding, operand, attribute value, in RCDATA, or in JSON-LD. **MUST NOT** be host-declarable. |
+| `Html` | **MUST** render only as element content. **MAY** be a component prop type and be passed to a prop declared `Html`. **MUST NOT** appear as a binding, an attribute value, in RCDATA, or in JSON-LD, and **MUST NOT** be a filter operand except as the first argument of an `htmlTransform` filter. **MUST NOT** be nested inside an optional, list or record. **MUST NOT** be host-declarable as a data type. |
 
-The only producer of `Html` **MUST** be a host filter explicitly flagged as
-producing unsafe HTML, and an implementation **MUST** warn at every use site.
+The only producer of `Html` **MUST** be a host filter, and every
+`Html`-returning filter **MUST** declare exactly one of three obligations. An
+implementation **MUST** reject a declaration that names none, names more than
+one, or names any of them on a filter that does not return `Html`.
+
+| Flag | The host undertakes | Implementation MUST warn at use sites |
+|---|---|---|
+| `sanitizer` | input is untrusted; this filter sanitizes it | no |
+| `trustedHtml` | input is trusted by host fiat; emitted raw | **yes** |
+| `htmlTransform` | `Html` in, `Html` out; well-formedness preserved | no |
+
+An implementation **MUST NOT** warn at the use sites of a `sanitizer` or
+`htmlTransform` filter. Warning on correct code devalues the warning that marks
+code a human must inspect, and an implementation that warns on everything has
+produced a census rather than an audit.
+
+The restriction that an `Html` value is element-content-only **MUST** hold
+transitively: it applies to a value that arrived through a component prop
+exactly as to one produced by a filter in the same expression. An implementation
+**SHOULD** achieve this by checking the type at each sink rather than tracking
+the value's origin.
+
+An implementation **MUST** carry the `trustedHtml` obligation with the value, so
+that it is still known at a sink the value reached through a component prop.
 
 ### 5.4 Arithmetic
 
@@ -271,7 +293,11 @@ An implementation is **not** required to defend against:
   emitted into. A rewriter, sanitizer or email client applied afterwards owns
   its own outcome.
 - **Host authorization.** The engine renders what it is given.
-- **Host filter defects**, including those flagged as producing unsafe HTML.
+- **Host filter defects.** A `sanitizer` is only as good as the sanitizer
+  behind it, a `trustedHtml` filter emits whatever it is given, and an
+  `htmlTransform` that slices markup mid-tag changes how the remainder of the
+  document parses. Each obligation is the host’s to keep; the engine records
+  which one was claimed.
 - **Request-rate exhaustion.** Budgets bound one render.
 
 ## 10. Versioning

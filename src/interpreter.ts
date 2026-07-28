@@ -38,7 +38,7 @@ import {
   sanitizeUrl,
   serializeJsonLd,
 } from './escape';
-import { isHtmlValue, unsafeHtmlValue, type HostFilterDecl } from './host';
+import { isHtmlValue, htmlValue, type HostFilterDecl } from './host';
 import { LIMITS } from './limits';
 import { DEFAULT_LOCALE, STDLIB, type FilterRuntime, type LocaleData } from './stdlib';
 
@@ -403,10 +403,19 @@ class Interpreter {
           const value = this.evalExpr(node.expr, scope);
           if (isHtmlValue(value)) {
             if (ctx.rcdata) this.fail('O4034', 'Html cannot render inside <title>/<textarea>', node.span);
-            // The one unescaped sink in the engine. The checker warns at the
-            // call site; this records that it actually fired at RUNTIME, so a
-            // host can audit which pages really emit host-sanitized HTML.
-            this.warn('O4902', 'emitted Html from an unsafeHtml host filter without escaping', node.span);
+            /*
+             * Only TRUSTED Html warns.
+             *
+             * A sanitizer's output is the sanctioned path and is silent, so
+             * this list stays a real audit surface rather than a census of
+             * every rich-text field on the page. The flag travels on the value
+             * because by the time it reaches this sink it may have crossed a
+             * component boundary and been transformed — there is nothing here
+             * to look the filter up by.
+             */
+            if (value.__orbitTrusted === true) {
+              this.warn('O4902', 'emitted raw Html from a trustedHtml host filter', node.span);
+            }
             this.emit(value.__orbitHtml, node.span);
             break;
           }
@@ -836,7 +845,7 @@ class Interpreter {
         if (typeof result !== 'string') {
           this.fail('O4035', `host filter ${JSON.stringify(name)} declared Html but returned a non-string`, span);
         }
-        return unsafeHtmlValue(result);
+        return htmlValue(result, host.trustedHtml === true);
       }
       return result === undefined ? null : result;
     }

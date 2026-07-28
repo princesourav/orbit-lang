@@ -26,8 +26,10 @@ for templates written by people — or AI agents — you do not fully trust.
 XSS is a compile error. Runaway loops are a budget trip. The data a template can
 touch is statically extractable. None of it depends on a sandbox, because there
 is no escape surface to sandbox: the language has no dynamic member access, no
-method calls, no `eval`, no raw-HTML mode, and no way to reach a host object the
-embedder did not declare.
+method calls, no `eval`, and no way to reach a host object the embedder did not
+declare. Unescaped sinks exist, but they are host-owned and fixed at embed time:
+a template author cannot introduce one, choose one, or opt out of escaping at a
+call site.
 
 This package is the **whole engine**: lexer, parser, type checker, six-context
 escaper, stateless interpreter, pure stdlib, stored-AST validator, and the
@@ -213,7 +215,9 @@ claim loses its evidence.
 - **Terminal branded types.** `Html` renders only as element content — never a
   prop, binding, operand, attribute or RCDATA value — and is **not
   host-declarable**: the only producers are host filters explicitly flagged
-  `unsafeHtml: true`, which the checker warns about at every use site. `Money`
+  one of three obligations (`sanitizer`, `trustedHtml`, `htmlTransform`), and
+  only `trustedHtml` — where the host asserts trust rather than establishing
+  it — warns at every use site. `Money`
   admits no operators, no properties, no rendering and no stdlib filters.
   `MoneyText` renders but admits no filters. `Image` is host-filter input only.
 - **No truthiness and the optional law.** `<if>` requires `Bool`. Using `T?`
@@ -251,9 +255,10 @@ declined by design:
 
 - No Turing-completeness, no user-defined functions, no recursion.
 - No dynamic member access (`obj[userInput]`), no method calls, no reflection.
-- No raw-HTML mode, no `|safe`, no `triple-mustache` escape hatch. The only
-  unescaped sink in the entire engine is a host filter that declared itself
-  `unsafeHtml: true`.
+- No `|safe`, no triple-mustache, no template-author-selectable raw sink.
+  Unescaped output is possible — rich text requires it — but every unescaped
+  sink is a host filter the embedder declared, and the decision is made once at
+  integration time rather than at each call site.
 - No `eval`, no `new Function`, no runtime compilation to JS.
 - No regex, anywhere.
 

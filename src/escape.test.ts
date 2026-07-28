@@ -13,7 +13,7 @@ import {
   srcsetDescriptorValid,
 } from './escape';
 import { OrbitRenderError } from './diagnostics';
-import { unsafeHtmlValue } from './host';
+import { htmlValue } from './host';
 
 describe('TEXT context', () => {
   it('escapes & < > and leaves quotes alone', () => {
@@ -277,7 +277,7 @@ describe('JSON-LD context (W-10)', () => {
   });
 
   it('rejects Html values, non-finite numbers and over-deep nesting', () => {
-    expect(() => serializeJsonLd({ x: unsafeHtmlValue('<b>') })).toThrowError(OrbitRenderError);
+    expect(() => serializeJsonLd({ x: htmlValue('<b>') })).toThrowError(OrbitRenderError);
     expect(() => serializeJsonLd({ x: Infinity })).toThrowError(OrbitRenderError);
     let deep: unknown = 'x';
     for (let i = 0; i < 20; i += 1) deep = [deep];

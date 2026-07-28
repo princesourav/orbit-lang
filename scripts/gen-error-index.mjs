@@ -165,7 +165,7 @@ const NOTES = new Map(Object.entries({
   O2065: 'Warning: the value can never be `none`, so the comparison is constant. Drop it.',
   O2066: 'The two sides have no common comparable type. Compare precomputed flags from the host model.',
   O2070: 'No such filter. Check the stdlib reference and the host filter list.',
-  O2071: 'Warning: this host filter returns raw Html and its output is NOT escaped. Confirm the host sanitizes it at write time.',
+  O2071: 'Warning: this host filter is declared trustedHtml, so its output is emitted raw and unsanitized. The host asserts the input is trusted; verify that where the filter is DECLARED, not at this call site. A sanitizer or htmlTransform filter does not raise this.',
   O2072: 'Warning: the left of `??` is never `none` — the fallback is dead. Remove it.',
   O2073: 'Both branches must have a common type. Convert one side, or move the difference into the markup.',
   O2074: 'The value has no textual form. Project it into a printable primitive first.',
@@ -237,7 +237,7 @@ const NOTES = new Map(Object.entries({
   // -- O49xx: render warnings (non-fatal) -------------------------------------
   O4900: 'Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead.',
   O4901: 'Warning: a merchant setting value was invalid for its control; the declared default was used.',
-  O4902: 'Warning: an `unsafeHtml` host filter emitted raw Html. Audit that the host sanitized it at write time.',
+  O4902: 'Warning: a trustedHtml host filter emitted raw Html at runtime. Sanitizer and htmlTransform output is silent, so this list is an audit surface rather than a census of every rich-text field.',
   O4903: 'Warning: a prop supplied at a component entry is not declared by the component and was ignored.',
   O4909: 'Warning: the per-render warning list hit its cap and was truncated.',
 

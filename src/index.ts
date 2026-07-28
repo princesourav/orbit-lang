@@ -111,9 +111,12 @@ export {
   assertValidHostFilters,
   extractAccessPlan,
   isHtmlValue,
-  unsafeHtmlValue,
+  htmlObligationOf,
+  htmlValue,
+  warnsAtUseSite,
   type AccessPlan,
   type HostFilterDecl,
+  type HtmlObligation,
   type HtmlValue,
   type OrbitHost,
 } from './host';

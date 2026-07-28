@@ -14,6 +14,67 @@ at v1.0.
 
 ## [Unreleased]
 
+### Html trust model (Phase A)
+
+**Breaking for embedders.** `HostFilterDecl.unsafeHtml` is replaced by three
+flags, and `unsafeHtmlValue` is renamed `htmlValue`. Nothing has been published
+to npm, so no deprecation alias is carried.
+
+#### Changed
+
+- **One flag became three.** An `Html`-returning host filter now declares
+  exactly one of `sanitizer`, `trustedHtml` or `htmlTransform`. The old single
+  flag conflated two different risks and answered both with a warning: a filter
+  that sanitizes untrusted input is the sanctioned path and should be silent,
+  while a filter passing through markup the host decided to trust is the one a
+  reviewer must actually look at. Warning on both trained everyone to ignore the
+  warning.
+- **Only `trustedHtml` warns** — `O2071` at check time, `O4902` at render time.
+  A theme calling a sanitizer at fifty sites now produces zero warnings. The
+  `O2071` hint points at the filter DECLARATION, because nothing the template
+  author writes can resolve it.
+- **The obligation travels with the value**, so it is still known at a sink the
+  value reached through a component prop.
+- **README, security model, types and embedding docs corrected.** The claim that
+  Orbit has no raw-HTML mode was false: `unsafeHtml` was one, and every real
+  deployment ships one because product descriptions are rich text. The accurate
+  and still-strong claim is that unescaped sinks are host-owned and fixed at
+  embed time — a template author cannot introduce one, choose one, or opt out of
+  escaping at a call site.
+
+#### Added
+
+- **`Html` may cross a component boundary.** It is a legal prop type on a
+  component and may be passed to a prop declared `Html`, which is what makes a
+  shared `<RichText content={…}/>` possible. Without it every prose site inlines
+  its own sanitizer call, forcing a proliferation of narrow blessed components —
+  a larger unaudited surface than one well-named filter. Nothing is loosened
+  inside the callee: every sink check is keyed on the type AT the sink, so
+  attributes, `<let>`, filter operands and RCDATA still reject it, and a
+  property test sweeps all eleven sink positions rather than the two that are
+  easy to think of.
+- **`htmlTransform` filters** take `Html` as a first argument and return `Html`,
+  so truncation and heading-shifting run on sanitized markup instead of forcing
+  sanitization to run twice in an order the checker cannot see. The obligation is
+  to preserve well-formedness — naive truncation yields `<a href="` and changes
+  how everything after it parses.
+- `Html?` and `List<Html>` are rejected: optionality belongs on the String
+  before sanitization, where the sanitizer decides what empty input produces. The
+  canonical pattern is `{(product.description ?? "") |> richtext}`.
+- Conformance categories `html-accepted`, `html-rejected` and `html-prop`
+  (26 cases). The corpus previously had **zero** `Html` coverage.
+- LSP prop-type completion and hover, including `Html`.
+
+#### Fixed
+
+- **The formatter now parenthesises a pipe on the right of `??`.** `|>` binds
+  tighter, so `a ?? "" |> richtext` pipes only the FALLBACK and leaves `a`
+  unsanitized — and both groupings previously printed identically, so a reader
+  could not tell which was in effect. Hit twice while writing this change.
+- The conformance host is now defined once, in `conformance/host.mjs`, and
+  imported by both the generator and the runner. The two copies drifted during
+  this change and 19 cases failed against a host that no longer matched.
+
 Two milestones landed on `main` since 0.2.0. They are documented here rather
 than tagged, because tagging a release implies a published artifact and nothing
 has been published to npm yet.

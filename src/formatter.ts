@@ -231,8 +231,25 @@ function printExprInner(e: Expr): string {
       // own grouping when reparsed.
       return `${printExpr(e.left, p)} ${e.op} ${printExpr(e.right, p + 1)}`;
     }
-    case 'coalesce':
-      return `${printExpr(e.left, PREC.coalesce)} ?? ${printExpr(e.right, PREC.coalesce + 1)}`;
+    case 'coalesce': {
+      /*
+       * A pipe on the right of `??` is ALWAYS parenthesised, even though
+       * precedence does not require it.
+       *
+       * `|>` binds tighter than `??`, so `a ?? "" |> richtext` pipes only the
+       * FALLBACK and leaves `a` untouched — and without parentheses the two
+       * groupings print identically, so a reader cannot tell which one is in
+       * effect. Printing the parentheses makes the grouping visible at the
+       * cost of two characters. It is not a style preference: this exact
+       * expression, written against a sanitizer, silently leaves merchant
+       * input unsanitized in the branch that matters.
+       */
+      const right =
+        e.right.kind === 'call' && e.right.viaPipe
+          ? `(${printExprInner(e.right)})`
+          : printExpr(e.right, PREC.coalesce + 1);
+      return `${printExpr(e.left, PREC.coalesce)} ?? ${right}`;
+    }
     case 'cond':
       // Right-associative, so the branches may sit at the loosest level.
       return `${printExpr(e.test, PREC.cond + 1)} ? ${printExpr(e.then, PREC.cond)} : ${printExpr(e.else, PREC.cond)}`;

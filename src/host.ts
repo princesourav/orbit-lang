@@ -6,10 +6,13 @@
  * model), host filters (typed, taint-flagged), and data resolved by the host
  * from an AccessPlan the engine extracts statically.
  *
- * Security split (W-34): the ENGINE guarantees termination, escaping and no
- * ambient authority; the HOST guarantees authorization and data scoping.
- * `Html` is not host-declarable — the only Html producers are host filters
- * explicitly flagged `unsafeHtml: true`, which the checker warns on.
+ * Security split: the ENGINE guarantees termination, escaping and no ambient
+ * authority; the HOST guarantees authorization and data scoping.
+ *
+ * `Html` is not host-declarable as a data type — the only producers are host
+ * filters, and each must declare which of three obligations it takes on. The
+ * template author cannot introduce an unescaped sink, choose one, or opt out of
+ * escaping at a call site; that decision is fixed at embed time.
  */
 import { groupSlotChildren, type Expr, type Node, type Program, type Template } from './ast';
 import { type Type, type TypeRegistry } from './types';
@@ -25,13 +28,74 @@ export interface HostFilterDecl {
   params: readonly Type[];
   optionalParams?: readonly Type[];
   returns: Type;
-  /**
-   * Required when `returns` is Html. Flags that this filter's output is
-   * emitted UNESCAPED — the host owns sanitization; the checker warns at
-   * every use site (W-34a).
+
+  /*
+   * Exactly one of the three flags below is REQUIRED when `returns` is Html,
+   * and none is valid otherwise.
+   *
+   * One flag used to cover all of this, which conflated risks that call for
+   * different responses. A filter that sanitizes untrusted input is the
+   * sanctioned path and should be silent; a filter that passes through markup
+   * the host has decided to trust is the one a reviewer must actually look at.
+   * Warning on both trains everyone to ignore the warning.
+   *
+   * Each flag names a distinct obligation the HOST takes on:
    */
-  unsafeHtml?: boolean;
+
+  /**
+   * Input is untrusted; output is safe by construction because this filter
+   * sanitizes it.
+   *
+   * **Obligation: actually sanitize.** The engine cannot verify this and does
+   * not try — it is the host's assertion, made once at embed time.
+   *
+   * Use sites are not warned: this is the sanctioned path, and a diagnostic on
+   * correct code is noise that devalues the diagnostics that matter.
+   */
+  sanitizer?: true;
+
+  /**
+   * Input is trusted by host fiat and emitted raw, without sanitization.
+   *
+   * **Obligation: ensure the input is trusted** — that it comes from a source
+   * the host controls, not from a merchant, a customer, or a model.
+   *
+   * Every use site is warned (`O2071` at check time, `O4902` at render time).
+   * That warning list is the audit surface for unescaped output.
+   */
+  trustedHtml?: true;
+
+  /**
+   * Html in, Html out: a transform over markup whose trust was already
+   * established upstream by a `sanitizer` or `trustedHtml` filter.
+   *
+   * **Obligation: preserve well-formedness.** This is not a formality. Naive
+   * truncation slices mid-tag and yields `<a href="` — which does not merely
+   * lose content, it changes how everything after it parses. The conformance
+   * suite checks this obligation with a real HTML parser rather than leaving
+   * it to documentation.
+   *
+   * Use sites are not warned: the trust decision was made upstream, and this
+   * filter adds no new one.
+   */
+  htmlTransform?: true;
+
   impl(args: readonly unknown[]): unknown;
+}
+
+/** The three Html obligations, in declaration order. */
+const HTML_FLAGS = ['sanitizer', 'trustedHtml', 'htmlTransform'] as const;
+
+/** Which Html obligation a filter declared, if any. */
+export type HtmlObligation = (typeof HTML_FLAGS)[number];
+
+export function htmlObligationOf(decl: HostFilterDecl): HtmlObligation | undefined {
+  return HTML_FLAGS.find((flag) => decl[flag] === true);
+}
+
+/** True when a filter's Html output must be warned about at every use site. */
+export function warnsAtUseSite(decl: HostFilterDecl): boolean {
+  return decl.trustedHtml === true;
 }
 
 function containsHtmlType(type: Type): boolean {
@@ -77,21 +141,66 @@ export function assertValidHostFilters(decls: readonly HostFilterDecl[]): void {
       throw new Error(`duplicate host filter ${JSON.stringify(d.name)}`);
     }
     seen.add(d.name);
-    for (const p of [...d.params, ...(d.optionalParams ?? [])]) {
+
+    const declared = HTML_FLAGS.filter((flag) => d[flag] === true);
+    const obligation = declared[0];
+
+    /*
+     * Html as a PARAMETER is permitted in exactly one shape: the first
+     * parameter of an `htmlTransform` filter. Everywhere else it stays banned,
+     * because a filter taking Html anywhere else is asking to interleave
+     * trusted markup with untrusted arguments — precisely the confusion the
+     * type exists to prevent.
+     */
+    const optional = d.optionalParams ?? [];
+    d.params.forEach((p, i) => {
+      const isTransformSubject = obligation === 'htmlTransform' && i === 0;
+      if (isTransformSubject) {
+        if (p.kind !== 'html') {
+          throw new Error(
+            `host filter ${JSON.stringify(d.name)}: htmlTransform requires its first parameter to be Html`,
+          );
+        }
+        return;
+      }
       if (containsHtmlType(p)) {
-        throw new Error(`host filter ${JSON.stringify(d.name)}: Html cannot be a parameter type (W-34)`);
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)}: Html may only be the first parameter, and only on an htmlTransform filter`,
+        );
+      }
+    });
+    for (const p of optional) {
+      if (containsHtmlType(p)) {
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)}: Html cannot be an optional parameter type`,
+        );
       }
     }
+
     if (d.returns.kind === 'html') {
-      if (d.unsafeHtml !== true) {
+      if (declared.length === 0) {
         throw new Error(
-          `host filter ${JSON.stringify(d.name)} returns Html and must be flagged unsafeHtml: true (W-34)`,
+          `host filter ${JSON.stringify(d.name)} returns Html and must declare exactly one of ` +
+            `sanitizer, trustedHtml or htmlTransform — see HostFilterDecl for what each obligates the host to`,
+        );
+      }
+      if (declared.length > 1) {
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)} declares ${declared.join(' and ')}; exactly one is allowed ` +
+            `(they name different obligations, so claiming two states nothing)`,
+        );
+      }
+      if (obligation === 'htmlTransform' && d.params.length === 0) {
+        throw new Error(
+          `host filter ${JSON.stringify(d.name)}: htmlTransform takes Html and returns Html, so it needs an Html first parameter`,
         );
       }
     } else if (containsHtmlType(d.returns)) {
       throw new Error(`host filter ${JSON.stringify(d.name)}: Html may only be the top-level return type`);
-    } else if (d.unsafeHtml === true) {
-      throw new Error(`host filter ${JSON.stringify(d.name)}: unsafeHtml is only valid on Html-returning filters`);
+    } else if (declared.length > 0) {
+      throw new Error(
+        `host filter ${JSON.stringify(d.name)}: ${declared.join(' and ')} ${declared.length > 1 ? 'are' : 'is'} only valid on an Html-returning filter`,
+      );
     }
   }
 }
@@ -103,10 +212,27 @@ export function assertValidHostFilters(decls: readonly HostFilterDecl[]): void {
 /** Runtime carrier for Html values so a plain string can never be emitted raw. */
 export interface HtmlValue {
   readonly __orbitHtml: string;
+  /**
+   * Set when the value came from a `trustedHtml` filter.
+   *
+   * The obligation travels WITH the value rather than being looked up at the
+   * emit site, because an Html value can now cross a component prop boundary
+   * and the interpreter has no way to ask, at the point of emission, which
+   * filter produced something three components ago.
+   */
+  readonly __orbitTrusted?: true;
 }
 
-export function unsafeHtmlValue(html: string): HtmlValue {
-  return { __orbitHtml: html };
+/**
+ * Brand a string as Html.
+ *
+ * Called by the engine on a declared-Html filter's return value; a host filter
+ * `impl` returns a plain string and the engine brands it. The name carries no
+ * "unsafe" warning because the obligation lives on the DECLARATION — the flag
+ * says which promise the host made, and this only carries the result.
+ */
+export function htmlValue(html: string, trusted = false): HtmlValue {
+  return trusted ? { __orbitHtml: html, __orbitTrusted: true } : { __orbitHtml: html };
 }
 
 export function isHtmlValue(v: unknown): v is HtmlValue {

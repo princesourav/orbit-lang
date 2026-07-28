@@ -216,3 +216,32 @@ describe('toLspDiagnostic', () => {
     expect(lsp.range.start).toEqual({ line: 0, character: 0 });
   });
 });
+
+describe('prop types', () => {
+  it('completes Html among the prop types after a name:', () => {
+    // Html became a legal prop type in the trust-model change; an author will
+    // not discover that from a list that omits it.
+    const source = '---\ncomponent Card\nprops {\n  content:\n}\n---\n';
+    const labels = complete(source, '  content:').map((i) => i.label);
+    expect(labels).toContain('Html');
+    expect(labels).toContain('String');
+    expect(labels).toContain('Money');
+  });
+
+  it('does not offer elements or filters in type position', () => {
+    const source = '---\ncomponent Card\nprops {\n  content:\n}\n---\n';
+    const labels = complete(source, '  content:').map((i) => i.label);
+    expect(labels).not.toContain('div');
+    expect(labels).not.toContain('truncate');
+  });
+
+  it('hovers Html with its element-content-only restriction', () => {
+    const text = hover('---\ncomponent Card\n---\n', 'Html');
+    expect(text).toContain('Element-content only');
+    expect(text).toContain('sanitize before');
+  });
+
+  it('hovers Money with the reason it refuses arithmetic', () => {
+    expect(hover('---\ncomponent Card\n---\n', 'Money')).toContain('No operators');
+  });
+});

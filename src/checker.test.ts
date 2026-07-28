@@ -145,23 +145,124 @@ describe('Money terminality (W-23/W-24)', () => {
   });
 });
 
-describe('Html terminality (W-13)', () => {
-  it('renders only in element content, with a warning at the unsafe filter', () => {
+describe('Html terminality', () => {
+  it('renders in element content with NO warning for a sanitizer filter', () => {
+    // The sanctioned path must be silent. A real theme calls a sanitizer at
+    // dozens of sites; warning on each one buries the diagnostic that means
+    // "a human must look here" under diagnostics that mean "this is correct".
     const files = [cardSource('<div>{richtext(product.title)}</div>')];
+    expectCodes(files, []);
+    expect(warningsOf(files).map((d) => d.code)).not.toContain('O2071');
+  });
+
+  it('warns at every use site of a trustedHtml filter', () => {
+    const files = [cardSource('<div>{rawHtml(product.title)}</div>')];
     expectCodes(files, []);
     expect(warningsOf(files).map((d) => d.code)).toContain('O2071');
   });
 
-  it('never in attributes, bindings, filters, props or RCDATA', () => {
+  it('stays silent across ten sanitizer calls, and warns ten times for trustedHtml', () => {
+    const ten = (fn: string) => Array.from({ length: 10 }, () => `<div>{${fn}(product.title)}</div>`).join('');
+    expect(warningsOf([cardSource(ten('richtext'))]).filter((d) => d.code === 'O2071')).toHaveLength(0);
+    expect(warningsOf([cardSource(ten('rawHtml'))]).filter((d) => d.code === 'O2071')).toHaveLength(10);
+  });
+
+  it('points the trustedHtml warning at the declaration, not the template', () => {
+    // Nothing the template author writes resolves this; only the embedder can.
+    const warning = warningsOf([cardSource('<div>{rawHtml(product.title)}</div>')]).find(
+      (d) => d.code === 'O2071',
+    );
+    expect(warning?.suggestion).toContain('where "rawHtml" is declared');
+  });
+
+  it('never in attributes, bindings, non-transform filters, mistyped props or RCDATA', () => {
     expect(errorsOf([cardSource('<div title={richtext(product.title)}>x</div>')])[0]?.code).toBe('O2076');
     expect(errorsOf([cardSource('<let x={richtext(product.title)}/>')])[0]?.code).toBe('O2079');
     expect(errorsOf([cardSource('<p>{upper(richtext(product.title))}</p>')])[0]?.code).toBe('O2063');
     expect(errorsOf([cardSource('<title>{richtext(product.title)}</title>')])[0]?.code).toBe('O2075');
+    // Html into a String prop is still rejected — only an Html prop accepts it.
     const files: SourceFile[] = [
       cardSource('<Inner text={richtext(product.title)}/>'),
       { name: 'inner.orbit', source: '---\ncomponent Inner\nprops { text: String }\n---\n<p>{text}</p>' },
     ];
     expect(errorsOf(files)[0]?.code).toBe('O2011');
+  });
+
+  describe('crossing a component boundary', () => {
+    const richText = (body: string): SourceFile => ({
+      name: 'rich-text.orbit',
+      source: `---\ncomponent RichText\nprops {\n  content: Html\n}\n---\n${body}\n`,
+    });
+
+    it('accepts Html passed to a prop declared Html', () => {
+      // The load-bearing case: a shared RichText component owning prose
+      // typography, instead of inlining the sanitizer call at every site.
+      expectCodes(
+        [cardSource('<RichText content={richtext(product.title)}/>'), richText('<div class="prose">{content}</div>')],
+        [],
+      );
+    });
+
+    it('forwards an Html prop to another component', () => {
+      expectCodes(
+        [
+          cardSource('<RichText content={richtext(product.title)}/>'),
+          richText('<Inner content={content}/>'),
+          { name: 'inner.orbit', source: '---\ncomponent Inner\nprops {\n  content: Html\n}\n---\n<div>{content}</div>' },
+        ],
+        [],
+      );
+    });
+
+    it('keeps every sink closed INSIDE the callee', () => {
+      // The guarantee that makes A3 safe: restrictions are keyed on the type
+      // at the sink, so they apply to a prop exactly as to a filter result.
+      const at = (body: string) =>
+        errorsOf([cardSource('<RichText content={richtext(product.title)}/>'), richText(body)])[0]?.code;
+      expect(at('<div title={content}>x</div>')).toBe('O2076');
+      expect(at('<let x={content}/>')).toBe('O2079');
+      expect(at('<p>{upper(content)}</p>')).toBe('O2063');
+      expect(at('<title>{content}</title>')).toBe('O2075');
+    });
+
+    it('rejects Html inside an optional or a list prop type', () => {
+      // Optionality belongs on the String before sanitization, so the
+      // sanitizer decides what empty input produces.
+      const decl = (type: string) =>
+        errorsOf([{ name: 'x.orbit', source: `---\ncomponent X\nprops {\n  content: ${type}\n}\n---\n<p>ok</p>` }])[0];
+      expect(decl('Html?')?.code).toBe('O2011');
+      expect(decl('List<Html>')?.code).toBe('O2011');
+      expect(decl('Html?')?.suggestion).toContain('?? ""');
+    });
+
+    it('allows Html in both branches of a ternary', () => {
+      // No soundness reason to forbid it: both branches are element-content
+      // only, unification gives Html, and every sink check still applies.
+      expectCodes(
+        [cardSource('<div>{product.isNew ? richtext(product.title) : richtext(product.vendor ?? "")}</div>')],
+        [],
+      );
+    });
+  });
+
+  describe('htmlTransform filters', () => {
+    it('accepts Html as the first argument', () => {
+      expectCodes([cardSource('<div>{richtext(product.title) |> truncateHtml(200)}</div>')], []);
+    });
+
+    it('is silent — the trust decision was made upstream', () => {
+      const warnings = warningsOf([cardSource('<div>{richtext(product.title) |> truncateHtml(200)}</div>')]);
+      expect(warnings.map((d) => d.code)).not.toContain('O2071');
+    });
+
+    it('still rejects Html for a filter that did not declare the obligation', () => {
+      expect(errorsOf([cardSource('<p>{richtext(product.title) |> upper}</p>')])[0]?.code).toBe('O2063');
+    });
+
+    it('preserves the trustedHtml warning through a transform', () => {
+      const warnings = warningsOf([cardSource('<div>{rawHtml(product.title) |> truncateHtml(200)}</div>')]);
+      expect(warnings.map((d) => d.code)).toContain('O2071');
+    });
   });
 });
 

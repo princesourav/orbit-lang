@@ -35,11 +35,12 @@ import {
   type TypeExpr,
 } from './ast';
 import { type Diagnostic, type Span } from './diagnostics';
-import { type HostFilterDecl } from './host';
+import { warnsAtUseSite, type HostFilterDecl } from './host';
 import { LIMITS } from './limits';
 import { STDLIB, STDLIB_FILTER_NAMES, type FilterArg } from './stdlib';
 import {
   assignable,
+  containsHtml,
   isOpaqueNamed,
   t,
   type Type,
@@ -153,8 +154,33 @@ class Checker {
         continue;
       }
       const type = this.resolveTypeExpr(decl.type);
-      if (type.kind === 'html') {
-        this.report('O2011', 'Html cannot be a prop type (it is element-content-only)', decl.span);
+      /*
+       * Html IS a legal prop type on a component (but not on a page, which
+       * takes no props at all — enforced separately).
+       *
+       * This is what makes a shared `<RichText content={…}/>` component
+       * possible. Without it every site that renders prose has to inline the
+       * sanitizer call, which forces a proliferation of narrow blessed
+       * components each carrying its own hardcoded sanitizer — a larger
+       * unaudited surface than one well-named filter.
+       *
+       * Nothing is loosened downstream: an Html prop enters the callee's scope
+       * with type `html`, and every sink check is keyed on the type AT the
+       * sink, so attributes (O2076), <let> (O2079), filter operands (O2063)
+       * and rcdata (O2075) all still reject it. Element content is the only
+       * position that accepts it, exactly as before.
+       *
+       * Optional and collection forms stay rejected: optionality belongs on the
+       * String BEFORE sanitization, where the sanitizer decides what empty
+       * input produces. Write {(product.description ?? "") |> richtext}.
+       */
+      if (type.kind !== 'html' && containsHtml(type)) {
+        this.report(
+          'O2011',
+          `Html cannot appear inside ${typeToString(type)} — it may only be a prop's own type`,
+          decl.span,
+          'sanitize before the optional or the list: {(value ?? "") |> richtext}',
+        );
       }
       let required = type.kind !== 'optional';
       if (decl.defaultValue !== undefined) {
@@ -586,8 +612,20 @@ class Checker {
         );
         continue;
       }
-      if (argType.kind === 'html') {
-        this.report('O2011', 'Html cannot be passed as a prop (element-content only)', prop.span);
+      /*
+       * An Html argument is accepted only by a prop declared Html. That is
+       * exactly what `assignable(html, html)` already says, so the check below
+       * needs no special case — this branch exists only to give a better
+       * message than the generic type mismatch, since "Html where String was
+       * expected" has a specific fix (sanitize at the boundary, not here).
+       */
+      if (argType.kind === 'html' && decl.type.kind !== 'html') {
+        this.report(
+          'O2011',
+          `prop ${JSON.stringify(prop.name)} is ${typeToString(decl.type)}, but this value is Html — Html may only be passed to a prop declared Html`,
+          prop.span,
+          `declare the prop as Html, or pass the unsanitized String and let ${JSON.stringify(name)} sanitize it`,
+        );
         continue;
       }
       if (argType.kind === 'optional' && decl.type.kind !== 'optional') {
@@ -979,10 +1017,37 @@ class Checker {
   private typeOfCall(expr: Expr & { kind: 'call' }, scope: Scope, narrowed: ReadonlySet<string>): Type {
     const argTypes: FilterArg[] = expr.args.map((a) => ({ expr: a, type: this.typeOf(a, scope, narrowed) }));
 
-    // Terminality rules first (W-13, W-24): these hold for EVERY filter.
-    for (const arg of argTypes) {
+    /*
+     * Terminality rules first: these hold for EVERY filter, with one carved
+     * exception.
+     *
+     * An `htmlTransform` host filter may take Html as its FIRST argument —
+     * that is the whole point of the flag. Without it, truncation,
+     * first-paragraph extraction and heading-level shifting all have to run on
+     * the pre-sanitized string, which means sanitization happens more than
+     * once in an order the checker cannot see.
+     *
+     * The exception is deliberately narrow: first parameter only, host filters
+     * only, and only when the host declared the obligation. Everything else —
+     * stdlib filters, later arguments, filters that did not declare it — keeps
+     * O2063.
+     */
+    const hostDecl = this.hostFilters.get(expr.callee);
+    const htmlTransform = hostDecl?.htmlTransform === true ? hostDecl : undefined;
+    for (let i = 0; i < argTypes.length; i += 1) {
+      const arg = argTypes[i]!;
       if (arg.type.kind === 'html') {
-        this.report('O2063', 'Html cannot be a filter operand', arg.expr.span);
+        if (htmlTransform !== undefined && i === 0) continue;
+        this.report(
+          'O2063',
+          htmlTransform !== undefined
+            ? `Html may only be the first argument to ${JSON.stringify(expr.callee)}`
+            : 'Html cannot be a filter operand',
+          arg.expr.span,
+          htmlTransform === undefined
+            ? 'to transform sanitized markup, declare the host filter htmlTransform'
+            : undefined,
+        );
         return t.invalid();
       }
       if (isOpaqueNamed(arg.type, 'MoneyText')) {
@@ -1013,12 +1078,26 @@ class Checker {
           return t.invalid();
         }
       }
-      if (host.unsafeHtml === true) {
+      /*
+       * Only `trustedHtml` warns.
+       *
+       * A `sanitizer` filter is the sanctioned path for rich text, and a real
+       * theme calls it at dozens of sites. Warning on every one of them is not
+       * caution — it buries the diagnostic that means "a human must look here"
+       * under diagnostics that mean "this is correct", and both the human and
+       * CI learn to suppress the lot. `htmlTransform` is silent for the same
+       * reason: it introduces no trust decision, it inherits one.
+       *
+       * The hint points at the DECLARATION rather than the template, because
+       * nothing the template author can write will resolve this — the choice
+       * was made at embed time and only the embedder can revisit it.
+       */
+      if (warnsAtUseSite(host)) {
         this.report(
           'O2071',
-          `host filter ${JSON.stringify(expr.callee)} returns raw Html — its output is NOT escaped`,
+          `host filter ${JSON.stringify(expr.callee)} is declared trustedHtml — its output is emitted raw, unsanitized`,
           expr.span,
-          'ensure the host sanitizes this value at write time',
+          `the host asserts this input is trusted; verify that where ${JSON.stringify(expr.callee)} is declared, not here`,
           'warning',
         );
       }

@@ -40,6 +40,7 @@ import type {
   GroupedSlots,
   HmacFn,
   HostFilterDecl,
+  HtmlObligation,
   HtmlValue,
   IfBranch,
   IfNode,
@@ -112,6 +113,8 @@ const EXPECTED_VALUE_EXPORTS = [
   'formatTemplate',
   'frozenMap',
   'groupSlotChildren',
+  'htmlObligationOf',
+  'htmlValue',
   'isForbiddenKey',
   'isHexColorLiteral',
   'isHtmlValue',
@@ -132,11 +135,11 @@ const EXPECTED_VALUE_EXPORTS = [
   't',
   'timingSafeEqualBytes',
   'typeToString',
-  'unsafeHtmlValue',
   'unsafe_loadTrustedAst',
   'unwrapOptional',
   'validateAstStructure',
   'verifyAstTag',
+  'warnsAtUseSite',
 ] as const;
 
 describe('public surface', () => {
@@ -205,6 +208,7 @@ describe('public types are nameable from the package root', () => {
       hmac?: HmacFn;
       hostFilter?: HostFilterDecl;
       html?: HtmlValue;
+      htmlObligation?: HtmlObligation;
       ifBranch?: IfBranch;
       ifNode?: IfNode;
       jsonLd?: JsonLdNode;

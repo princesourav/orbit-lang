@@ -238,7 +238,7 @@ function assertNoHostHtml(fields: Record<string, Type>): void {
   }
 }
 
-function containsHtml(type: Type): boolean {
+export function containsHtml(type: Type): boolean {
   switch (type.kind) {
     case 'html':
       return true;

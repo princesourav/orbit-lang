@@ -1,0 +1,215 @@
+{
+  "category": "html-rejected",
+  "cases": [
+    {
+      "id": "html-rejected/coalesce-pipe-precedence",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<div>{data.note ?? \"\" |> richtext}</div>\n",
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2073"
+      }
+    },
+    {
+      "id": "html-rejected/attribute-whole",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<div title={data.text |> richtext}>x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2076"
+      }
+    },
+    {
+      "id": "html-rejected/attribute-part",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<div class=\"a {data.text |> richtext}\">x</div>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2076"
+      }
+    },
+    {
+      "id": "html-rejected/url-attribute",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<a href={data.text |> richtext}>x</a>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2076"
+      }
+    },
+    {
+      "id": "html-rejected/let-binding",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<let x={data.text |> richtext}/><p>ok</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2079"
+      }
+    },
+    {
+      "id": "html-rejected/stdlib-filter-operand",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<p>{data.text |> richtext |> upper}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2063"
+      }
+    },
+    {
+      "id": "html-rejected/rcdata-title",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<title>{data.text |> richtext}</title>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2075"
+      }
+    },
+    {
+      "id": "html-rejected/rcdata-textarea",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<textarea>{data.text |> richtext}</textarea>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2075"
+      }
+    },
+    {
+      "id": "html-rejected/jsonld-payload",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<json-ld>{{\"@type\": \"Thing\", name: data.text |> richtext}}</json-ld>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2090"
+      }
+    },
+    {
+      "id": "html-rejected/transform-second-arg",
+      "category": "html-rejected",
+      "template": "---\npage page\n---\n<p>{data.text |> shout(data.text |> richtext)}</p>\n",
+      "bindings": {
+        "data": {
+          "text": "x",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2063"
+      }
+    }
+  ]
+}

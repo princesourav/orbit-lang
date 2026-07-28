@@ -42,7 +42,7 @@ is genuinely about the existence and content of a file.
 | Interpolation inside a `style` attribute is a parse error — "rejects any interpolation inside style" | src/parser.test.ts | test |
 | Static `style` attributes are permitted as text only — "allows static style attributes" | src/parser.test.ts | test |
 | RCDATA elements preserve text exactly and treat nested tags as text — "treats nested tags as text" | src/parser.test.ts | test |
-| The one unescaped sink is an `unsafeHtml` host filter's output — "renders Html host-filter output raw (the one unescaped sink)" | src/interpreter.test.ts | test |
+| Unescaped output comes only from a host filter that declared an Html obligation; a template author cannot introduce or select one — "renders Html host-filter output raw (the one unescaped sink)" | src/interpreter.test.ts | test |
 | End-to-end render is byte-exact with escaping applied across contexts — "renders byte-exact HTML with escaping, slots, settings and URL defense" | src/e2e.test.ts | test |
 
 ## Allowlists
@@ -132,10 +132,24 @@ is genuinely about the existence and content of a file.
 | There is no truthiness: `<if>` rejects non-`Bool` conditions (`O3007`) — "rejects non-Bool <if> conditions" | src/checker.test.ts | test |
 | Optional conditions are rejected with a `!= none` fix-it — "rejects optional conditions with a != none fix-it" | src/checker.test.ts | test |
 | Logical-and and logical-or require `Bool` on both sides — "requires Bool on both sides" | src/checker.test.ts | test |
-| `Html` renders only in element content, with a warning at the unsafe filter — "renders only in element content, with a warning at the unsafe filter" | src/checker.test.ts | test |
-| `Html` is never permitted in attributes, bindings, filters, props or RCDATA — "never in attributes, bindings, filters, props or RCDATA" | src/checker.test.ts | test |
+| A `sanitizer` filter produces NO warning at check time — "renders in element content with NO warning for a sanitizer filter", "stays silent across ten sanitizer calls, and warns ten times for trustedHtml" | src/checker.test.ts | test |
+| A `trustedHtml` filter warns at every use site, pointing at the declaration — "warns at every use site of a trustedHtml filter", "points the trustedHtml warning at the declaration, not the template" | src/checker.test.ts | test |
+| At runtime only `trustedHtml` output raises `O4902`; a sanitizer is silent — "records an O4902 when a trustedHtml filter emits raw HTML", "stays silent for a sanitizer filter, so the warning list is an audit surface" | src/interpreter.test.ts | test |
+| The trusted marker travels with the value across a component boundary — "carries the trusted marker across a component boundary" | src/interpreter.test.ts | test |
+| `Html` is never permitted in attributes, bindings, non-transform filters, mistyped props or RCDATA — "never in attributes, bindings, non-transform filters, mistyped props or RCDATA" | src/checker.test.ts | test |
+| `Html` may be a component prop, and stays element-content-only inside the callee — "accepts Html passed to a prop declared Html", "keeps every sink closed INSIDE the callee" | src/checker.test.ts | test |
+| Every sink position is swept, not just the obvious two — "is accepted in element content and rejected at every other sink" | src/html-prop.property.test.ts | test |
+| An Html value crossing a prop boundary is emitted raw ONLY in element content, for arbitrary payloads — "emits the value raw ONLY in element content, for arbitrary payloads" | src/html-prop.property.test.ts | test |
+| The same value not passed through the Html prop is still escaped (the control) — "escapes the same value when it did NOT come through the Html prop" | src/html-prop.property.test.ts | test |
+| Html survives forwarding through a second component and into slot content — "holds when the value is forwarded through a second component", "holds when the value crosses into slot content" | src/html-prop.property.test.ts | test |
+| An `htmlTransform` filter cannot launder Html into another sink — "an htmlTransform filter cannot move the value to another sink" | src/html-prop.property.test.ts | test |
+| `Html?` and `List<Html>` are rejected as prop types — "rejects Html inside an optional or a list prop type" | src/checker.test.ts | test |
+| Html is permitted in both branches of a ternary — "allows Html in both branches of a ternary" | src/checker.test.ts | test |
 | `Html` is engine-owned and not host-declarable; `TypeRegistry.defineObject` refuses the name | src/types.ts | artifact |
-| Host filters returning `Html` must be flagged `unsafeHtml: true`; `Html` may never be a host-filter parameter type | src/host.ts | artifact |
+| A host filter returning `Html` must declare exactly one of `sanitizer`, `trustedHtml` or `htmlTransform`; declaring both, neither, or any on a non-Html return throws | src/host.ts | artifact |
+| `Html` may be a host-filter parameter only as the first parameter of an `htmlTransform` filter | src/host.ts | artifact |
+| An `htmlTransform` filter accepts Html as its first argument and is silent — "accepts Html as the first argument", "is silent — the trust decision was made upstream" | src/checker.test.ts | test |
+| A filter that did not declare the obligation still rejects Html — "still rejects Html for a filter that did not declare the obligation" | src/checker.test.ts | test |
 | `Money` cannot render, has no properties and admits no operators — "Money cannot render, has no properties, admits no operators" | src/checker.test.ts | test |
 | `Money` cannot reach stdlib filters, only declared host filters — "Money cannot reach stdlib filters, only declared host filters" | src/checker.test.ts | test |
 | `MoneyText` renders (including in attributes) but admits no filters — "MoneyText renders (incl. attributes) but admits no filters" | src/checker.test.ts | test |

@@ -315,12 +315,48 @@ describe('settings resolution (W-20)', () => {
 });
 
 describe('warnings are structured and bounded', () => {
-  it('records an O4902 whenever an unsafeHtml host filter emits raw HTML', () => {
-    const { html, warnings } = renderOkPage([pageSource('<div>{richtext(collection.title)}</div>')], {
+  it('records an O4902 when a trustedHtml filter emits raw HTML', () => {
+    const { html, warnings } = renderOkPage([pageSource('<div>{rawHtml(collection.title)}</div>')], {
       bindings: { collection: { title: '<b>x</b>', products: [] } },
     });
     expect(html).toBe('<div><b>x</b></div>');
     expect(warnings.map((w) => w.code)).toContain('O4902');
+  });
+
+  it('stays silent for a sanitizer filter, so the warning list is an audit surface', () => {
+    // Ten calls, zero warnings. A list that includes every correct rich-text
+    // field is a census, not an audit.
+    const body = Array.from({ length: 10 }, () => '<div>{richtext(collection.title)}</div>').join('');
+    const { html, warnings } = renderOkPage([pageSource(body)], {
+      bindings: { collection: { title: '<b>x</b>', products: [] } },
+    });
+    expect(html).toContain('<b>x</b>');
+    expect(warnings.map((w) => w.code)).not.toContain('O4902');
+  });
+
+  it('carries the trusted marker across a component boundary', () => {
+    // The obligation travels ON the value: by the time it reaches the sink it
+    // has crossed a prop boundary, and there is nothing there to look up.
+    const { warnings } = renderOkPage(
+      [
+        pageSource('<RichText content={rawHtml(collection.title)}/>'),
+        { name: 'rich.orbit', source: '---\ncomponent RichText\nprops {\n  content: Html\n}\n---\n<div>{content}</div>' },
+      ],
+      { bindings: { collection: { title: '<b>x</b>', products: [] } } },
+    );
+    expect(warnings.map((w) => w.code)).toContain('O4902');
+  });
+
+  it('does not invent a warning for sanitized Html crossing a component boundary', () => {
+    const { html, warnings } = renderOkPage(
+      [
+        pageSource('<RichText content={richtext(collection.title)}/>'),
+        { name: 'rich.orbit', source: '---\ncomponent RichText\nprops {\n  content: Html\n}\n---\n<div>{content}</div>' },
+      ],
+      { bindings: { collection: { title: '<b>x</b>', products: [] } } },
+    );
+    expect(html).toBe('<div><b>x</b></div>');
+    expect(warnings.map((w) => w.code)).not.toContain('O4902');
   });
 
   it('caps the warning list and says so instead of growing without bound', () => {

@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { parseProgram } from '../src/parser.ts';
 import { check } from '../src/checker.ts';
 import { render } from '../src/interpreter.ts';
-import { t, TypeRegistry } from '../src/types.ts';
+import { HOST_FILTERS, PAGE_GLOBALS, makeRegistry } from './host.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CASES_DIR = path.join(HERE, 'cases');
@@ -31,28 +31,8 @@ const CASES_DIR = path.join(HERE, 'cases');
 // non-JS implementation can reproduce it exactly.
 // ---------------------------------------------------------------------------
 
-const ITEM_FIELDS = {
-  text: t.string(),
-  url: t.url(),
-  note: t.optional(t.string()),
-  count: t.int(),
-  ratio: t.float(),
-  flag: t.bool(),
-  tags: t.list(t.string()),
-};
-
-function makeRegistry() {
-  const registry = new TypeRegistry();
-  registry.defineObject('Item', { ...ITEM_FIELDS });
-  registry.defineObject('Data', { ...ITEM_FIELDS, items: t.list(t.object('Item')) });
-  return registry;
-}
-
-const HOST_FILTERS = [
-  { name: 'shout', params: [t.string()], returns: t.string(), impl: ([s]) => String(s).toUpperCase() },
-];
-
-const PAGE_GLOBALS = { data: t.object('Data') };
+// The host is defined once, in host.mjs, and imported by both the generator
+// and this runner. See the note there for why.
 
 // ---------------------------------------------------------------------------
 

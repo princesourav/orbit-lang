@@ -97,11 +97,22 @@ type the value claims to be.
 
 Some types exist to make a category of mistake unrepresentable:
 
-- **`Html`** renders only as element content — never as a prop, binding,
-  operand, attribute value, or inside RCDATA or JSON-LD. It is **not
-  host-declarable**: the only producers are host filters flagged
-  `unsafeHtml: true`, and every use site raises a warning. That flag is your
-  complete audit list for unescaped output.
+- **`Html`** renders only as element content. It may be a component **prop**, so
+  a shared rich-text component is expressible — but it is never a binding, an
+  attribute value, a filter operand (except the first argument of an
+  `htmlTransform` filter), or inside RCDATA or JSON-LD, and those restrictions
+  apply to a prop exactly as to a filter result, because each is checked at the
+  sink rather than at the source.
+
+  `Html` is **not host-declarable as a data type**: the only producers are host
+  filters, each declaring one of three obligations — `sanitizer` (untrusted in,
+  sanitized out), `trustedHtml` (trusted by host fiat, emitted raw), or
+  `htmlTransform` (Html in, Html out, well-formedness preserved).
+
+  Only `trustedHtml` warns at every use site, because only it asserts trust
+  rather than establishing it. That warning list is the audit surface for
+  unescaped output; a list that also included every correct rich-text field
+  would be a census, not an audit.
 - **`Money`** admits no operators, no properties, no equality, no stdlib
   filters and no rendering. Currency arithmetic in a template is a bug; the type
   makes it impossible to write. Format it with a host filter returning
@@ -160,7 +171,8 @@ Stated plainly, because a security page that only lists strengths is marketing:
   context it emitted into. If you then pass that HTML through a rewriter, a
   sanitizer with different parsing rules, or an email client's mangler, that
   pipeline owns the outcome.
-- **Host filter bugs.** A filter flagged `unsafeHtml` emits raw markup. That is
+- **Host filter bugs.** A `trustedHtml` filter emits raw markup, and a
+  `sanitizer` filter is only as good as the sanitizer behind it. That is
   the point of the flag, and it is your code.
 - **Denial of service by an authorized operator.** Budgets bound a single
   render, not how many renders a legitimate caller may request.

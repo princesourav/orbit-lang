@@ -5,7 +5,8 @@
  * worse than none — so this test walks the directory, compiles every template
  * as ONE program (components resolve across files), and fails on any error
  * diagnostic. Warnings are allowed and asserted on separately: the article
- * example deliberately calls an `unsafeHtml` host filter, which must warn.
+ * example calls both a `sanitizer` filter (silent) and a `trustedHtml` one
+ * (which must warn).
  *
  * It lives here, next to the examples, rather than in `src/`, for one concrete
  * reason: the engine's tsconfig sets `"types": []` on purpose, so no file it
@@ -91,18 +92,28 @@ const HOST_FILTERS = [
     impl: (args) => `/cdn/${args[0].key}?w=${String(args[1])}`,
   },
   {
-    // Stand-in for a sanitizer-backed rich-text sink. Unsafe BY CONTRACT: the
-    // host promises the value was sanitized at write time.
+    // Untrusted merchant markdown in, safe HTML out. The sanctioned path, so
+    // it is silent at every use site.
     name: 'richtext',
     params: [t.string()],
     returns: t.html(),
-    unsafeHtml: true,
+    sanitizer: true,
+    impl: (args) => String(args[0]),
+  },
+  {
+    // Markup the platform itself authored, emitted raw. Warns at every use
+    // site, which is what makes that warning list worth reading.
+    name: 'platformHtml',
+    params: [t.string()],
+    returns: t.html(),
+    trustedHtml: true,
     impl: (args) => String(args[0]),
   },
 ];
 
 const PAGE_GLOBALS = {
   shopName: t.string(),
+  legalNoticeHtml: t.string(),
   collection: t.object('Collection'),
   article: t.object('Article'),
   articles: t.list(t.object('Article')),
@@ -151,6 +162,7 @@ const article = {
 
 const BINDINGS = {
   shopName: 'Northwind Supply',
+  legalNoticeHtml: '<small>Prices include VAT.</small>',
   collection: {
     title: 'Everyday carry',
     description: 'Things we use daily.',
@@ -224,10 +236,14 @@ describe('examples/', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('the only check warning is the documented unsafeHtml one', () => {
+  it('warns only where the host asserted trust, not where it sanitized', () => {
+    // The article example uses both obligations: merchant rich text through a
+    // sanitizer (silent) and platform markup through trustedHtml (warns). One
+    // warning, from the line that actually needs a human.
     const { result } = compileAll();
     const warnings = result.diagnostics.filter((d) => d.severity === 'warning');
     expect(warnings.map((d) => d.code)).toEqual(['O2071']);
+    expect(warnings[0].message).toContain('platformHtml');
   });
 
   it('declares every template the README names', () => {
@@ -269,11 +285,12 @@ describe('examples/', () => {
     expect(plan.paths).toContain('nextUrl');
   });
 
-  it('the article example emits an unsafeHtml render warning at runtime', () => {
+  it('emits exactly one runtime warning: the trustedHtml sink, not the sanitizer', () => {
     const { program } = compileAll();
     const out = render(program, 'article', { hostFilters: HOST_FILTERS, bindings: BINDINGS, now: () => 0 });
     expect(out.ok).toBe(true);
-    expect(out.warnings.map((w) => w.code)).toContain('O4902');
+    const raw = out.warnings.filter((w) => w.code === 'O4902');
+    expect(raw).toHaveLength(1);
   });
 
   it('every example is already in canonical format', () => {

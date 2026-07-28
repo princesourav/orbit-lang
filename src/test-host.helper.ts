@@ -58,13 +58,45 @@ export const HOST_FILTERS: HostFilterDecl[] = [
       return `/img/${img.key}?w=${String(args[1])}`;
     },
   },
+  /*
+   * One filter per Html obligation, so tests can exercise all three branches.
+   * The `impl`s are stand-ins — what matters here is the DECLARATION, since
+   * that is what the checker and interpreter key their behaviour off.
+   */
   {
-    // Test stand-in for a sanitizer-backed richtext sink (unsafe by contract).
+    /** Untrusted in, safe out. Sanctioned path: silent at every use site. */
     name: 'richtext',
     params: [t.string()],
     returns: t.html(),
-    unsafeHtml: true,
+    sanitizer: true,
     impl: (args) => String(args[0]),
+  },
+  {
+    /** Trusted by host fiat, emitted raw. Warns at every use site. */
+    name: 'rawHtml',
+    params: [t.string()],
+    returns: t.html(),
+    trustedHtml: true,
+    impl: (args) => String(args[0]),
+  },
+  {
+    /**
+     * Html in, Html out. Silent, but obligated to preserve well-formedness —
+     * this stand-in truncates on a tag boundary rather than mid-tag, which is
+     * the whole point of the obligation.
+     */
+    name: 'truncateHtml',
+    params: [t.html(), t.int()],
+    returns: t.html(),
+    htmlTransform: true,
+    impl: (args) => {
+      const html = (args[0] as { __orbitHtml: string }).__orbitHtml;
+      const max = Number(args[1]);
+      if (html.length <= max) return html;
+      // Cut at the last '>' before the limit so a tag is never sliced open.
+      const cut = html.lastIndexOf('>', max);
+      return cut === -1 ? '' : html.slice(0, cut + 1);
+    },
   },
 ];
 

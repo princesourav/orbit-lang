@@ -1,0 +1,200 @@
+{
+  "category": "html-prop",
+  "cases": [
+    {
+      "id": "html-prop/prop-accepted",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<RichText content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "rich-text.orbit": "---\ncomponent RichText\nprops {\n  content: Html\n}\n---\n<div class=\"prose\">{content}</div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<div class=\"prose\"><p>hi</p></div>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-prop/prop-forwarded",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<RichText content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "rich-text.orbit": "---\ncomponent RichText\nprops {\n  content: Html\n}\n---\n<Inner content={content}/>\n",
+        "inner.orbit": "---\ncomponent Inner\nprops {\n  content: Html\n}\n---\n<span>{content}</span>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<span><p>hi</p></span>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "html-prop/prop-string-rejected",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<Plain content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "plain.orbit": "---\ncomponent Plain\nprops {\n  content: String\n}\n---\n<div>{content}</div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2011"
+      }
+    },
+    {
+      "id": "html-prop/prop-then-attribute-rejected",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<BadAttr content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "bad-attr.orbit": "---\ncomponent BadAttr\nprops {\n  content: Html\n}\n---\n<div title={content}>x</div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2076"
+      }
+    },
+    {
+      "id": "html-prop/prop-then-let-rejected",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<BadLet content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "bad-let.orbit": "---\ncomponent BadLet\nprops {\n  content: Html\n}\n---\n<let x={content}/><p>ok</p>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2079"
+      }
+    },
+    {
+      "id": "html-prop/prop-then-rcdata-rejected",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<BadTitle content={data.text |> richtext}/>\n",
+      "extraTemplates": {
+        "bad-title.orbit": "---\ncomponent BadTitle\nprops {\n  content: Html\n}\n---\n<title>{content}</title>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2075"
+      }
+    },
+    {
+      "id": "html-prop/optional-html-prop",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<p>ok</p>\n",
+      "extraTemplates": {
+        "bad.orbit": "---\ncomponent Bad\nprops {\n  content: Html?\n}\n---\n<p>x</p>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2011"
+      }
+    },
+    {
+      "id": "html-prop/list-html-prop",
+      "category": "html-prop",
+      "template": "---\npage page\n---\n<p>ok</p>\n",
+      "extraTemplates": {
+        "bad.orbit": "---\ncomponent Bad\nprops {\n  content: List<Html>\n}\n---\n<p>x</p>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2011"
+      }
+    }
+  ]
+}
