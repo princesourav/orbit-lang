@@ -258,6 +258,27 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | `orbit fmt` refuses to rewrite a file that does not parse — "refuses to rewrite a file that does not parse, and leaves it untouched" | src/cli.test.mts | test |
 | No source file except `src/cli.ts` imports a node builtin, and the built library entrypoint contains no `node:` specifier — "no source file except cli.ts imports a node builtin", "the built library entrypoint contains no node: specifier" | src/cli.test.mts | test |
 
+## Governance and stability
+
+| claim | evidence | kind |
+|---|---|---|
+| A stability policy states what semver covers, with tiered API guarantees | STABILITY.md | artifact |
+| Governance, non-goals and the proposal process are written down | GOVERNANCE.md | artifact |
+| A trademark policy exists, since Apache-2.0 grants no trademark rights | TRADEMARK.md | artifact |
+| A Trusted Types integration recipe is documented, including what it does not cover | docs/guides/trusted-types.md | artifact |
+| Non-JavaScript embedding patterns are documented with their real costs | docs/guides/non-js-embedding.md | artifact |
+| A reproducible benchmark harness exists, with the machine recorded and no cross-engine comparison | bench/README.md | artifact |
+
+## Locale injection
+
+| claim | evidence | kind |
+|---|---|---|
+| Month names are host-injectable and default to English — "uses host-supplied month names when given" | src/locale.test.ts | test |
+| Injected locale data does not leak between renders — "does not leak locale between renders" | src/locale.test.ts | test |
+| Numeric date tokens stay locale-independent — "keeps numeric tokens locale-independent" | src/locale.test.ts | test |
+| formatDate applies no timezone conversion, as documented — "applies no timezone conversion" | src/locale.test.ts | test |
+| Short locale data degrades to the month number rather than throwing — "falls back to the month number when locale data is short" | src/locale.test.ts | test |
+
 ## Specification and conformance
 
 | claim | evidence | kind |

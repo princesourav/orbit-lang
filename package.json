@@ -73,7 +73,8 @@
     "eval": "vite-node llm/eval/run.mjs --",
     "conformance": "vite-node conformance/runner.mjs",
     "conformance:gen": "vite-node conformance/generate.mjs",
-    "conformance:check": "vite-node conformance/generate.mjs --check"
+    "conformance:check": "vite-node conformance/generate.mjs --check",
+    "bench": "vite-node bench/run.mjs --"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

@@ -2219,3 +2219,285 @@ In scope: escaping bypasses, budget bypasses, termination escapes, stored-AST
 poisoning. Out of scope: host misconfiguration, missing authorization in the
 host, and resource exhaustion by an authorized operator — all of which are the
 embedder's responsibility by design and are documented as such above.
+
+
+==============================================================================
+FILE: docs/guides/non-js-embedding.md
+==============================================================================
+
+# Embedding Orbit from a non-JavaScript host
+
+Orbit ships as a TypeScript library. If your platform is Ruby, Java, Python,
+PHP, Go or .NET, you cannot `import` it — and the segment that most needs a safe
+template language for untrusted authors is largely built on those stacks.
+
+This page describes the three patterns that work today, honestly including what
+each costs. A native second implementation is the real answer and is not built;
+see [conformance](../../conformance/README.md) if you want to build one.
+
+---
+
+## Pattern 1 — Sidecar render service
+
+Run the engine as a small HTTP service. Your application calls it.
+
+```
+your app  ──POST /render──▶  orbit-sidecar (Node)  ──▶  HTML
+   (Ruby/Java/Python)          @orbitlang/core
+```
+
+A minimal sidecar:
+
+```js
+import { createServer } from 'node:http';
+import { loadCheckedAst, render } from '@orbitlang/core';
+
+const server = createServer(async (req, res) => {
+  const body = JSON.parse(await text(req));
+
+  // The AST was compiled and stored at publish time; the render path never
+  // parses source. Verify it, because the row is executable.
+  const program = loadCheckedAst(body.ast, { trust: 'verify' });
+
+  const result = render(program, body.entry, {
+    bindings: body.bindings,
+    hostFilters: FILTERS,
+    settings: body.settings,
+    fuel: 250_000,
+    deadlineMs: 50,
+    maxOutput: 512 * 1024,
+    urlPolicy: 'error',
+  });
+
+  res.writeHead(result.ok ? 200 : 500, { 'content-type': 'application/json' });
+  res.end(JSON.stringify(result.ok
+    ? { html: result.html, warnings: result.warnings }
+    : { error: result.error }));
+});
+```
+
+**Good:** the engine runs exactly as designed, every guarantee intact, and you
+upgrade it independently of your application.
+
+**Costs, stated plainly:**
+
+- **A network hop per render.** Same-host over a Unix socket keeps this to
+  hundreds of microseconds; across a network it will dominate.
+- **A Node runtime to operate** — deployment, monitoring, patching.
+- **Data crosses a boundary.** Bindings are serialized. That is a place tenant
+  data can leak if the sidecar is reachable from anywhere it should not be.
+  Bind it to localhost or a socket, never a shared network.
+
+**Fits:** you already run a polyglot service mesh, or renders are infrequent
+enough that a hop does not matter.
+
+---
+
+## Pattern 2 — Precompile to a signed AST, render at the edge
+
+Split the work by lifecycle. Compile in your pipeline; render wherever.
+
+```
+publish time (CI, Node):     source ──parse+check──▶ AST ──sign──▶ database
+render time (edge, Node):    AST ──verify──▶ render ──▶ HTML
+```
+
+Your non-JS application never touches the engine. It manages templates, stores
+the signed AST, and serves the rendered result — while parsing, checking and
+rendering happen where JavaScript already runs, which for most of these
+architectures is the CDN edge.
+
+```js
+// Publish (CI):
+const parsed = parseProgram(files);
+const checked = check(parsed.program, host);
+if (checked.diagnostics.some((d) => d.severity === 'error')) fail(checked);
+
+const ast = JSON.stringify(serializeProgram(parsed.program));
+const tag = signAst(hmac, key, { storeId, themeVersionId, astBytes: bytes(ast) });
+await db.save({ storeId, themeVersionId, ast, tag });
+```
+
+**Good:** no render-time hop, no Node in your request path, and the expensive
+half happens once per publish rather than once per request.
+
+**Costs:**
+
+- **Two runtimes to operate**, even if only one is in the request path.
+- **Key custody.** The signing key is now a thing you own and rotate.
+- **Deployment coupling.** An engine upgrade means recompiling stored ASTs if
+  the serialized format changed. It is covered by
+  [the stability policy](../../STABILITY.md) within a major version, but a major
+  bump means a migration.
+
+**Fits:** commerce and content platforms that already publish themes, and
+anything rendering on Cloudflare Workers, Vercel or Fastly.
+
+---
+
+## Pattern 3 — Compile-only integration
+
+Use Orbit as a *validator* in your pipeline and keep your existing renderer.
+
+Run `orbit check --format json` over authored templates in CI. You get the type
+laws, the allowlists and the diagnostics, without changing what renders.
+
+```bash
+npx orbit check themes/ --format json > report.json
+```
+
+**Good:** almost no integration work, and it catches the class of bug Orbit
+exists to catch, at authoring time.
+
+**Cost, and it is the important one:** you get **none of the runtime
+guarantees**. No structural escaping, no budgets, no sanitized URL sinks —
+because your renderer is still the one producing HTML. This is a linting story,
+not a security story, and should not be described internally as the latter.
+
+**Fits:** an incremental first step while evaluating one of the patterns above.
+
+---
+
+## Which to choose
+
+| Your situation | Pattern |
+|---|---|
+| Templates are published, then rendered many times | **2** — precompiled signed AST |
+| Rendering is already at the edge | **2** |
+| Polyglot services, renders are not hot | **1** — sidecar |
+| Evaluating Orbit, cannot change the render path yet | **3** — compile-only |
+| You need a native library in-process | Not available. See below. |
+
+## The honest gap
+
+None of these is as good as a native library in your language. Pattern 1 costs a
+hop, pattern 2 costs a second runtime, pattern 3 gives up the runtime guarantees
+entirely.
+
+The real answer is a second implementation, and the
+[conformance corpus](../../conformance/README.md) exists to make one verifiable:
+620 language-agnostic cases, a documented host contract, and a reference runner
+that is roughly a page of code. An implementation that passes them all is Orbit,
+and that claim is checkable rather than asserted.
+
+If you are considering building one, the corpus is the specification of what
+you have to match — start there rather than with this engine's source.
+
+
+==============================================================================
+FILE: docs/guides/trusted-types.md
+==============================================================================
+
+# Orbit and Trusted Types
+
+Trusted Types reached Baseline in February 2026. It closes DOM-based XSS in the
+browser: with a CSP `require-trusted-types-for 'script'` directive, assigning a
+plain string to `innerHTML`, `src` on a script, or any other injection sink
+throws instead of executing.
+
+Orbit and Trusted Types solve **different halves of the same problem**, and
+neither substitutes for the other:
+
+| | Prevents | Where |
+|---|---|---|
+| **Orbit** | Injection through server-rendered markup | Server, at render |
+| **Trusted Types** | Injection through DOM manipulation | Browser, at assignment |
+
+Orbit guarantees the HTML it produced is correctly escaped for the context it
+emitted into. It says nothing about what your client-side JavaScript does with
+that page afterwards. Trusted Types covers exactly that gap.
+
+## The recommended headers
+
+```http
+Content-Security-Policy:
+  require-trusted-types-for 'script';
+  trusted-types default;
+  script-src 'self';
+  base-uri 'none';
+  object-src 'none'
+```
+
+Notes on each, since a copied CSP nobody understands is its own hazard:
+
+- `require-trusted-types-for 'script'` — the directive that does the work.
+- `trusted-types default` — names the allowed policies. Start with a single
+  `default` policy and enumerate more only as you genuinely need them.
+- `script-src 'self'` — Orbit templates cannot emit `<script>` at all, so you
+  do not need `'unsafe-inline'` for anything the template produced. If your
+  build needs a nonce, add it here rather than loosening this.
+- `base-uri 'none'` — `<base>` is not in Orbit's element allowlist either;
+  this covers scripts that might inject one.
+- `object-src 'none'` — same reasoning for `<object>` and `<embed>`.
+
+## Rolling it out
+
+Report first, enforce later. A `report-only` header tells you what would break
+without breaking it:
+
+```http
+Content-Security-Policy-Report-Only:
+  require-trusted-types-for 'script';
+  trusted-types default;
+  report-uri /csp-report
+```
+
+Because an Orbit-rendered page contains no inline script and no event handler
+attributes, the violations you see will come from your own client bundle and
+from third-party tags — which is exactly the inventory worth having.
+
+## The one place they meet: `unsafeHtml` filters
+
+Orbit has a single unescaped sink: a host filter declared to produce `Html`.
+Rich-text fields usually go through one.
+
+```ts
+{
+  name: 'richtext',
+  params: [t.string()],
+  returns: t.html(),
+  unsafeHtml: true,
+  impl: ([markup]) => sanitize(String(markup)),
+}
+```
+
+That `sanitize` is **yours**, and it is the weakest link in the whole pipeline —
+the engine has said so explicitly by making you flag the filter and by warning
+at every use site.
+
+Trusted Types does not protect this path, because the markup is assembled on the
+server and arrives as part of the document. Two things do:
+
+1. **Sanitize with a maintained library**, and keep it updated. DOMPurify's
+   CVE-2026-41238 is a reminder that sanitizers are themselves a moving target.
+2. **Audit the use sites.** Every one is a compile-time warning, so a build log
+   is a complete inventory. Grep for `unsafeHtml: true` and you have the list of
+   filters; the warnings give you the list of templates.
+
+If you can avoid an `unsafeHtml` filter entirely — by giving authors structured
+fields instead of a rich-text blob — do that. It removes the only sink Orbit
+cannot reason about.
+
+## What Orbit does that helps a CSP hold
+
+- **No `<script>`, no `<style>`, no `on*` attributes.** Not "escaped" — absent
+  from the allowlists, so a template cannot express them. A strict `script-src`
+  costs you nothing.
+- **No `<base>`, `<meta>` or `<link>`.** A template cannot rewrite the document
+  base or inject a stylesheet reference.
+- **URL sinks are scheme-checked at emission.** `javascript:` in an `href`
+  never reaches the page, so you are not relying on the browser to refuse it.
+- **`style` attributes are static.** No injected CSS to reason about, which
+  keeps `style-src` simple.
+
+## What it does not help with
+
+Stated plainly:
+
+- **Your client-side JavaScript.** Orbit renders a page; whatever your bundle
+  does to the DOM afterwards is between it and Trusted Types.
+- **Third-party tags.** An analytics snippet you inject around the Orbit output
+  is outside the engine's reach.
+- **Downstream rewriting.** A CDN transform, an A/B testing proxy, or an email
+  client's HTML mangler applied after render owns its own outcome. See
+  [the security model](security-model.md#what-orbit-does-not-protect-against).
