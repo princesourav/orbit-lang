@@ -14,6 +14,95 @@ at v1.0.
 
 ## [Unreleased]
 
+### Server islands (Phase E0)
+
+#### Added
+
+- **`<Component defer/>`** renders a component in a SECOND pass. The engine
+  emits an inert placeholder — `<orbit-island data-island="i0">` with the call's
+  children as fallback — and returns an island manifest: id, component, the
+  props resolved in this pass, and the paths that component reads. Transport,
+  signing and caching policy stay with the host.
+  The reason is caching, not interactivity: a personalized cart badge in a
+  shared header otherwise puts its paths into every page's access plan, and a
+  page whose plan contains personalized data cannot be cached for anyone.
+- **A required prop a deferred call omits is host-resolved, not missing.** This
+  is what makes the feature do anything: an island whose every input came from
+  the page would take nothing out of the page's plan, because the page already
+  had to fetch it. Those props are what the island's own plan is rooted at.
+- **`AccessPlan` gained `islands`** and `paths` now covers the first pass only.
+  Deferring never adds a path to the page plan, and no path is in both — a
+  property test asserts both.
+- **`LIMITS.defaultIslandFuel` and `LIMITS.maxIslandsPerRender`.** Each pass has
+  its own budget; an island does not draw on the page's, because the two are
+  separate requests and a shared budget would let a slow island shrink a page
+  that was already sent.
+- Diagnostics: `O1112` (`defer` is a bare marker), `O2112` (no `Html` prop —
+  an `Html` value carries its trust obligation and serializing discards it),
+  `O2113` (islands do not nest at any depth), `O2114` (no slot fills — a fill is
+  markup in the caller's scope, and the caller is gone), `O4042` (island cap).
+- Conformance category `server-islands`, with the placeholder shape specified in
+  prose in `conformance/README.md`.
+
+**Breaking for embedders.** `RenderResult` gained `islands`, and `AccessPlan`
+gained `islands` with `paths` narrowed to the first pass.
+
+### The closed-world falsification (Phase D)
+
+- **[docs/evaluation/closed-world.md](docs/evaluation/closed-world.md)** — 17.2%
+  of a real platform's theme functionality cannot be expressed in Orbit as it
+  stands; 23–27% per individual theme. Measured against the CommerceOS block
+  registry (116 blocks, 34 modules, 9,519 lines) and tested by porting Aurora's
+  home and product pages to Orbit in `evaluation/aurora/`, where they compile,
+  render and format-check on every CI run.
+- The premise holds for content and breaks for commerce interaction. 93% of the
+  registry needs no client JavaScript. What fails is the header, the product
+  grid and the buy box — every page of every theme.
+- Two follow-ups, neither of which is an escape hatch: platform islands (started
+  above), and a typed custom-property sink for per-instance `Color` settings,
+  which has no plan behind it yet.
+
+### Language: match, named arguments, versions (Phase B)
+
+#### Added
+
+- **`<match>` / `<case>`** with exhaustiveness over string-literal unions. Every
+  variant needs an arm, and a union scrutinee may NOT have a default: a default
+  absorbs variants added later, which is exactly the check's purpose. A plain
+  `String` requires one, having no closed set to check against.
+  Diagnostics `O1107`–`O1111`, `O2107`–`O2111`, `O4040`–`O4041`.
+- **Named filter arguments.** A host filter's optional parameters carry names,
+  and a call site may pass them by name in any order:
+  `imgUrl(product.cover, 800, crop: "face")`. Positional order was the thing
+  that rotted. Diagnostics `O1102`, `O2105`, `O2106`.
+- **`orbit <version>` frontmatter pragma** versions the LANGUAGE separately from
+  the package. An engine rejects a version it does not implement rather than
+  rendering it under whatever rules it happens to have, and a stored AST carries
+  its version. Diagnostics `O1104`–`O1106`.
+- **`on:*` and `@*` attribute forms are reserved** (`O1103`) so a future
+  reactive syntax cannot collide with attribute names already in the wild.
+- **Comments are AST nodes.** `orbit fmt` previously deleted every comment in a
+  file, silently, because the parser discarded them and no test noticed — a
+  comment changes no rendered byte.
+
+#### Changed
+
+- **`HostFilterDecl.optionalParams` is now `{ name, type }[]`.** Breaking for
+  embedders; nothing is published to npm.
+- **Three diagnostic codes were reassigned.** `O1096`, `O1097` and `O1037` had
+  each acquired a second, unrelated meaning while this work landed, which
+  STABILITY.md forbids and the spec states as a MUST NOT. The new diagnostics
+  moved to `O1103`–`O1106`, and `scripts/gen-error-index.mjs` now pins the set
+  of codes that legitimately raise more than one message — a code acquiring a
+  second meaning fails the build rather than hiding under one authored note.
+
+#### Fixed
+
+- The language server no longer reports unknown-filter and signature errors for
+  host filters it has no declarations for, and no longer advertises
+  `replace(s, from: String, to: String)` in completions — the colon now makes
+  that a real call, and one the checker rejects.
+
 ### Html trust model (Phase A)
 
 **Breaking for embedders.** `HostFilterDecl.unsafeHtml` is replaced by three
