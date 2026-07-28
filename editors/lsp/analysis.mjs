@@ -130,6 +130,21 @@ const CONTROL_TAG_DOCS = {
     'Only `<case>` may appear between `<match>` and `</match>`.',
 };
 
+/** Markers that read like attributes but instruct the engine. */
+const MARKER_DOCS = {
+  defer:
+    '**`defer`** — render this component in a SECOND pass.\n\n' +
+    'The engine emits `<orbit-island data-island="i0">` with the children as ' +
+    'fallback, and returns an island manifest for the host to render and ' +
+    'substitute.\n\n' +
+    'The point is caching, not interactivity: the paths this component reads ' +
+    "leave the page's access plan, so a personalized fragment stops poisoning " +
+    'a page that would otherwise be cacheable for everyone.\n\n' +
+    'A required prop the call omits is host-resolved, not missing. No `Html` ' +
+    'props, no nesting, no slot fills.',
+  verbatim: '**`verbatim`** — `{` is literal text in this subtree; no interpolation.',
+};
+
 /**
  * Types a `props` block may declare, with the note a reader needs at the moment
  * they are choosing one.
@@ -334,6 +349,8 @@ export function hover(source, word, linePrefix = '') {
   if (setting !== undefined) {
     return `\`${word}\` — setting (\`${setting.setting.control}\`)`;
   }
+
+  if (MARKER_DOCS[word] !== undefined) return MARKER_DOCS[word];
 
   if (PROP_TYPES[word] !== undefined) return PROP_TYPES[word];
 

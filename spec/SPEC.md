@@ -281,14 +281,48 @@ NOT** return partial output.
 Published cap values are **minimums**: a conforming implementation must bound
 each quantity, and a host **MAY** configure lower values.
 
-### 6.2 Determinism and statelessness
+### 6.2 Server islands
+
+A component call may be marked `defer`. An implementation **MUST NOT** render a
+deferred component in the pass that encounters it. It **MUST** emit an inert
+placeholder and record the call in an island manifest returned alongside the
+output.
+
+The placeholder **MUST** be `<orbit-island data-island="ID">` … `</orbit-island>`
+where `ID` is derived from the island's position in emission order and **MUST
+NOT** be derived from data. The call's children render inside the placeholder in
+the caller's scope, under the caller's escaping rules.
+
+Each manifest entry **MUST** carry the component name, the props resolved in this
+pass, and the data paths the deferred component reads.
+
+An implementation **MUST** reject at check time:
+
+- an `Html`-typed prop on a deferred call — an `Html` value carries its trust
+  obligation in the value, and serializing it discards that;
+- a deferred component reachable from a deferred component, at any depth —
+  nothing bounds a chain of round trips;
+- a slot fill on a deferred call — a fill is markup written in the caller's
+  scope, and the caller does not exist in the second pass.
+
+A required prop that a deferred call does not supply **MUST NOT** be reported
+missing: it is resolved by the host in the second pass, and it is what makes the
+island's access plan non-empty.
+
+§6.1's budgets apply to each pass separately. An island **MUST NOT** draw on the
+budget of the page that deferred it: the two are rendered in separate requests,
+and a shared budget would let a slow island shrink a page that was already sent.
+
+An implementation **MUST** bound the number of islands per render.
+
+### 6.3 Determinism and statelessness
 
 Rendering **MUST** be a pure function of program, bindings, settings and
 options. An implementation **MUST NOT** retain state between renders, and the
 injected clock **MUST** be used only to detect deadline expiry — its value
 **MUST NOT** reach output.
 
-### 6.3 Component graph
+### 6.4 Component graph
 
 The component call graph **MUST** be acyclic. An implementation **MUST** reject
 a cycle at check time and **SHOULD** report the cycle path.

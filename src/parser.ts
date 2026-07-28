@@ -1488,23 +1488,40 @@ class TemplateParser {
   // -- elements and components ----------------------------------------------
 
   private parseComponent(name: string, at: Pos, ctx: BodyCtx): Node {
-    const props = this.parseAttrs(true, name);
-    for (const p of props) {
+    const all = this.parseAttrs(true, name);
+    for (const p of all) {
       if (p.name === 'slot') {
         this.fail('O1072', 'components cannot carry slot=; wrap the call in an element', undefined, at);
       }
     }
+    /*
+     * `defer` is a bare MARKER, like `verbatim`. It is stripped from the prop
+     * list rather than passed through, because it is an instruction to the
+     * engine about when to render, not a value the component receives.
+     */
+    const deferAttr = all.find((p) => p.name === 'defer');
+    if (deferAttr !== undefined && deferAttr.value.form !== 'bare') {
+      this.fail(
+        'O1112',
+        'defer is a bare marker: write <Component defer/>',
+        'the placeholder is emitted unconditionally; use <if> around the call to make it conditional',
+        at,
+      );
+    }
+    const defer = deferAttr !== undefined;
+    const props = defer ? all.filter((p) => p.name !== 'defer') : all;
+
     this.s.skipWhitespace();
     if (this.s.match('/>')) {
       const span = { start: at, end: this.s.posNow() };
       this.budget.charge(span, ctx.depth);
-      return { kind: 'component', name, props, children: [], span };
+      return { kind: 'component', name, props, children: [], defer, span };
     }
     if (!this.s.match('>')) this.fail('O1073', `malformed <${name}> tag`);
     const children = this.parseNodes(name, { ...ctx, depth: ctx.depth + 1 });
     const span = { start: at, end: this.s.posNow() };
     this.budget.charge(span, ctx.depth);
-    return { kind: 'component', name, props, children, span };
+    return { kind: 'component', name, props, children, defer, span };
   }
 
   private parseElement(tag: string, at: Pos, ctx: BodyCtx): Node {

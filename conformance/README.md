@@ -163,6 +163,35 @@ markup-significant characters, quote-breaking, `javascript:` with tab, newline
 and NUL splits, `data:` URLs, protocol-relative URLs, Unicode, bidi overrides,
 CDATA-ish sequences, and each RCDATA element's own closing tag.
 
+## The server-island placeholder, specified
+
+The `server-islands` cases assert exact bytes, so the shape has to be stated
+rather than inferred from them. A conforming implementation emits, for
+`<Component defer/>`:
+
+```
+<orbit-island data-island="ID">FALLBACK</orbit-island>
+```
+
+- The element name is exactly `orbit-island`. A custom element is inert in every
+  browser — an unknown element is an `inline` container with no behaviour — so a
+  page whose second pass never runs shows the fallback and nothing else.
+- `ID` is `i` followed by the island's **zero-based index in emission order**:
+  `i0`, `i1`, `i2`. It is a render-local counter and **must not** be derived from
+  data. An id computed from bindings is both attacker-reachable and a cache key
+  that moves when nothing meaningful changed.
+- `FALLBACK` is the call's children, rendered in the caller's scope with the
+  caller's escaping rules, exactly as if they had been written in place. It is
+  empty when the call has no children.
+- `data-island` is the only attribute. Everything else the host needs — the
+  component name, the resolved props, the island's access plan — travels in the
+  **manifest**, not in the markup, so nothing about the second pass is
+  attacker-reachable through the page.
+
+Signing, transport and caching policy are deliberately NOT specified: the engine
+has no I/O and no key material, and a signing scheme baked into the engine is one
+every embedder would have to accept. The manifest is the seam.
+
 ## Two things the corpus does not prove
 
 Stated plainly, because a conformance suite that oversells itself is worse than

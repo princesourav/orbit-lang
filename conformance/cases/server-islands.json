@@ -1,0 +1,264 @@
+{
+  "category": "server-islands",
+  "cases": [
+    {
+      "id": "server-islands/bare",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<Deferred defer/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<orbit-island data-island=\"i0\"></orbit-island>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/with-fallback",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<Deferred defer><i>loading</i></Deferred>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<orbit-island data-island=\"i0\"><i>loading</i></orbit-island>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/with-a-prop",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<Deferred defer label=\"Bag\"/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<orbit-island data-island=\"i0\"></orbit-island>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/two-islands-are-numbered-in-order",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<Deferred defer/><Deferred defer/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<orbit-island data-island=\"i0\"></orbit-island><orbit-island data-island=\"i1\"></orbit-island>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/inside-an-element",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<section><Deferred defer/></section>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<section><orbit-island data-island=\"i0\"></orbit-island></section>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/inside-a-loop",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<for i of={data.items}><Deferred defer/></for>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<orbit-island data-island=\"i0\"></orbit-island>",
+        "warnings": []
+      }
+    },
+    {
+      "id": "server-islands/not-deferred-renders-inline",
+      "category": "server-islands",
+      "template": "---\npage page\n---\n<Deferred data={data}/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "hi",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": [
+            {
+              "text": "item",
+              "url": "/item",
+              "note": null,
+              "count": 1,
+              "ratio": 1.5,
+              "flag": false,
+              "tags": [],
+              "style": "info"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "kind": "html",
+        "html": "<b>xhi</b>",
+        "warnings": []
+      }
+    }
+  ]
+}

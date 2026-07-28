@@ -26,6 +26,7 @@
  */
 import {
   groupSlotChildren,
+  slotNameOf,
   type Attr,
   type Expr,
   type MatchCase,
@@ -475,7 +476,8 @@ class Checker {
           break;
         }
         case 'component':
-          this.checkComponentCall(node.name, node.props, node.children, node.span, scope, narrowed, ctx, template);
+          if (node.defer) this.checkIsland(node, template);
+          this.checkComponentCall(node.name, node.props, node.children, node.span, scope, narrowed, ctx, template, node.defer);
           break;
         case 'slot': {
           if (template.templateKind !== 'component') {
@@ -579,6 +581,118 @@ class Checker {
     }
   }
 
+  /**
+   * The rules that apply because a deferred component crosses a PASS boundary.
+   *
+   * Everything an island receives has to survive serialization into a manifest,
+   * a second request, and a second render. Three things do not survive it, and
+   * each gets its own diagnostic rather than a generic "not allowed here":
+   * they fail for different reasons and have different fixes.
+   */
+  private checkIsland(node: Extract<Node, { kind: 'component' }>, template: Template): void {
+    const sig = this.sigs.get(node.name);
+
+    /*
+     * 1. Html props. An Html value is engine-owned and carries its trust
+     *    obligation in the value itself; serializing it into a manifest would
+     *    strip that and hand the host a string it has no way to distinguish
+     *    from merchant input. Sanitize on the far side instead.
+     */
+    if (sig !== undefined) {
+      for (const [propName, decl] of sig.props) {
+        if (containsHtml(decl.type)) {
+          this.report(
+            'O2112',
+            `${node.name} is deferred, so its prop ${JSON.stringify(propName)} cannot be Html`,
+            node.span,
+            'pass the source String and run the sanitizer inside the component',
+          );
+        }
+      }
+    }
+
+    /*
+     * 2. Slot fills. A fill is markup written in the CALLER's scope, and the
+     *    caller is gone by the time the island renders. On a deferred call the
+     *    children are the fallback, so a `slot=` child is a fill that would be
+     *    silently shown as fallback instead of filling anything.
+     */
+    for (const child of node.children) {
+      if (slotNameOf(child).kind !== 'named') continue;
+      this.report(
+        'O2114',
+        `${node.name} is deferred, so its children are the placeholder fallback — a slot fill cannot cross the pass boundary`,
+        child.span,
+        'render the slot content inside the component, or drop `defer`',
+      );
+    }
+
+    /*
+     * 3. Nesting. An island inside an island is a second round trip that
+     *    cannot start until the first finishes, and nothing bounds the chain.
+     *    Checked against the whole reachable subtree, not just the immediate
+     *    body, because the nesting can be several components deep.
+     */
+    const nested = this.firstDeferredUnder(node.name, new Set());
+    if (nested !== undefined) {
+      this.report(
+        'O2113',
+        nested.via === node.name
+          ? `${node.name} is deferred and itself defers ${JSON.stringify(nested.name)} — islands do not nest`
+          : `${node.name} is deferred and reaches a deferred ${JSON.stringify(nested.name)} through ${JSON.stringify(nested.via)} — islands do not nest`,
+        node.span,
+        'each round trip must be startable immediately; a chain of them has no bound',
+      );
+    }
+    void template;
+  }
+
+  /** The first deferred component reachable from `name`, if any. */
+  private firstDeferredUnder(
+    name: string,
+    seen: Set<string>,
+  ): { name: string; via: string } | undefined {
+    if (seen.has(name)) return undefined;
+    seen.add(name);
+    const body = this.program.templates.get(name)?.body;
+    if (body === undefined) return undefined;
+
+    let found: { name: string; via: string } | undefined;
+    const walk = (nodes: readonly Node[]): void => {
+      for (const n of nodes) {
+        if (found !== undefined) return;
+        switch (n.kind) {
+          case 'component':
+            if (n.defer) {
+              found = { name: n.name, via: name };
+              return;
+            }
+            walk(n.children);
+            found ??= this.firstDeferredUnder(n.name, seen);
+            break;
+          case 'element':
+            walk(n.children);
+            break;
+          case 'if':
+            for (const b of n.branches) walk(b.children);
+            if (n.elseChildren !== undefined) walk(n.elseChildren);
+            break;
+          case 'for':
+            walk(n.children);
+            if (n.emptyChildren !== undefined) walk(n.emptyChildren);
+            break;
+          case 'match':
+            for (const arm of n.cases) walk(arm.children);
+            break;
+          default:
+            break;
+        }
+      }
+    };
+    walk(body);
+    return found;
+  }
+
   private checkComponentCall(
     name: string,
     props: readonly Attr[],
@@ -588,6 +702,7 @@ class Checker {
     narrowed: ReadonlySet<string>,
     ctx: ContentCtx,
     template: Template,
+    deferred = false,
   ): void {
     const sig = this.sigs.get(name);
     if (sig === undefined) {
@@ -655,10 +770,34 @@ class Checker {
       }
     }
     for (const [propName, decl] of sig.props) {
-      if (decl.required && !provided.has(propName)) {
-        this.report('O2084', `missing required prop ${JSON.stringify(propName)} on <${name}>`, span);
-      }
+      if (!decl.required || provided.has(propName)) continue;
+      /*
+       * On a DEFERRED call an unsupplied required prop is not missing — it is
+       * host-resolved. This is what makes an island worth having: if every
+       * input had to come from the page, the page would already have fetched
+       * it and the island would take nothing out of the page's access plan.
+       *
+       * So the props the call site does NOT pass become the island's own plan,
+       * resolved by the host in the second request. The type is still declared
+       * and still checked; only where the value comes from changes.
+       */
+      if (deferred) continue;
+      this.report('O2084', `missing required prop ${JSON.stringify(propName)} on <${name}>`, span);
     }
+    /*
+     * Slot contracts do not apply to a DEFERRED call: its children are the
+     * placeholder fallback, not slot content. Checking them as fills would
+     * report "declares no default slot" for a perfectly ordinary skeleton, and
+     * the fill that WOULD have been wrong (a named `slot=`) is already O2114.
+     *
+     * The children are still checked as nodes below, in the caller's scope,
+     * because that is where they render.
+     */
+    if (deferred) {
+      this.checkNodes([...children], scope, narrowed, ctx, template);
+      return;
+    }
+
     // Slot contracts.
     const grouped = groupSlotChildren([...children]);
     for (const mixed of grouped.mixed) {

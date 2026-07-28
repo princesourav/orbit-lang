@@ -171,6 +171,13 @@ const AMBIENT_COMPONENTS = [
     source: `---\ncomponent ProductCard\nprops {\n  product: Product\n}\n---\n<article class="card">\n  <h3>{product.title}</h3>\n</article>\n`,
   },
   {
+    // The server-island example. `cart` is required and deliberately NOT
+    // defaulted: an island whose every input came from the page would take
+    // nothing out of the page's access plan, which is the whole mechanism.
+    name: 'ambient/CartCount.orbit',
+    source: `---\ncomponent CartCount\nprops {\n  cart: Collection\n}\n---\n<span class="cart">{cart.title}</span>\n`,
+  },
+  {
     name: 'ambient/Panel.orbit',
     source: `---\ncomponent Panel\nslots {\n  header\n  footer?\n}\n---\n<section class="panel">\n  <header><slot name="header"/></header>\n  <div><slot/></div>\n  <footer><slot name="footer"/></footer>\n</section>\n`,
   },

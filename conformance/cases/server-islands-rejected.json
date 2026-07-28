@@ -1,0 +1,81 @@
+{
+  "category": "server-islands-rejected",
+  "cases": [
+    {
+      "id": "server-islands-rejected/valued-defer",
+      "category": "server-islands-rejected",
+      "template": "---\npage page\n---\n<Deferred defer=\"yes\"/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "parse-error",
+        "code": "O1112"
+      }
+    },
+    {
+      "id": "server-islands-rejected/nested-islands",
+      "category": "server-islands-rejected",
+      "template": "---\npage page\n---\n<Wrapper defer/>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n",
+        "wrapper.orbit": "---\ncomponent Wrapper\n---\n<div><Deferred defer/></div>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2113"
+      }
+    },
+    {
+      "id": "server-islands-rejected/slot-fill-on-an-island",
+      "category": "server-islands-rejected",
+      "template": "---\npage page\n---\n<Deferred defer><p slot=\"side\">x</p></Deferred>\n",
+      "extraTemplates": {
+        "island.orbit": "---\ncomponent Deferred\nprops {\n  data: Data\n  label: String = \"x\"\n}\n---\n<b>{label} {data.text}</b>\n"
+      },
+      "bindings": {
+        "data": {
+          "text": "text",
+          "url": "/url",
+          "note": null,
+          "count": 0,
+          "ratio": 0,
+          "flag": false,
+          "tags": [],
+          "style": "info",
+          "items": []
+        }
+      },
+      "expect": {
+        "kind": "check-error",
+        "code": "O2114"
+      }
+    }
+  ]
+}

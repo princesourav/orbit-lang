@@ -143,6 +143,7 @@ const NOTES = new Map(Object.entries({
   O1109: '`<case>` is only valid as a direct child of `<match>`.',
   O1110: 'A case takes a string literal or the bare marker `default`: `<case "new">`, `<case default>`.',
   O1111: 'A `<match>` with no arms matches nothing. Add a `<case>`.',
+  O1112: '`defer` is a bare marker: `<Component defer/>`. Wrap the call in `<if>` to make the placeholder conditional.',
 
   // -- O2xxx: signatures ------------------------------------------------------
   O2010: 'Remove the duplicate prop declaration.',
@@ -216,6 +217,11 @@ const NOTES = new Map(Object.entries({
   O2110: 'Remove the default arm and list every variant. A default absorbs variants added later, which is exactly what exhaustiveness is for.',
   O2111: 'A String is not a closed set, so add `<case default>`.',
 
+  // -- O211x: server islands --------------------------------------------------
+  O2112: 'An Html value cannot be serialized into an island manifest without losing its trust obligation. Pass the source String and sanitize inside the component.',
+  O2113: 'Islands do not nest: a chain of round trips has no bound. Drop `defer` from one of them.',
+  O2114: 'On a deferred call the children are the placeholder fallback, so a `slot=` fill has nothing to fill. Render it inside the component.',
+
   // -- O3xxx: truthiness ------------------------------------------------------
   O3007: 'There is no truthiness. Write an explicit Bool: `{x != none}`, `{s != ""}`, `{n > 0}`.',
 
@@ -255,6 +261,7 @@ const NOTES = new Map(Object.entries({
   O4039: 'A reserved property name (`__proto__`, `constructor`, `prototype`) can never be read from or written to data.',
   O4040: 'No `<case>` matched and there is no default. The checker proved the arms cover the union, so the host supplied a value outside the type it declared.',
   O4041: 'The `<match>` subject was not a string at runtime — the host data contradicts its declared type.',
+  O4042: 'Too many deferred components in one render. Each island is a second request the host must make.',
 
   // -- O49xx: render warnings (non-fatal) -------------------------------------
   O4900: 'Warning: a URL was blocked at the sink and replaced with a placeholder. Set `urlPolicy: "error"` to fail instead.',

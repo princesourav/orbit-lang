@@ -38,7 +38,13 @@ import {
   sanitizeUrl,
   serializeJsonLd,
 } from './escape';
-import { bindHostFilterArgs, isHtmlValue, htmlValue, type HostFilterDecl } from './host';
+import {
+  bindHostFilterArgs,
+  extractAccessPlan,
+  isHtmlValue,
+  htmlValue,
+  type HostFilterDecl,
+} from './host';
 import { LIMITS } from './limits';
 import { DEFAULT_LOCALE, STDLIB, type FilterRuntime, type LocaleData } from './stdlib';
 
@@ -84,9 +90,30 @@ export interface RenderErrorInfo {
   col?: number;
 }
 
+/**
+ * One deferred component the host must render in a second pass.
+ *
+ * The engine's whole contribution to server islands is this record and the
+ * placeholder that references it. Transport, signing and caching policy are the
+ * host's: the engine has no I/O and no key material, and a signing scheme baked
+ * into the engine would be one every embedder had to accept.
+ */
+export interface IslandRecord {
+  /** Matches the `data-island` attribute on the emitted placeholder. */
+  id: string;
+  /** The component to render in the second pass. */
+  component: string;
+  /** Props resolved in the FIRST pass, ready to serialize. */
+  props: Record<string, unknown>;
+  /** Data paths this island reads — the paths the cacheable page must not fetch. */
+  paths: readonly string[];
+  /** Whether the placeholder carries fallback markup the host can leave in place. */
+  hasFallback: boolean;
+}
+
 export type RenderResult =
-  | { ok: true; html: string; warnings: RenderWarning[] }
-  | { ok: false; error: RenderErrorInfo; warnings: RenderWarning[] };
+  | { ok: true; html: string; warnings: RenderWarning[]; islands: IslandRecord[] }
+  | { ok: false; error: RenderErrorInfo; warnings: RenderWarning[]; islands: IslandRecord[] };
 
 /**
  * Per-render warning cap. Warnings are accumulated in memory and returned to
@@ -125,6 +152,14 @@ interface RangeValue {
   readonly end: number;
 }
 
+/** The root binding of a dotted access path: `cart.items[].qty` -> `cart`. */
+function rootOf(path: string): string {
+  const dot = path.indexOf('.');
+  const bracket = path.indexOf('[');
+  const end = Math.min(dot === -1 ? path.length : dot, bracket === -1 ? path.length : bracket);
+  return path.slice(0, end);
+}
+
 function isRangeValue(v: unknown): v is RangeValue {
   return v !== null && typeof v === 'object' && (v as { __orbitRange?: unknown }).__orbitRange === true;
 }
@@ -133,7 +168,7 @@ export function render(program: Program, entry: string, options: RenderOptions =
   const rt = new Interpreter(program, options);
   try {
     const html = rt.renderEntry(entry);
-    return { ok: true, html, warnings: rt.warnings };
+    return { ok: true, html, warnings: rt.warnings, islands: rt.islands };
   } catch (err) {
     if (err instanceof OrbitRenderError) {
       return {
@@ -146,6 +181,10 @@ export function render(program: Program, entry: string, options: RenderOptions =
           col: err.span?.start.col,
         },
         warnings: rt.warnings,
+        // Islands recorded before the failure are still returned: a host that
+        // caches per-island work should not lose it because a later node blew
+        // the budget.
+        islands: rt.islands,
       };
     }
     throw err;
@@ -154,6 +193,9 @@ export function render(program: Program, entry: string, options: RenderOptions =
 
 class Interpreter {
   readonly warnings: RenderWarning[] = [];
+  readonly islands: IslandRecord[] = [];
+
+  private readonly islandPathCache = new Map<string, readonly string[]>();
   currentTemplate = '<render>';
 
   private readonly out: string[] = [];
@@ -474,7 +516,11 @@ class Interpreter {
           break;
         }
         case 'component':
-          this.renderComponent(node.name, node.props, node.children, node.span, scope, frame, templateName);
+          if (node.defer) {
+            this.renderIsland(node, scope, frame, ctx, templateName);
+          } else {
+            this.renderComponent(node.name, node.props, node.children, node.span, scope, frame, templateName);
+          }
           break;
         case 'slot': {
           const fill = frame?.slots.get(node.name);
@@ -615,6 +661,99 @@ class Interpreter {
       return;
     }
     this.fail('O4024', '<for> subject is not a list or range', node.span);
+  }
+
+  /**
+   * A deferred component: emit an inert placeholder, record the island, render
+   * nothing of the component itself.
+   *
+   * The placeholder is `<orbit-island data-island="i0">…fallback…</orbit-island>`.
+   * A custom element is inert in every browser — unknown elements are `display:
+   * inline` containers with no behaviour — so a page whose second pass never
+   * happens shows the fallback and nothing else. That is the failure mode worth
+   * designing for.
+   *
+   * There is no RCDATA guard here because there is nothing to guard: `<title>`
+   * and `<textarea>` take text, so the parser reads `<CartCount defer/>` inside
+   * one as the literal characters. A component node cannot occur there at all.
+   *
+   * The id is a render-local counter, not a hash of anything the data can
+   * influence. Rendering is a pure function of program, data and options, so an
+   * id derived from data would be both attacker-reachable and a source of cache
+   * keys that move when they should not.
+   */
+  /**
+   * The paths a deferred component reads, extracted statically and memoized.
+   *
+   * The manifest carries this so a host can fetch exactly what the second pass
+   * needs without re-deriving it, and so the reason the page's own plan is
+   * smaller is visible in the same object.
+   */
+  private islandPaths(component: string, supplied: ReadonlySet<string>): readonly string[] {
+    const key = `${component} ${[...supplied].sort().join(',')}`;
+    const cached = this.islandPathCache.get(key);
+    if (cached !== undefined) return cached;
+
+    let paths: readonly string[] = [];
+    try {
+      /*
+       * A component entry's plan is rooted at its declared props, so this is
+       * "everything the island reads". Props the CALL SITE passed are already
+       * resolved and travel in the manifest, so they are dropped: what remains
+       * is exactly what the host must fetch for the second pass, and exactly
+       * what the page's own plan no longer has to contain.
+       */
+      paths = extractAccessPlan(this.program, component).paths.filter(
+        (p) => !supplied.has(rootOf(p)),
+      );
+    } catch {
+      // A component the plan extractor cannot enter contributes nothing; the
+      // manifest is advisory and must never be the thing that fails a render.
+      paths = [];
+    }
+    this.islandPathCache.set(key, paths);
+    return paths;
+  }
+
+  private renderIsland(
+    node: Extract<Node, { kind: 'component' }>,
+    scope: Scope,
+    frame: Frame | undefined,
+    ctx: EmitCtx,
+    templateName: string,
+  ): void {
+    if (this.islands.length >= LIMITS.maxIslandsPerRender) {
+      this.fail(
+        'O4042',
+        `a render may defer at most ${LIMITS.maxIslandsPerRender} components; each one is a second request the host must make`,
+        node.span,
+      );
+    }
+    this.chargeIteration(node.span);
+
+    const props: Record<string, unknown> = {};
+    for (const prop of node.props) {
+      if (prop.value.form === 'bare') props[prop.name] = true;
+      else if (prop.value.form === 'expr') props[prop.name] = this.evalExpr(prop.value.expr, scope);
+      else if (prop.value.form === 'parts') {
+        let s = '';
+        for (const part of prop.value.parts) if (part.kind === 'text') s += part.value;
+        props[prop.name] = s;
+      }
+    }
+
+    const id = `i${String(this.islands.length)}`;
+    this.islands.push({
+      id,
+      component: node.name,
+      props,
+      paths: this.islandPaths(node.name, new Set(Object.keys(props))),
+      hasFallback: node.children.length > 0,
+    });
+
+    this.emit(`<orbit-island data-island="${escapeAttr(id)}">`, node.span);
+    this.renderNodes(node.children, scope, frame, ctx, templateName);
+    this.emit('</orbit-island>', node.span);
   }
 
   private renderComponent(

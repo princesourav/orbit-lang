@@ -294,6 +294,10 @@ class AstValidator {
             this.invalid('component call name must be PascalCase');
             break;
           }
+          // A stored tree that omitted `defer` would render the component
+          // inline and drop it from the island manifest — a personalized
+          // fragment quietly baked into a cacheable page.
+          if (typeof node.defer !== 'boolean') this.invalid('component call needs a defer flag');
           if (!Array.isArray(node.props)) {
             this.invalid('component props must be an array');
             break;

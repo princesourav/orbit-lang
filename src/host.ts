@@ -398,8 +398,27 @@ export interface OrbitHost {
  * cap, which no realistic template reaches; it exists so the extractor can
  * degrade to over-approximation instead of silently dropping paths.
  */
-export interface AccessPlan {
+/** The paths one deferred component reads, kept out of the main plan. */
+export interface IslandPlan {
+  component: string;
   paths: readonly string[];
+}
+
+export interface AccessPlan {
+  /**
+   * What the FIRST pass reads.
+   *
+   * Deferred components are excluded — that is the entire point of deferring
+   * one. A cart-count badge in a shared header would otherwise put
+   * `cart.count` in every page's plan, and a page whose plan contains
+   * personalized data cannot be cached for anyone.
+   *
+   * Props passed TO an island are still here: the first pass has to evaluate
+   * them to put them in the manifest.
+   */
+  paths: readonly string[];
+  /** One entry per distinct deferred component reachable from the entry. */
+  islands: readonly IslandPlan[];
 }
 
 /**
@@ -426,6 +445,29 @@ function elementOf(base: string): string {
 
 class PlanExtractor {
   private readonly paths = new Set<string>();
+
+  /**
+   * Where recorded paths currently go.
+   *
+   * Defaults to the main plan and is swapped to an island's set while walking a
+   * deferred component's body. A single sink is what makes the partition
+   * exhaustive by construction: there is no second place a path can be added
+   * from, so nothing can leak into the main plan by being reached down a code
+   * path someone forgot to thread a flag through.
+   */
+  private sink = this.paths;
+
+  private readonly islandSets = new Map<string, Set<string>>();
+
+  /** The set for a deferred component, created on first sight. */
+  private islandPathsFor(component: string): Set<string> {
+    let set = this.islandSets.get(component);
+    if (set === undefined) {
+      set = new Set<string>();
+      this.islandSets.set(component, set);
+    }
+    return set;
+  }
   /**
    * True while walking a PAGE body, where a free identifier is a page global
    * (a data root). False inside component bodies, where every free identifier
@@ -455,21 +497,41 @@ class PlanExtractor {
       this.seedComponentProps(template, env);
     }
     this.walkNodes(template.body, env, 0);
-    return { paths: [...this.paths].sort() };
+    return {
+      paths: [...this.paths].sort(),
+      islands: [...this.islandSets]
+        .map(([component, set]) => ({ component, paths: [...set].sort() }))
+        .sort((a, b) => (a.component < b.component ? -1 : a.component > b.component ? 1 : 0)),
+    };
   }
 
   private seedComponentProps(template: Template, env: Map<string, Sym>): void {
     const defaultEnv = new Map<string, Sym>([['settings', OPAQUE]]);
     for (const decl of template.props) {
       env.set(decl.name, [decl.name]);
-      this.paths.add(decl.name);
+      this.sink.add(decl.name);
       // Default-prop expressions run when the prop is omitted, so whatever
       // they read is needed too.
       if (decl.defaultValue !== undefined) this.walkExpr(decl.defaultValue, defaultEnv);
     }
   }
 
-  private walkNodes(nodes: readonly Node[], envIn: Map<string, Sym>, depth: number): void {
+  private walkNodes(
+    nodes: readonly Node[],
+    envIn: Map<string, Sym>,
+    depth: number,
+    into?: Set<string>,
+  ): void {
+    if (into !== undefined) {
+      const prev = this.sink;
+      this.sink = into;
+      try {
+        this.walkNodes(nodes, envIn, depth);
+      } finally {
+        this.sink = prev;
+      }
+      return;
+    }
     if (depth > 32) throw new Error('component nesting too deep for plan extraction');
     let env = envIn;
     for (const node of nodes) {
@@ -561,7 +623,33 @@ class PlanExtractor {
             }
             const prevRoots = this.rootsAllowed;
             this.rootsAllowed = false; // inside a component, no free roots exist
-            this.walkNodes(callee.body, propEnv, depth + 1);
+            if (node.defer) {
+              /*
+               * A deferred component's body reads go into their OWN set, not
+               * the page's. Prop expressions above are already in the main
+               * plan, correctly: the first pass evaluates them to build the
+               * manifest, so the host does have to fetch them.
+               *
+               * Props the call site did NOT pass become ROOTS of the island's
+               * plan — the host resolves them in the second request. That is
+               * the mechanism: if every input came from the page, the page
+               * would have fetched it already and deferring would take nothing
+               * out of its plan.
+               */
+              const supplied = new Set(node.props.map((p) => p.name));
+              const islandEnv = new Map(propEnv);
+              const into = this.islandPathsFor(node.name);
+              for (const decl of callee.props) {
+                if (supplied.has(decl.name)) continue;
+                // A defaulted prop needs no host fetch — the default runs.
+                if (decl.defaultValue !== undefined) continue;
+                islandEnv.set(decl.name, [decl.name]);
+                into.add(decl.name);
+              }
+              this.walkNodes(callee.body, islandEnv, depth + 1, into);
+            } else {
+              this.walkNodes(callee.body, propEnv, depth + 1);
+            }
             this.rootsAllowed = prevRoots;
           }
           break;
@@ -582,7 +670,7 @@ class PlanExtractor {
         if (bound !== undefined) return bound;
         if (!this.rootsAllowed) return OPAQUE;
         // Free identifier in a page = page-global root.
-        this.paths.add(expr.name);
+        this.sink.add(expr.name);
         return [expr.name];
       }
       case 'member': {
@@ -598,7 +686,7 @@ class PlanExtractor {
         const out: string[] = [];
         for (const b of base) {
           const elem = elementOf(b);
-          this.paths.add(elem);
+          this.sink.add(elem);
           out.push(elem, b);
         }
         return this.capBases(out);
@@ -665,12 +753,12 @@ class PlanExtractor {
     for (const base of sym) {
       if (base.endsWith('.**')) {
         // Already a wildcard: everything below it is covered.
-        this.paths.add(base);
+        this.sink.add(base);
         out.push(base);
         continue;
       }
       const path = extend(base);
-      this.paths.add(path);
+      this.sink.add(path);
       out.push(path);
     }
     return this.capBases(out);
@@ -691,7 +779,7 @@ class PlanExtractor {
     for (const base of unique) {
       const root = base.endsWith('.**') ? base : `${base}.**`;
       wildcards.add(root);
-      this.paths.add(root);
+      this.sink.add(root);
     }
     return [...wildcards].slice(0, MAX_SYM_BASES);
   }

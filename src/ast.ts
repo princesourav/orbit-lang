@@ -199,6 +199,20 @@ export interface ComponentCallNode {
   name: string;
   props: Attr[];
   children: Node[];
+  /**
+   * A SERVER ISLAND: this component is not rendered in this pass.
+   *
+   * The first pass emits an inert placeholder and records the call in the
+   * island manifest; the host renders the component in a second request and
+   * substitutes it. The reason is caching, not interactivity — a personalized
+   * cart-count badge in a shared header otherwise poisons the cache for every
+   * page on the site.
+   *
+   * On a deferred call, `children` are the FALLBACK shown in the placeholder,
+   * not slot fills: a slot fill would have to cross the pass boundary, and
+   * nothing that crosses it can be markup.
+   */
+  defer: boolean;
   span: Span;
 }
 

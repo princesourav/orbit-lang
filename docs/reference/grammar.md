@@ -144,13 +144,52 @@ which arm is selected.
 ### Components
 
 ```
-component ::= "<" PascalName prop* "/>"
-            | "<" PascalName prop* ">" node* "</" PascalName ">"
+component ::= "<" PascalName "defer"? prop* "/>"
+            | "<" PascalName "defer"? prop* ">" node* "</" PascalName ">"
 prop      ::= name | name "=" '"' staticText '"' | name "=" "{" expr "}"
 ```
 
 A bare prop means `true`. Conditional props (`?=`) are rejected on component
 calls. Slot fills use a static `slot="name"` attribute on a child element.
+
+### Server islands: `defer`
+
+`defer` marks a component to be rendered in a **second pass**, by the host,
+after the page has been sent:
+
+```orbit
+<CartCount defer><span class="skeleton">…</span></CartCount>
+```
+
+The reason is caching, not interactivity. A personalized cart-count badge in a
+shared header puts `cart.count` into every page's access plan, and a page whose
+plan contains personalized data cannot be cached for anyone. Deferring the badge
+takes those paths out of the page's plan and into the island's.
+
+What the engine emits, and what it hands back:
+
+- Inline: `<orbit-island data-island="i0">…children…</orbit-island>`. A custom
+  element is inert, so a page whose second pass never runs shows the children
+  and nothing else — which is why the children are the **fallback**, not slot
+  fills.
+- Alongside the output: an **island manifest** — id, component, the props
+  resolved in this pass, and the paths that component reads. Transport, signing
+  and caching policy are the host's; the engine has no I/O and no key material.
+
+The rules, and why:
+
+| Rule | Diagnostic | Reason |
+|---|---|---|
+| A required prop the call omits is **host-resolved**, not missing | — | If every input came from the page, the page would have fetched it already and deferring would take nothing out of its plan. |
+| No `Html` prop | `O2112` | An `Html` value carries its trust obligation in the value; serializing it into a manifest discards that. |
+| Islands do not nest, at any depth | `O2113` | A chain of round trips has no bound. |
+| No slot fills | `O2114` | A fill is markup written in the caller's scope, and the caller is gone by the second pass. |
+| `defer` is a bare marker | `O1112` | The placeholder is unconditional; wrap the call in `<if>` to make it conditional. |
+| Bounded island count | `O4042` | Each island is a second request the host must make. |
+
+Each pass gets its own budgets. An island does not draw on the page's fuel: the
+two are separate requests, and a shared budget would let a slow island shrink a
+page that was already sent.
 
 ### Comments
 

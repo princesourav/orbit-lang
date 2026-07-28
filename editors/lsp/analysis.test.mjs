@@ -65,6 +65,12 @@ describe('diagnostics', () => {
     expect(withHost.length).toBeGreaterThanOrEqual(withoutHost.length);
   });
 
+  it('explains `defer` on hover, since it reads like an attribute and is not', () => {
+    const doc = hover(`${HEAD}<p>x</p>\n`, 'defer');
+    expect(doc).toContain('SECOND pass');
+    expect(doc).toContain('orbit-island');
+  });
+
   it('catches a non-exhaustive match with no project host at all', () => {
     // A `Select` union is declared in the frontmatter the editor is already
     // looking at, so this is the one type rule the server can enforce alone —

@@ -371,8 +371,11 @@ function printNodeInline(n: Node, ctx: Ctx): string {
       return `${open}${inner}</${n.tag}>`;
     }
     case 'component': {
-      if (n.children.length === 0) return printOpenTag(n.name, n.props, '', true);
-      const open = printOpenTag(n.name, n.props, '', false);
+      // `defer` prints first: it decides WHEN the component renders, so a
+      // reader should not have to scan a prop list to find it.
+      const marker = n.defer ? ' defer' : '';
+      if (n.children.length === 0) return printOpenTag(n.name + marker, n.props, '', true);
+      const open = printOpenTag(n.name + marker, n.props, '', false);
       const inner = n.children.map((c) => printNodeInline(c, ctx)).join('');
       return `${open}${inner}</${n.name}>`;
     }
@@ -512,8 +515,9 @@ function printNodeBlock(n: Node, indent: string, ctx: Ctx): string[] | undefined
     }
 
     case 'component': {
-      if (n.children.length === 0) return [printOpenTag(n.name, n.props, indent, true)];
-      return wrapBlock(printOpenTag(n.name, n.props, indent, false), `${indent}</${n.name}>`, n.children, indent, ctx);
+      const tag = n.defer ? `${n.name} defer` : n.name;
+      if (n.children.length === 0) return [printOpenTag(tag, n.props, indent, true)];
+      return wrapBlock(printOpenTag(tag, n.props, indent, false), `${indent}</${n.name}>`, n.children, indent, ctx);
     }
 
     case 'if': {

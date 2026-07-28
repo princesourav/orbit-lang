@@ -61,6 +61,21 @@ export const LIMITS = {
   defaultFuel: 2_000_000,
   perElementFuelCost: 8,
 
+  /**
+   * Server islands (`<Component defer/>`).
+   *
+   * An island gets its OWN fuel budget rather than a share of the page's. The
+   * page is cacheable and the island is not, so they are rendered in separate
+   * requests; charging a shared budget would make a slow island shrink the
+   * page that was already sent, which is both wrong and untestable.
+   *
+   * `maxIslandsPerRender` bounds the manifest. Each island is a second request
+   * the host must make, so an unbounded count turns one page render into an
+   * unbounded number of them.
+   */
+  defaultIslandFuel: 250_000,
+  maxIslandsPerRender: 32,
+
   /** Per-value caps enforced at every filter step (W-04b). */
   maxStringLength: 262_144, // 256 KiB of UTF-16 code units
   maxListItems: 5_000,

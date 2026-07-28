@@ -60,6 +60,10 @@
 (component_end_tag (component_name) @constructor)
 (component_self_closing_element (component_name) @constructor)
 
+; `defer` on a component is a marker the ENGINE reads — it decides when the
+; component renders — not an attribute the component receives.
+((attribute_name) @keyword
+ (#eq? @keyword "defer"))
 (attribute_name) @attribute
 (quoted_attribute_value) @string
 (attribute_text) @string
