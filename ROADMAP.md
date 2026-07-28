@@ -102,7 +102,7 @@ Goal: make what exists true, safe at the seams, decided where the spec will free
 **Runtime seam hardening** (all from the runtime-security gap list)
 - Wrap host filter `impl` in try/catch → `OrbitRenderError`; check deadline before/after host filter calls.
 - Parse `srcset` as multi-URL candidates before sanitizing.
-- Runtime shape-validation of component-entry props/bindings (mirror `settingValueValid`); fix the hollow color validator (hex-digit check).
+- Runtime shape-validation of component-entry props/bindings (mirror `settingValueValid`); fix the hollow color validator (hex-digit check). **Partly done, and the remainder is now load-bearing.** `isHexColorLiteral` is correct and is applied to merchant settings and component-entry props; it is **not** applied to a `Color` arriving as a page binding or as a field of a host object, and both reach a sink unvalidated. Harmless today — the escapers handle those bytes — but it falsifies the safety argument for the typed custom-property sink, which assumes a `Color` is exactly six hex digits. Resolution is to validate **at the sink**, as URL safety already does (SPEC §3.3), rather than to deep-walk host data on every render. See [closed-world.md](docs/evaluation/closed-world.md).
 - Structured warnings (codes + spans, matching diagnostics) and a host option to make blocked URLs fail instead of soft-`#`.
 - Ship the HMAC signing helper referenced by validate-ast docs. *(Specified but not shipped is another overclaim.)*
 - Null-prototype maps + `Object.freeze` on registries, with regression tests keyed to Handlebars CVE-2026-33916 and DOMPurify CVE-2026-41238 classes ([trace37](https://labs.trace37.com/blog/dompurify-pp-ceh-bypass/)).

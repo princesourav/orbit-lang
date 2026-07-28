@@ -444,6 +444,8 @@ prove.
 | The port is canonically formatted, so the templates in the report are what the formatter produces — "is already canonically formatted" | evaluation/aurora/port.test.mjs | test |
 | The host used for the evaluation is a realistic platform object model, not a filter surface invented to close gaps | evaluation/aurora/host.mjs | artifact |
 | The closed-world finding, its method, its per-theme numbers and its limits are published rather than summarized | docs/evaluation/closed-world.md | artifact |
+| Access-plan containment holds PER UNIT under deferral: an island reads nothing its manifest did not name — "the manifest names every path the second pass will read" | src/access-plan.property.test.ts | test |
+| The first pass reads nothing it deferred, so the page plan stays sound — "the page never reads what it deferred, so its own plan stays sound too" | src/access-plan.property.test.ts | test |
 
 ## Claims deliberately NOT listed here
 

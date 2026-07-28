@@ -473,3 +473,107 @@ describe('list filters erase the nominal element type (known checker gap)', () =
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Server islands: containment holds PER UNIT, not just for the whole page
+// ---------------------------------------------------------------------------
+
+/**
+ * Deferral splits one render into two, and the safety argument has to split
+ * with it.
+ *
+ * The property asserted when islands landed — deferral never adds a path to
+ * the page plan, and no path is in both — is monotonicity plus disjointness.
+ * Those describe how the two SETS relate; neither says a set is sound. A
+ * partition of two unsound halves is still a partition. What makes the
+ * declare-then-fetch contract survive deferral is that containment holds for
+ * every unit the host renders separately:
+ *
+ *     reads(render(unit)) ⊆ paths(plan(unit))    for the page AND each island
+ *
+ * The page half is covered above. This is the island half, and without it a
+ * host could fetch exactly what an island's manifest asked for and still find
+ * the island reading something it never fetched — as an O4012 in the second
+ * request, on a fragment nobody tested.
+ */
+const ISLAND: SourceFile = {
+  name: 'components/island-card.orbit',
+  source: `---
+component IslandCard
+props {
+  product: Product
+  showVendor: Bool = false
+}
+---
+<article>
+  <h4>{product.title}</h4>
+  <if {showVendor && product.vendor != none}><p>{product.vendor}</p></if>
+  <p>{money(product.price)}</p>
+  <p>{product.tags |> size} tags</p>
+</article>`,
+};
+
+const DEFERRING_PAGE: SourceFile = {
+  name: 'pages/collection.orbit',
+  source: '---\npage collection\n---\n<IslandCard defer showVendor={true}/>\n',
+};
+
+describe('access plan soundness for a deferred island', () => {
+  const program = compileOk([DEFERRING_PAGE, ISLAND]);
+
+  it('the manifest names every path the second pass will read', () => {
+    // The host fetches from the MANIFEST, so the manifest is the thing that
+    // has to be sound — not the plan the page happened to be extracted with.
+    const first = render(program, 'collection', {
+      hostFilters: HOST_FILTERS,
+      bindings: {},
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.islands).toHaveLength(1);
+    const manifest = first.islands[0];
+    if (manifest === undefined) return;
+
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 5 }), (seed) => {
+        const reads: Reads = new Set();
+        // Pass 2, exactly as a host performs it: the component as its own
+        // entry, the manifest's props supplied, everything else host-resolved.
+        const second = render(program, manifest.component, {
+          hostFilters: HOST_FILTERS,
+          props: {
+            ...manifest.props,
+            product: recordingProduct(reads, 'product', seed),
+          },
+        });
+        expect(second.ok).toBe(true);
+        expect(missingPaths(manifest.paths, reads)).toEqual([]);
+      }),
+      { numRuns: 60 },
+    );
+  });
+
+  it('the page never reads what it deferred, so its own plan stays sound too', () => {
+    // The other half of the partition, measured rather than assumed: if the
+    // first pass touched the island's data, deferring would have bought
+    // nothing and the page plan would be under-approximating.
+    const reads: Reads = new Set();
+    const out = render(program, 'collection', {
+      hostFilters: HOST_FILTERS,
+      bindings: { product: recordingProduct(reads, 'product', 1) },
+    });
+    expect(out.ok).toBe(true);
+    expect([...reads]).toEqual([]);
+    expect(missingPaths(extractAccessPlan(program, 'collection').paths, reads)).toEqual([]);
+  });
+
+  it('a prop the page DID supply is not left for the host to fetch twice', () => {
+    // `showVendor` travels in the manifest as a resolved value, so it must not
+    // also appear as a path the host is told to go and get.
+    const out = render(program, 'collection', { hostFilters: HOST_FILTERS, bindings: {} });
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.islands[0]?.props).toMatchObject({ showVendor: true });
+    expect(out.islands[0]?.paths ?? []).not.toContain('showVendor');
+  });
+});

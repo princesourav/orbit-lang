@@ -2532,6 +2532,41 @@ stop and report". **This is the stop-and-report case.** What follows is the
 report, and the reason the conclusion is nevertheless *proceed, with two
 specific changes* rather than *change the architecture*.
 
+### Two limits on that number, stated here rather than at the end
+
+Both were originally at the bottom of this document. They belong next to the
+number, because the number is what gets quoted.
+
+**Three themes from one registry are not three samples.** Aurora, Scholar and
+Landmark compose the same 116 blocks. The tight variance — 23.5% to 26.7% — is
+evidence that they share a substrate, not evidence that the measurement is
+robust. The honest n is **one block library**, measured three ways.
+
+**The registry has a selection effect this scan cannot see.** Those 116 blocks
+are what was tractable to build in React. Anything merchants asked for and did
+not get *because it was hard in React* never became a block, and so never
+appears here as a gap. A registry scan measures what exists; it cannot measure
+what was abandoned. Closing that requires a theme developer's live friction log,
+which no static analysis substitutes for.
+
+Neither limit changes the decision below, and both bound how far the number
+travels.
+
+### Why the threshold fired, and why it was overridden
+
+The 20% threshold was a proxy for an **unbounded long tail** — the failure mode
+where a closed language keeps meeting bespoke requirements it cannot express,
+and the honest response is to admit you are building a sandbox platform instead.
+
+That is not what the number turned out to be. 17.2% decomposes into exactly
+**two mechanisms, invoked 7 and 14 times**, each with a closed-world answer. A
+threshold designed to detect unboundedness fired on concentration.
+
+What would have overturned the override, and did not happen: 17.2% spread across
+forty unrelated causes, or a list of missing language features that grew as more
+themes were ported. The causes did not multiply as the port proceeded — they
+repeated.
+
 ## What was measured, and against what
 
 **Subject:** the CommerceOS block registry — 116 blocks across 34 modules, 9,519
@@ -2703,6 +2738,55 @@ paper cut a theme author hits on day one.
 needed. The rich-text path is a `sanitizer`, and nothing in two full pages had to
 reach past it.
 
+## Two things checked after the fact
+
+### The island property was restated, and the restatement was right
+
+When server islands landed, the acceptance property from the brief —
+`paths(mainPlan) ∪ ⋃ paths(islandPlans)` equals the undeferred plan — was
+replaced with monotonicity plus disjointness, on the grounds that once an
+island's unsupplied props became host-resolved the two plans were rooted
+differently and were no longer comparable path-for-path.
+
+That reasoning was correct but incomplete as an argument. Monotonicity and
+disjointness describe how the two **sets relate**; neither says a set is
+*sound*. A partition of two unsound halves is still a partition. What actually
+has to survive deferral is per-unit containment:
+
+```
+reads(render(unit)) ⊆ paths(plan(unit))    for the page AND for each island
+```
+
+That was not asserted anywhere for islands. It is now, in
+`src/access-plan.property.test.ts`, measured the same way the page half always
+was — with recording getters, against the **manifest** rather than against a
+plan re-derived in the test, because the manifest is what a host actually
+fetches from. The property holds. The restatement stands, and the original
+property was simply wrong once props became host-resolved.
+
+### The `Color` validator is soft, and that blocks the custom-property sink
+
+`isHexColorLiteral` is correct, and it is applied at two boundaries — merchant
+settings and component-entry props. It is **not** applied to a `Color` arriving
+as a page binding or as a field of a host object. Both reach a sink unvalidated:
+
+```
+bindings: { theme: { accent: "red; --x:evil" } }   ->  renders, unchallenged
+```
+
+This is not a live vulnerability. The attribute and text escapers handle those
+bytes correctly today, which is why nothing has failed. It matters because it
+falsifies the safety argument for the planned typed custom-property sink, which
+rests entirely on "`Color` values are exactly six hex digits, so they need no CSS
+escaper". For a host-supplied `Color`, they are not.
+
+The resolution is the project's own established rule rather than a new one. URL
+safety is already "a property of the sink, not of the value" (SPEC §3.3), and
+the Html trust model already turned on sinks being type-directed at the sink.
+The custom-property sink must **validate at emission** and refuse a malformed
+value there, exactly as the URL sink does — not trust the declared type to have
+been honoured upstream.
+
 ## Verdict
 
 The closed-world premise **holds for content and breaks for commerce
@@ -2745,6 +2829,9 @@ produced by following each block's render through its view components in the
 CommerceOS repository; the counts in this report are the ones that scan
 produced, and the theme compositions are read from
 `packages/theme-schema/src/default-theme.ts` and `industry-themes.ts`.
+
+The two limits on the number are stated in the verdict rather than here, so they
+travel with it.
 
 The measurement is of one platform's block library. It is the platform Orbit
 exists to serve, which makes it the right subject and also the limit of the
