@@ -334,6 +334,21 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | The escaping panel labels each interpolation by position, and never reports RAWTEXT — "labels each interpolation with the context its position implies", "never reports a RAWTEXT context, because none is reachable" | playground/playground.test.ts | test |
 | The optional law and no-truthiness examples produce the diagnostics they advertise — "rejects an unguarded optional (the optional law)", "rejects a String used as a condition (no truthiness)" | playground/playground.test.ts | test |
 
+## Language server
+
+| claim | evidence | kind |
+|---|---|---|
+| The language server reports every error in a file, not just the first — "reports every error in a file, not just the first" | editors/lsp/analysis.test.mjs | test |
+| Orbit's 1-based spans are converted to LSP's 0-based positions, never negative — "converts 1-based Orbit spans to 0-based LSP positions", "never emits a negative position" | editors/lsp/analysis.test.mjs | test |
+| The fix-it is surfaced in the diagnostic message — "puts the fix-it in the message where a user will see it" | editors/lsp/analysis.test.mjs | test |
+| Host-dependent diagnostics are suppressed without a project host, while allowlist and syntax errors still report — "suppresses host-dependent diagnostics when no project host is configured", "still reports allowlist and syntax errors without a host" | editors/lsp/analysis.test.mjs | test |
+| Completion never offers a banned element — "never offers a banned element" | editors/lsp/analysis.test.mjs | test |
+| Completion after a pipe offers only filters — "offers only filters after a pipe" | editors/lsp/analysis.test.mjs | test |
+| Hover explains why a banned element is banned, and that URL attributes are sanitized at the sink — "explains WHY a banned element is banned", "explains that a URL attribute is sanitized at the sink, not by type" | editors/lsp/analysis.test.mjs | test |
+| Hover prefers a buffer-declared name over a same-named element — "prefers a declared slot over the element of the same name" | editors/lsp/analysis.test.mjs | test |
+| Formatting through the server makes no edit when the buffer does not parse — "makes NO edit when the buffer does not parse" | editors/lsp/analysis.test.mjs | test |
+| The server is compile-only: it never renders and never invokes a host filter | editors/lsp/analysis.mjs | artifact |
+
 ## Editor tooling
 
 | claim | evidence | kind |

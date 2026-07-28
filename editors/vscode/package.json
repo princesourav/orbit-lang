@@ -1,0 +1,62 @@
+{
+  "name": "orbit-lang",
+  "displayName": "Orbit",
+  "description": "Syntax highlighting, diagnostics and formatting for the Orbit template language.",
+  "version": "0.5.0",
+  "publisher": "orbit-lang",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/princesourav/orbit-lang.git",
+    "directory": "editors/vscode"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Programming Languages", "Formatters", "Linters"],
+  "keywords": ["orbit", "template", "templating", "storefront"],
+  "activationEvents": ["onLanguage:orbit"],
+  "main": "./client.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "orbit",
+        "aliases": ["Orbit", "orbit"],
+        "extensions": [".orbit"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "orbit",
+        "scopeName": "source.orbit",
+        "path": "./syntaxes/orbit.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Orbit",
+      "properties": {
+        "orbit.hasProjectHost": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Report diagnostics that depend on the project's type registry (unknown identifiers, unknown properties).\n\nOff by default: an editor has no way to know a project's object model, so every `{product.title}` would be flagged as an unknown identifier and bury the diagnostics that ARE actionable. Turn this on only when the language server has been given a host description."
+        },
+        "orbit.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace the communication between VS Code and the Orbit language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0"
+  }
+}
