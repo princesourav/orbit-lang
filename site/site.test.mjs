@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { main as buildSite } from './build.mjs';
 import { escapeHtml, renderInline, renderMarkdown, rewriteLink, slugify } from './markdown.mjs';
 
 /**
@@ -22,6 +23,19 @@ import { escapeHtml, renderInline, renderMarkdown, rewriteLink, slugify } from '
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const DIST = path.join(HERE, 'dist');
+
+/**
+ * Build before asserting, rather than requiring a prior build step.
+ *
+ * `site/dist` is generated and gitignored, so a test that only READ it passed
+ * locally — where a build had just run — and failed in CI, where the test step
+ * comes first. A test whose result depends on what someone happened to run
+ * beforehand is not a test.
+ */
+beforeAll(() => {
+  const code = buildSite([]);
+  expect(code, 'the site build failed').toBe(0);
+});
 
 function distFiles(dir = DIST, acc = []) {
   if (!existsSync(dir)) return acc;

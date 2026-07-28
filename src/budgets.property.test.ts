@@ -277,12 +277,23 @@ describe('render terminates for any generated program under any budget', () => {
   it('a generous budget renders every generated program', () => {
     // The dual guard: if the budgets were so tight that everything failed, the
     // termination property above would pass while proving nothing.
+    //
+    // "Generous" has to be stated, not assumed. This ran with DEFAULT budgets
+    // and passed by luck: the generator can emit six nested `<for limit={4}>`,
+    // which is 4^6 iterations over eight rows and legitimately exhausts the
+    // global iteration counter. That is the engine working — a nested loop
+    // multiplying out is exactly what the counter exists to stop — so the fix
+    // is to give the property the budget its name claims, not to weaken the
+    // cap. It failed intermittently in CI until this was made explicit.
+    const GENEROUS = { fuel: 200_000_000, maxIterations: 5_000_000, maxOutput: 50_000_000 };
     fc.assert(
       fc.property(generatedWorkload, fc.integer({ min: 0, max: 8 }), (file, rowCount) => {
         const generated = compileOk([file, ...SUPPORT]);
         const result = render(generated, 'Generated', {
+          ...GENEROUS,
           props: { title: 'T', rows: Array.from({ length: rowCount }, (_, i) => `r${String(i)}`) },
         });
+        if (!result.ok) throw new Error(`${result.error.code}: ${result.error.message}`);
         expect(result.ok).toBe(true);
       }),
       { numRuns: 100 },
