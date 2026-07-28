@@ -426,6 +426,25 @@ corpus, which does not exist (see "Claims deliberately NOT listed here").
 | This claims manifest is enforced by a CI script that fails the build on missing evidence | scripts/audit-claims.mjs | artifact |
 | The claims-audit script is itself tested | scripts/audit-claims.test.mjs | test |
 
+## Closed-world evaluation (Phase D)
+
+The report at `docs/evaluation/closed-world.md` states a number that decides
+project sequencing, so its central claim — "these templates express the theme"
+— is executable rather than asserted. The classification counts behind the
+report are a scan of a second repository and are **not** machine-checkable from
+here; the report says so, and the rows below claim only what this repository can
+prove.
+
+| claim | evidence | kind |
+|---|---|---|
+| The ported Aurora home and product pages parse, type-check and render with zero diagnostics — "compiles with no errors" | evaluation/aurora/port.test.mjs | test |
+| The port needs no `trustedHtml` seam: it raises no warnings at all — "raises no warnings either — nothing here needed the trusted-Html seam" | evaluation/aurora/port.test.mjs | test |
+| The rendered pages contain no executable script and no inline event handler; the only `<script>` is `application/ld+json` — "renders no executable script and no inline event handler" | evaluation/aurora/port.test.mjs | test |
+| The port yields an access plan a host can serve — "produces an access plan the host can serve" | evaluation/aurora/port.test.mjs | test |
+| The port is canonically formatted, so the templates in the report are what the formatter produces — "is already canonically formatted" | evaluation/aurora/port.test.mjs | test |
+| The host used for the evaluation is a realistic platform object model, not a filter surface invented to close gaps | evaluation/aurora/host.mjs | artifact |
+| The closed-world finding, its method, its per-theme numbers and its limits are published rather than summarized | docs/evaluation/closed-world.md | artifact |
+
 ## Claims deliberately NOT listed here
 
 Some things this project will claim later are absent on purpose, because the

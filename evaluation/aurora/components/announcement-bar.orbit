@@ -1,0 +1,21 @@
+---
+orbit 2026
+component AnnouncementBar
+settings {
+  text: Text = "Free shipping on orders over 2,000" label "Message"
+  link: Text = "" label "Link URL"
+  tone: Select("neutral", "accent", "dark") = "accent" label "Tone"
+}
+---
+{# PORT NOTE (announcement-bar): clean.
+
+   The original computes `background: s.background` from a colour setting. Here
+   `tone` is a closed set of three, so the colour lives in the stylesheet and
+   the template picks a class. That is a BETTER design than the original — the
+   merchant cannot pick an unreadable colour pair — but it is a narrowing, and
+   it is only available because the set is small enough to enumerate. See the
+   colour finding in the report. #}
+<div class="ann ann--{settings.tone}">
+  <if {settings.link != ""}><a class="ann__link" href={settings.link}>{settings.text}</a></if>
+  <else><span>{settings.text}</span></else>
+</div>

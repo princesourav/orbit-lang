@@ -35,6 +35,7 @@ that most often surprise:
 - [errors](https://github.com/princesourav/orbit-lang/blob/main/docs/reference/errors.md): Every diagnostic code, generated from source.
 - [embedding](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/embedding.md): Implementing a host: types, filters, stored ASTs, access plans.
 - [security-model](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/security-model.md): Threat model, each guarantee and its mechanism, and what Orbit does NOT protect against.
+- [closed-world](https://github.com/princesourav/orbit-lang/blob/main/docs/evaluation/closed-world.md):
 - [non-js-embedding](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/non-js-embedding.md):
 - [trusted-types](https://github.com/princesourav/orbit-lang/blob/main/docs/guides/trusted-types.md):
 

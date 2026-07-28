@@ -1,0 +1,125 @@
+---
+orbit 2026
+page product
+settings {
+  showReviews: Toggle = true label "Show reviews"
+  galleryStyle: Select("stack", "grid") = "stack" label "Gallery layout"
+}
+---
+{# Aurora product page: breadcrumbs · buy-box · product-reviews.
+
+   This is the page where the closed world is under the most pressure, because
+   the buy box is the one block whose whole job is interaction. #}
+<AnnouncementBar/>
+<SiteHeader shop={shop} menu={menu}/>
+<main id="main">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <ol>
+      <for c of={crumbs}>
+        <li>
+          <a href={c.url}>{c.label}</a>
+        </li>
+      </for>
+      <li aria-current="page">{product.title}</li>
+    </ol>
+  </nav>
+  {# ── buy-box ─────────────────────────────────────────────────────────────
+     What ports cleanly: the gallery, title, price, compare-at, savings,
+     availability, the option list, and the description through the sanitizer.
+
+     What does not: choosing a variant. The original swaps price, image and
+     availability when an option changes, all client-side, with no reload.
+     Below, each option value is a LINK to the variant URL, which is a real
+     technique (it is what a progressively-enhanced storefront degrades to) and
+     is a full page load per click.
+
+     Add-to-cart is a POST form. That works, and it costs the flyout: the
+     browser navigates to the cart instead of the drawer opening. #}
+  <section class="buybox buybox--{settings.galleryStyle}">
+    <div class="buybox__media">
+      <img
+        src={imgUrl(product.cover, 1200, crop: "center", format: "webp")}
+        alt={product.title}
+        width="1200"
+        height="1500"
+      />
+    </div>
+    <div class="buybox__info">
+      <if {product.vendor != none}><p class="buybox__vendor">{product.vendor}</p></if>
+      <h1 class="buybox__title">{product.title}</h1>
+      <p class="buybox__price">
+        <span class="buybox__price-now">{money(product.price)}</span>
+        <if {product.compareAt != none}>
+          <s class="buybox__price-was">{money(product.compareAt)}</s>
+          <span class="buybox__save"> Save {percentOff(product.price, product.compareAt)}% </span>
+        </if>
+      </p>
+      <match {product.badge}>
+        <case "none">
+        </case>
+        <case "new">
+          <p class="buybox__note">Just landed</p>
+        </case>
+        <case "sale">
+          <p class="buybox__note">On sale</p>
+        </case>
+        <case "low-stock">
+          <p class="buybox__note buybox__note--urgent">Only a few left</p>
+        </case>
+      </match>
+      <fieldset class="buybox__options">
+        <legend>{product.optionName}</legend>
+        <ul class="buybox__values">
+          <for v of={product.optionValues}>
+            <li>
+              <a class="chip" href="{product.url}?option={v}">{v}</a>
+            </li>
+          </for>
+        </ul>
+      </fieldset>
+      <form class="buybox__form" action="/cart/add" method="post">
+        <input type="hidden" name="url" value={product.url}/>
+        <label class="visually-hidden" for="qty">Quantity</label>
+        <input id="qty" name="quantity" type="number" value="1" min="1" max="10"/>
+        <button class="btn btn--primary" type="submit" disabled?={!product.available}>
+          <if {product.available}>Add to cart</if>
+          <else>Sold out</else>
+        </button>
+      </form>
+      <div class="rich buybox__desc">{product.descriptionHtml |> richtext}</div>
+    </div>
+  </section>
+  {# ── product-reviews ─────────────────────────────────────────────────────
+     Read-only, so it ports exactly. Writing a review is a form POST; the
+     original opens a modal. #}
+  <if {settings.showReviews}>
+    <section class="reviews">
+      <h2>Reviews</h2>
+      <if {product.rating != none}>
+        <p class="reviews__summary" data-rating={product.rating}>
+          {product.rating}
+          out of 5 · 
+          {product.reviewCount}
+          reviews
+        </p>
+      </if>
+      <ul class="reviews__list">
+        <for r of={reviews}>
+          <li class="review">
+            <p class="review__meta" data-stars={r.rating}>{r.author} · {r.dateText}</p>
+            <p class="review__body">{r.body}</p>
+          </li>
+        <empty>
+          <li class="review review--none">No reviews yet.</li>
+        </empty>
+        </for>
+      </ul>
+    </section>
+  </if>
+  {# Structured data: in-language, and typed. The original hand-builds a JSON
+     string inside a <script> tag. #}
+  <json-ld>{{"@context": "https://schema.org", "@type": "Product", name: product.title, description: product.title, offers: {"@type": "Offer", availability: product.available ? "InStock" : "OutOfStock"}}}</json-ld>
+</main>
+<footer class="ftr">
+  <p class="ftr__legal">{shop.name}</p>
+</footer>

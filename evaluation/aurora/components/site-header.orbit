@@ -1,0 +1,59 @@
+---
+orbit 2026
+component SiteHeader
+props {
+  shop: Shop
+  menu: List<MenuItem>
+}
+settings {
+  showSearch: Toggle = true label "Show search"
+  sticky: Toggle = true label "Sticky header"
+}
+---
+{# PORT NOTE (header): THE central finding. Three things here cannot be
+   expressed, and all three are interactivity:
+
+   1. The mobile nav toggle. The original is a useState drawer. Below it is a
+      <details>/<summary> disclosure, which needs no script and works — but it
+      is a different interaction (no focus trap, no scroll lock, no animation).
+   2. Live search. The original fetches suggestions as you type. Below it is a
+      plain GET form to /search. Correct, and a real downgrade.
+   3. The cart flyout and its live count. The original opens a drawer and
+      updates the badge without a reload. Below it is a link to /cart, and the
+      count is whatever the server rendered.
+
+   None of these is a missing FILTER or a missing type. Each is the same
+   missing thing: a way for the theme to say "put the platform's cart drawer
+   here". That is one mechanism, not three, and it is what E0/E1 proposes. #}
+<header class="hdr hdr--sticky-{settings.sticky}">
+  <nav class="hdr__nav" aria-label="Primary">
+    <a class="hdr__logo" href="/">
+      <img src={imgUrl(shop.logo, 160, format: "webp")} alt={shop.name} width="160" height="40"/>
+    </a>
+    {# The mobile menu: a disclosure, because no author-written JS exists. #}
+    <details class="hdr__menu">
+      <summary class="hdr__menu-button" aria-label="Menu">Menu</summary>
+      <ul class="hdr__links">
+        <for item of={menu}>
+          <li>
+            <a href={item.url} aria-current?={item.current}>{item.label}</a>
+          </li>
+        </for>
+      </ul>
+    </details>
+    <div class="hdr__actions">
+      <if {settings.showSearch}>
+        <form class="hdr__search" action={shop.searchUrl} method="get" role="search">
+          <label class="visually-hidden" for="q">Search</label>
+          <input id="q" name="q" type="search" placeholder="Search" autocomplete="off"/>
+          <button type="submit">Search</button>
+        </form>
+      </if>
+      <a class="hdr__account" href={shop.accountUrl}>Account</a>
+      <a class="hdr__cart" href={shop.cartUrl}>
+        Cart 
+        <if {shop.cartCount > 0}><span class="hdr__cart-count">{shop.cartCount}</span></if>
+      </a>
+    </div>
+  </nav>
+</header>

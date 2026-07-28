@@ -1,0 +1,145 @@
+---
+orbit 2026
+page home
+settings {
+  heroHeading: Text = "Everything your wardrobe wanted" label "Hero heading"
+  heroSub: Text = "Small-batch, shipped worldwide." label "Hero subheading"
+  heroCta: Text = "Shop the drop" label "Hero button"
+  heroCtaLink: Text = "/collections/all" label "Hero button link"
+  heroSize: Select("short", "tall", "full") = "tall" label "Hero height"
+  heroAlign: Select("left", "center") = "center" label "Hero alignment"
+  gridHeading: Text = "Featured" label "Product grid heading"
+  gridColumns: Range(2, 4, step: 1) = 4 label "Columns"
+  faqHeading: Text = "Questions" label "FAQ heading"
+  newsletterHeading: Text = "Stay in the loop" label "Newsletter heading"
+}
+---
+{# Aurora home page, ported block for block.
+
+   Blocks: announcement-bar · header · hero · trust-bar · product-grid ·
+   image-text · testimonials · faq · newsletter · footer. #}
+<AnnouncementBar/>
+<SiteHeader shop={shop} menu={menu}/>
+<main id="main">
+  {# ── hero ────────────────────────────────────────────────────────────────
+     The original computes `height: s.size` and an overlay opacity from a
+     range. Both are enumerable here (three sizes, and the overlay moved to the
+     stylesheet), so the template picks classes. #}
+  <section class="hero hero--{settings.heroSize} hero--{settings.heroAlign}">
+    <div class="hero__inner">
+      <h1 class="hero__heading">{settings.heroHeading}</h1>
+      <p class="hero__sub">{settings.heroSub}</p>
+      <a class="btn btn--primary" href={settings.heroCtaLink}>{settings.heroCta}</a>
+    </div>
+  </section>
+  {# ── trust-bar ───────────────────────────────────────────────────────────
+     The original renders an inline <svg> per item, chosen by an icon name from
+     a closed set. <svg> is banned (O1080), so each icon is an <img>. The
+     stylesheet tints them with mask-image so they still follow currentColor.
+     Structurally faithful; one extra request per icon unless they are sprited. #}
+  <section class="trust">
+    <ul class="trust__list">
+      <li class="trust__item">
+        <img class="trust__icon" src="/icons/truck.svg" alt="" width="24" height="24"/>
+        <span class="trust__title">Free shipping</span>
+        <span class="trust__text">On orders over 2,000</span>
+      </li>
+      <li class="trust__item">
+        <img class="trust__icon" src="/icons/refresh.svg" alt="" width="24" height="24"/>
+        <span class="trust__title">Easy returns</span>
+        <span class="trust__text">30-day money back</span>
+      </li>
+      <li class="trust__item">
+        <img class="trust__icon" src="/icons/shield.svg" alt="" width="24" height="24"/>
+        <span class="trust__title">Secure checkout</span>
+        <span class="trust__text">Encrypted and PCI-safe</span>
+      </li>
+      <li class="trust__item">
+        <img class="trust__icon" src="/icons/chat.svg" alt="" width="24" height="24"/>
+        <span class="trust__title">Here to help</span>
+        <span class="trust__text">Mon to Fri support</span>
+      </li>
+    </ul>
+  </section>
+  {# ── product-grid ────────────────────────────────────────────────────────
+     `gridColumns` is a Range(2,4) — three values — so it becomes a class. A
+     Range with a wide span would need one stylesheet rule per value; see the
+     report. #}
+  <section class="grid grid--cols-{settings.gridColumns}">
+    <h2 class="grid__heading">{settings.gridHeading}</h2>
+    <div class="grid__items">
+      <for item, i of={collection.products} limit={24}>
+        <ProductCard product={item} eager={i < 4}/>
+      </for>
+    </div>
+    <if {collection.productCount == 0}><p class="grid__empty">Nothing here yet.</p></if>
+  </section>
+  {# ── image-text ──────────────────────────────────────────────────────────
+     Merchant markdown through the sanitizer. Element content only, which is
+     where it belongs. #}
+  <section class="imgtext">
+    <div class="imgtext__media">
+      <img
+        src={imgUrl(shop.logo, 800, format: "webp")}
+        alt=""
+        width="800"
+        height="600"
+        loading="lazy"
+      />
+    </div>
+    <div class="imgtext__body">
+      <h2>{collection.title}</h2>
+      <div class="rich">{collection.description |> richtext}</div>
+      <a class="btn" href={collection.url}>Browse</a>
+    </div>
+  </section>
+  {# ── testimonials ────────────────────────────────────────────────────────
+     The original is a carousel with autoplay; without JS it is a scroll-snap
+     row, which is the same content and a different interaction. #}
+  <section class="quotes">
+    <ul class="quotes__row">
+      <for r of={reviews}>
+        <li class="quotes__item">
+          <blockquote class="quotes__body">{r.body}</blockquote>
+          <p class="quotes__by">{r.author} · {r.dateText}</p>
+        </li>
+      </for>
+    </ul>
+  </section>
+  {# ── faq ─────────────────────────────────────────────────────────────────
+     <details>/<summary> in the original too, so this is exact. #}
+  <section class="faq">
+    <h2>{settings.faqHeading}</h2>
+    <details class="faq__item">
+      <summary>When will my order ship?</summary>
+      <p>Within two business days.</p>
+    </details>
+    <details class="faq__item">
+      <summary>Do you ship internationally?</summary>
+      <p>Yes, to most countries.</p>
+    </details>
+  </section>
+  {# ── newsletter ──────────────────────────────────────────────────────────
+     A plain POST form. The original does an inline fetch and swaps in a thank
+     you; here the browser navigates. Correct, less pleasant. #}
+  <section class="news">
+    <h2>{settings.newsletterHeading}</h2>
+    <form class="news__form" action="/subscribe" method="post">
+      <label class="visually-hidden" for="email">Email</label>
+      <input id="email" name="email" type="email" required placeholder="you@example.com"/>
+      <button type="submit">Subscribe</button>
+    </form>
+  </section>
+</main>
+<footer class="ftr">
+  <nav class="ftr__nav" aria-label="Footer">
+    <ul>
+      <for item of={menu}>
+        <li>
+          <a href={item.url}>{item.label}</a>
+        </li>
+      </for>
+    </ul>
+  </nav>
+  <p class="ftr__legal">{shop.name}</p>
+</footer>

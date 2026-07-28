@@ -1,0 +1,67 @@
+---
+orbit 2026
+component ProductCard
+props {
+  product: Product
+  eager: Bool = false
+}
+---
+{# PORT NOTE (product-card): clean except the wishlist button.
+
+   `badge` is a host-declared union, so <match> checks it — and the day the
+   platform adds a fifth badge, this file fails the build by name instead of
+   rendering nothing. That is the one place the port is strictly better than
+   the original, which does `badge === 'sale' ? … : null` and silently drops
+   anything new.
+
+   The wishlist heart is a useState toggle writing to localStorage. It is not
+   expressible and is omitted; see the report. #}
+<article class="pcard">
+  <a class="pcard__link" href={product.url}>
+    <div class="pcard__media">
+      <img
+        class="pcard__img"
+        src={imgUrl(product.cover, 600, crop: "center", format: "webp")}
+        alt={product.title}
+        width="600"
+        height="750"
+        loading={eager ? "eager" : "lazy"}
+      />
+      <match {product.badge}>
+        <case "none">
+        </case>
+        <case "new">
+          <span class="pcard__badge pcard__badge--new">New</span>
+        </case>
+        <case "sale">
+          <span class="pcard__badge pcard__badge--sale">
+            <if {product.compareAt != none}>
+              Save 
+              {percentOff(product.price, product.compareAt)}%
+            </if>
+            <else>Sale</else>
+          </span>
+        </case>
+        <case "low-stock">
+          <span class="pcard__badge pcard__badge--low">Low stock</span>
+        </case>
+      </match>
+    </div>
+    <h3 class="pcard__title">{product.title}</h3>
+    <p class="pcard__price">
+      <span class="pcard__price-now">{money(product.price)}</span>
+      <if {product.compareAt != none}>
+        <s class="pcard__price-was">{money(product.compareAt)}</s>
+      </if>
+    </p>
+    <if {product.rating != none}>
+      <p class="pcard__rating" data-rating={product.rating}>
+        {product.rating}
+        out of 5 · 
+        {product.reviewCount}
+        reviews
+      </p>
+    </if>
+    <if {!product.available}><p class="pcard__sold">Sold out</p></if>
+  </a>
+</article>

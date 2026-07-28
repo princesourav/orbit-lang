@@ -21,6 +21,39 @@
 > second implementation, allowlist profiles — is out of scope by decision and is
 > listed below for planning only.
 
+## The Phase D result changes the sequence
+
+The falsification test has run:
+[**docs/evaluation/closed-world.md**](docs/evaluation/closed-world.md).
+
+**17.2% of a real platform's theme functionality cannot be expressed in Orbit as
+it stands** — 23–27% per individual theme. That is above the "stop and report"
+threshold, and this is the report.
+
+The premise holds where it was most in doubt and fails where it was least
+expected. 93% of a 116-block section library needs no client JavaScript at all:
+the storefront is overwhelmingly a rendering problem. What fails is not a long
+tail of exotic sections but the header, the product grid and the buy box — the
+three blocks on every page of every theme.
+
+Two conclusions, neither of which is "add an escape hatch":
+
+1. **Platform islands move to the front of the queue.** 6.0% of blocks need
+   client interactivity, and it is the same missing mechanism seven times: a way
+   for a theme to place a platform-owned interactive component. No language rule
+   loosens — Orbit already ships JavaScript; what it forbids is *author-written*
+   JS in themes. Hardening a language that cannot express a cart drawer is the
+   wrong use of the next two quarters.
+2. **A typed custom-property sink is now a required language addition.** 12.1% of
+   blocks carry a `Color` setting with nowhere to go: interpolated `style` is
+   banned (correctly — it is a CSS injection sink), `Color` is unbounded so it
+   cannot become a class, and CSS cannot read a data attribute as a colour.
+   `Color` is already a terminal type whose values are exactly six hex digits, so
+   emitting `style="--accent:#1a73e8"` after checking the type opens no new
+   injection surface. This gap has no plan behind it today. It needs one.
+
+Everything below predates that result and is otherwise unchanged.
+
 ## Positioning
 
 **Orbit's wedge is being typed *and* safe for untrusted authors at the same time.** Type safety is normally bought by trusting the author — the template compiles into the host language and can reach whatever that language can. Safety for untrusted authors is normally bought by giving up types, and then defended with a sandbox. Orbit refuses both trades. "Best in industry" therefore does **not** mean fastest engine or biggest ecosystem. It means:
@@ -158,7 +191,8 @@ Goal: falsifiable claims, enterprise-grade stability promises, public launch.
 | 1 | **Team of 1–2 stalls on the tooling long-pole (LSP/formatter)**, launch slips past the 2026–27 credibility window | Proven order (errors→formatter→tree-sitter→LSP); **in-milestone cut line: LSP formally slips to v1.0, the v0.5 soft launch proceeds without it**; compiler-as-library from day one; recruit contributors early for grammar and editor extensions [community] |
 | 2 | **A security researcher (or AI auditor) finds an escaping/budget hole before the spec exists**, undermining the positioning | v0.2 property-testing + seam hardening *before* the early-2027 soft launch; browser-differential oracle at v1.0; funded, scoped bounty live at launch; private-report channel + 90-day disclosure policy + CVE path in SECURITY.md from v0.2; assume machine audit per Glasswing |
 | 3 | **Overclaim hangover**: fuzz-suite and HMAC claims already in-repo are false today | Fix in v0.2 before any external attention; claims-audit CI gate (every doc claim linked to a test or artifact) makes recurrence machine-detectable rather than self-certified |
-| 4 | **Strictness rejection**: real users hit missing power (dynamic style, i18n, email HTML) and go elsewhere | Sanctioned escape valves (host filters now; locale-data injection at v1.0; profiles and micro-contexts via staged proposals); honest limitation docs from v0.2 so nothing fails as a surprise; never answer with Turing-completeness |
+| 4 | **Strictness rejection**: real users hit missing power (dynamic style, i18n, email HTML) and go elsewhere | **Measured, not assumed** — Phase D puts it at 17.2% of a real block library, with per-instance colour the single largest cause. Sanctioned escape valves (host filters now; locale-data injection at v1.0; profiles and micro-contexts via staged proposals); a typed custom-property sink to close the colour gap; honest limitation docs from v0.2 so nothing fails as a surprise; never answer with Turing-completeness |
+| 7 | **Interactivity gap ships as a surprise**: themes render correctly and feel a decade old, because the cart drawer, live search and variant picker all became page loads | Phase D quantified it at 6.0% of blocks but 100% of themes, all on the highest-traffic path; platform-owned islands resequenced ahead of further hardening; no author-written JS at any point, so the security property is unchanged |
 | 5 | **Beachhead mismatch**: the largest segment (polyglot multi-tenant SaaS) can't embed an npm library, and the edge pitch rests on an unbuilt VM | JS-native segments (AI builders, edge) ranked first; non-JS embedding guide at v1.0 and Rust/WASM post-1.0 for the SaaS segment; edge claims gated on the single v1.0 Workers benchmark, which is exempt from performance-cut rules |
 | 6 | **Unfunded commitments and no revenue until mid-2027**: audit hand-waved to competitive grants, bounty unbudgeted, monetization deferred | Funding workstream from v0.5: grant applications submitted Q4 2026 with a self-funded fallback scope; bounty budget defined in v0.5, funded at v1.0; paid design-partner conversations open pre-1.0 with ≥1 paid LOI targeted before launch |
 
